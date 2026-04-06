@@ -38,6 +38,11 @@ export default function AIReport({ chart, report: propReport, onReportGenerated 
   }, [report, onReportGenerated]);
 
   useEffect(() => {
+    const storedApiKey = localStorage.getItem('openrouter_api_key');
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    }
+    
     fetch('/api/report')
       .then(res => res.json())
       .then(data => {
