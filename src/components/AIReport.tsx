@@ -19,7 +19,7 @@ interface AIReportProps {
 
 export default function AIReport({ chart, report: propReport, onReportGenerated }: AIReportProps) {
   const [internalReport, setInternalReport] = useState<AIReportType | null>(null);
-  const report = propReport !== undefined ? propReport : internalReport;
+  const report = propReport ?? internalReport;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash');

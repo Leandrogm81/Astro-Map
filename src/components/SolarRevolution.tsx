@@ -18,7 +18,7 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [internalSolarReport, setInternalSolarReport] = useState<AIReport | null>(null);
-  const solarReport = propSolarReport !== undefined ? propSolarReport : internalSolarReport;
+  const solarReport = propSolarReport ?? internalSolarReport;
   const [generatingReport, setGeneratingReport] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [initialized, setInitialized] = useState(false);
