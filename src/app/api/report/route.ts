@@ -8,8 +8,12 @@ export const AVAILABLE_MODELS = [
   { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Rápido e econômico', cost: '~R$0.80/relatório' },
   { id: 'google/gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', description: 'O mais barato', cost: '~R$0.40/relatório' },
   { id: 'deepseek/deepseek-chat-v3-0324', name: 'DeepSeek V3', description: 'Excelente em PT-BR', cost: '~R$0.50/relatório' },
-  { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', description: 'Maior qualidade', cost: '~R$2.00/relatório' },
   { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Open source', cost: '~R$0.30/relatório' },
+  { id: 'qwen/qwen3.6-plus:free', name: 'Qwen 3.6 Plus', description: 'Modelo gratuito', cost: 'Grátis' },
+  { id: 'stepfun/step-3.5-flash:free', name: 'Step 3.5 Flash', description: 'Rápido e gratuito', cost: 'Grátis' },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super', description: 'Modelo gratuito NVIDIA', cost: 'Grátis' },
+  { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air', description: 'Modelo gratuito Z-AI', cost: 'Grátis' },
+  { id: 'minimax/minimax-m2.5:free', name: 'MiniMax M2.5', description: 'Modelo gratuito MiniMax', cost: 'Grátis' },
 ];
 
 interface OpenRouterMessage {
