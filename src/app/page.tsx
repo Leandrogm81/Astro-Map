@@ -112,12 +112,26 @@ export default function Home() {
     }
   }, [savedChartId]);
 
+  const handleReportDeleted = useCallback(() => {
+    setAiReport(null);
+    if (savedChartId) {
+      updateChart(savedChartId, { aiReport: undefined });
+    }
+  }, [savedChartId]);
+
   const handleSolarReportGenerated = useCallback((report: AIReportType | null) => {
     setSolarReport(report);
     if (savedChartId && report) {
       updateChart(savedChartId, { solarReport: report, solarRevolution: solarRevolution || undefined, solarYear: solarYear });
     }
   }, [savedChartId, solarRevolution, solarYear]);
+
+  const handleSolarReportDeleted = useCallback(() => {
+    setSolarReport(null);
+    if (savedChartId) {
+      updateChart(savedChartId, { solarReport: undefined });
+    }
+  }, [savedChartId]);
 
   const handleRevolutionCalculated = useCallback((rev: NatalChart | null, year: number) => {
     setSolarRevolution(rev);
@@ -339,6 +353,7 @@ export default function Home() {
                       chart={chart} 
                       report={aiReport}
                       onReportGenerated={handleReportGenerated}
+                      onReportDeleted={handleReportDeleted}
                     />
                   )}
 
@@ -348,6 +363,7 @@ export default function Home() {
                       solarReport={solarReport}
                       onRevolutionCalculated={handleRevolutionCalculated}
                       onSolarReportGenerated={handleSolarReportGenerated}
+                      onSolarReportDeleted={handleSolarReportDeleted}
                     />
                   )}
                 </div>

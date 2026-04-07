@@ -15,9 +15,10 @@ interface AIReportProps {
   chart: NatalChart;
   report?: AIReportType | null;
   onReportGenerated?: (report: AIReportType | null) => void;
+  onReportDeleted?: () => void;
 }
 
-export default function AIReport({ chart, report: propReport, onReportGenerated }: AIReportProps) {
+export default function AIReport({ chart, report: propReport, onReportGenerated, onReportDeleted }: AIReportProps) {
   const [internalReport, setInternalReport] = useState<AIReportType | null>(null);
   const report = propReport ?? internalReport;
   const [loading, setLoading] = useState(false);
@@ -302,10 +303,13 @@ export default function AIReport({ chart, report: propReport, onReportGenerated 
               onClick={() => {
                 setInternalReport(null);
                 setModelUsed('');
+                if (onReportDeleted) {
+                  onReportDeleted();
+                }
               }}
               className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-purple-500/30 rounded-lg text-slate-300 transition-colors"
             >
-              Gerar Novo Relatório
+              Apagar Relatório
             </button>
           </div>
         </div>

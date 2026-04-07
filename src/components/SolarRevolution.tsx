@@ -10,9 +10,10 @@ interface SolarRevolutionProps {
   solarReport?: AIReport | null;
   onRevolutionCalculated?: (solarReturn: NatalChart | null, year: number) => void;
   onSolarReportGenerated?: (report: AIReport | null) => void;
+  onSolarReportDeleted?: () => void;
 }
 
-export default function SolarRevolution({ natalChart, solarReport: propSolarReport, onRevolutionCalculated, onSolarReportGenerated }: SolarRevolutionProps) {
+export default function SolarRevolution({ natalChart, solarReport: propSolarReport, onRevolutionCalculated, onSolarReportGenerated, onSolarReportDeleted }: SolarRevolutionProps) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [solarReturn, setSolarReturn] = useState<NatalChart | null>(null);
   const [loading, setLoading] = useState(false);
@@ -417,10 +418,15 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
               ))}
 
               <button
-                onClick={() => setInternalSolarReport(null)}
+                onClick={() => {
+                  setInternalSolarReport(null);
+                  if (onSolarReportDeleted) {
+                    onSolarReportDeleted();
+                  }
+                }}
                 className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-purple-500/30 rounded-lg text-slate-300 transition-colors"
               >
-                Limpar Relatório
+                Apagar Relatório
               </button>
             </div>
           )}
