@@ -3,15 +3,20 @@ import { NatalChart, AIReport } from '@/types';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Modelos disponíveis
+// Modelos disponíveis com custos reais
 export const AVAILABLE_MODELS = [
-  { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', description: 'Open source da OpenAI', cost: 'Grátis' },
-  { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', description: 'Excelente em PT-BR', cost: 'Grátis' },
-  { id: 'x-ai/grok-4.1-fast', name: 'Grok 4.1 Fast', description: 'Rápido da xAI', cost: 'Grátis' },
-  { id: 'google/gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', description: 'Econômico do Google', cost: 'Grátis' },
-  { id: 'xiaomi/mimo-v2-flash', name: 'MiMo V2 Flash', description: 'Modelo rápido da Xiaomi', cost: 'Grátis' },
-  { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: 'Open source da Meta', cost: 'Grátis' },
-  { id: 'google/gemma-4-26b-a4b-it:free', name: 'Gemma 4 26B', description: 'Modelo gratuito do Google', cost: 'Grátis' },
+  { id: 'openai/gpt-oss-120b', name: 'GPT-OSS 120B', description: 'Open source da OpenAI (131K context)', cost: '~$0.63/relatório' },
+  { id: 'deepseek/deepseek-v3.2', name: 'DeepSeek V3.2', description: 'Excelente em PT-BR (164K context)', cost: '~$1.53/relatório' },
+  { id: 'x-ai/grok-4.1-fast', name: 'Grok 4.1 Fast', description: 'Rápido da xAI (2M context)', cost: '~$1.80/relatório' },
+  { id: 'google/gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', description: 'Econômico do Google (1M context)', cost: '~$1.35/relatório' },
+  { id: 'xiaomi/mimo-v2-flash', name: 'MiMo V2 Flash', description: 'Modelo rápido da Xiaomi (262K context)', cost: '~$1.00/relatório' },
+  { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', description: 'Open source da Meta (16K context)', cost: '~$0.18/relatório' },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free', name: 'Nemotron 3 Super', description: 'Modelo NVIDIA (256K context)', cost: '~$0.53/relatório' },
+  { id: 'qwen/qwen3.5-flash-02-23', name: 'Qwen 3.5 Flash', description: 'Modelo Qwen (1M context)', cost: '~$0.88/relatório' },
+  { id: 'qwen/qwen3-235b-a22b-2507', name: 'Qwen 3 235B', description: 'Modelo grande Qwen (262K context)', cost: '~$0.41/relatório' },
+  { id: 'google/gemma-4-26b-a4b-it:free', name: 'Gemma 4 26B', description: 'Modelo gratuito do Google (262K context)', cost: 'Grátis' },
+  { id: 'arcee-ai/trinity-large-preview:free', name: 'Arcee Trinity', description: 'Modelo gratuito (131K context)', cost: 'Grátis' },
+  { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air', description: 'Modelo gratuito Z-AI (131K context)', cost: 'Grátis' },
 ];
 
 interface OpenRouterMessage {
