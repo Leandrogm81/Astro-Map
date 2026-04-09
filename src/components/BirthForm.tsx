@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { BirthData, GeocodingResult } from '@/types';
 import { geocodeLocation, getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { Search, MapPin, Clock, Calendar, User } from 'lucide-react';
@@ -26,6 +27,21 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
   const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState({});
+
+  useEffect(() => {
+    if (showResults && searchInputRef.current) {
+      const rect = searchInputRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  }, [showResults]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery || searchQuery.length < 3) return;
@@ -114,6 +130,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
           <div className="flex gap-2">
             <input
               type="text"
+              ref={searchInputRef}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
@@ -131,8 +148,8 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
           </div>
 
           {/* Resultados da busca */}
-          {showResults && searchResults.length > 0 && (
-            <div className="absolute z-20 w-full mt-2 bg-slate-900 border border-purple-500/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto touch-auto">
+          {showResults && searchResults.length > 0 && createPortal(
+            <div style={dropdownStyle} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto touch-auto">
               {searchResults.map((result, index) => (
                 <button
                   key={index}
@@ -146,13 +163,15 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
                   </p>
                 </button>
               ))}
-            </div>
+            </div>,
+            document.body
           )}
 
-          {showResults && searchResults.length === 0 && !isSearching && (
-            <div className="absolute z-10 w-full mt-2 bg-slate-900 border border-purple-500/30 rounded-lg shadow-xl p-4">
+          {showResults && searchResults.length === 0 && !isSearching && createPortal(
+            <div style={dropdownStyle} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-xl p-4">
               <p className="text-sm text-slate-400">Nenhum local encontrado</p>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
 
