@@ -262,7 +262,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const focusedPlanetPos = planetPositions.find(p => (hoveredPlanet === p.planet.name || selectedPlanet === p.planet.name) && (hoveredPlanet === p.planet.name ? !selectedPlanet : true));
   const tooltipElement = focusedPlanetPos && (
     <g transform={`translate(${focusedPlanetPos.x}, ${focusedPlanetPos.y})`}>
-      <g transform={`translate(${focusedPlanetPos.x > CX ? -190 : 20}, -60)`} style={{ pointerEvents: 'none' }}>
+      <g transform={`translate(${focusedPlanetPos.x > CX ? -190 : 20}, -60)`} className="pointer-events-none">
         <rect width="180" height="90" rx="6" fill="#0f172a" stroke="#7c3aed" strokeWidth="1" />
         <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="bold">{focusedPlanetPos.planet.name}</text>
         <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">{focusedPlanetPos.planet.sign} {Math.floor(focusedPlanetPos.planet.degree)}°{Math.floor((focusedPlanetPos.planet.degree % 1) * 60)}'</text>
@@ -335,7 +335,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         onPointerLeave={handlePointerUp}
         onWheel={handleWheel}
       >
-        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'center' }}>
+        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }} className="origin-center">
           
           <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
           <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />

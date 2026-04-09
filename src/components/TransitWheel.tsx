@@ -285,10 +285,10 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
 
   // Logic to find the focused one again for the top-level tooltip
   const getFocusedTooltip = () => {
-    if (!hoveredPlanet && !selectedPlanet) return null;
     const focus = hoveredPlanet || selectedPlanet;
-    const isTransit = focus === hoveredPlanet ? hoveredPlanet.isTransit : selectedPlanet?.isTransit;
-    const name = focus === hoveredPlanet ? hoveredPlanet.name : selectedPlanet?.name;
+    if (!focus) return null;
+    const isTransit = focus.isTransit;
+    const name = focus.name;
     
     // We need to recalculate the position (x, y) exactly as plotPlanets does
     // This is a bit redundant but ensures the tooltip is at the right place
@@ -322,7 +322,7 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
     const color = isTransit ? '#10b981' : '#fbbf24';
     
     return (
-      <g transform={`translate(${focused.x}, ${focused.y})`} style={{ pointerEvents: 'none' }}>
+      <g transform={`translate(${focused.x}, ${focused.y})`} className="pointer-events-none">
          <g transform={`translate(${focused.x > CX ? -190 : 20}, -50)`}>
           <rect width="180" height="90" rx="6" fill="#0f172a" stroke={color} strokeWidth="1" />
           <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="bold">
@@ -350,7 +350,7 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
         onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onWheel={handleWheel}
       >
-        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'center' }}>
+        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }} className="origin-center">
           
           <circle cx={CX} cy={CY} r={R_TRANSIT_OUTER} fill="#0f172a" />
           
