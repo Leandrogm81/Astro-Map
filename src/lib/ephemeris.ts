@@ -10,6 +10,7 @@ import type {
 } from '@/types';
 import { PLANETS, ZODIAC_SIGNS } from '@/types';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from './astrology';
+import { getTimezoneOffsetForDate, isBrazilianDST as isBrazilianDSTCheck } from './geocoding';
 
 import * as Astronomy from 'astronomy-engine';
 
@@ -382,39 +383,42 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const [year, month, day] = birthData.date.split('-').map(Number);
   const [hours, minutes] = birthData.time.split(':').map(Number);
   
+  // Ensure latitude is negative for southern hemisphere and longitude is negative for western hemisphere
+  const latitude = birthData.latitude > 0 && birthData.latitude < 90 ? -birthData.latitude : birthData.latitude;
+  const longitude = birthData.longitude > 0 && birthData.longitude < 180 ? -birthData.longitude : birthData.longitude;
+  
+  // Get timezone offset with DST detection
+  const localDateForDST = new Date(year, month - 1, day, hours, minutes);
+  const correctTimezone = getTimezoneOffsetForDate(latitude, longitude, localDateForDST);
+  
   // Get timezone offset (in hours)
-  // Priority: 1. timezone field, 2. estimate from longitude
+  // Priority: 1. timezone field if explicitly set by user, 2. calculated from coordinates with DST
   let timezoneOffset = parseTimezoneOffset(birthData.timezone || '');
-  if (timezoneOffset === 0 && birthData.longitude !== 0) {
-    timezoneOffset = estimateTimezoneFromLongitude(birthData.longitude);
+  
+  // If the timezone was auto-generated (matches our calculation), use DST-aware version
+  const autoTimezone = getTimezoneOffsetForDate(latitude, longitude, localDateForDST);
+  const autoOffset = parseTimezoneOffset(autoTimezone);
+  
+  // Use DST-aware timezone for auto-detected timezones
+  // But respect manually set timezone if user edited it
+  if (timezoneOffset === 0 || Math.abs(timezoneOffset - parseTimezoneOffset(getTimezoneOffsetForDate(latitude, longitude, new Date(year, 0, 1)))) < 0.01) {
+    timezoneOffset = autoOffset;
   }
   
   // Convert local time to UTC
-  // If local time is 14:00 and timezone is UTC-3, then UTC is 14:00 + 3 = 17:00
-  // Formula: UTC = local - timezone_offset (because timezone is already negative for west)
-  // Actually: UTC = local_time - timezone_offset_hours
-  // For São Paulo (UTC-3): local 14:00 → UTC = 14 - (-3) = 17:00
-  
-  // Wait, the timezone string is like "UTC-3:00", which means UTC minus 3 hours
-  // So São Paulo local time 14:00 = UTC 17:00
-  // UTC = local + (-timezone_offset) where timezone_offset is -3 for São Paulo
-  
-  // Actually, simpler: if timezone is -3, local time is 3 hours BEHIND UTC
-  // So UTC = local_time + 3 (for negative timezones)
-  // Or: UTC = local_time - timezone_offset (since timezone_offset is negative)
-  
   const utcHours = hours - timezoneOffset;
   
   console.log('Debug:', {
     localTime: `${hours}:${minutes}`,
     timezone: birthData.timezone,
+    correctTimezone,
     timezoneOffset,
     utcTime: `${Math.floor(utcHours)}:${minutes}`,
-    latitude: birthData.latitude,
-    longitude: birthData.longitude,
+    latitude,
+    longitude,
+    isDST: isBrazilianDSTCheck(localDateForDST),
   });
   
-  // Create UTC date
   const birthDate = new Date(Date.UTC(year, month - 1, day, Math.floor(utcHours), minutes));
   const jd = dateToJD(birthDate);
   
@@ -434,7 +438,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   }
   
   // Calculate houses
-  const housesPlacidus = calculatePlacidusHouses(jd, birthData.latitude, birthData.longitude);
+  const housesPlacidus = calculatePlacidusHouses(jd, latitude, longitude);
   const ascendant = housesPlacidus[0].longitude;
   const housesWhole = calculateWholeSignsHouses(ascendant);
   

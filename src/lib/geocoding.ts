@@ -72,22 +72,58 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
   }
 }
 
+export function isBrazilianDST(date: Date): boolean {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  // Brasil aboliu o horário de verão em 2019
+  if (year >= 2019) return false;
+
+  // Antes de 1985, não havia horário de verão consistente
+  if (year < 1985) return false;
+
+  // Verão brasileiro: de outubro a fevereiro
+  // Início: terceiro domingo de outubro do ano anterior
+  // Fim: terceiro domingo de fevereiro do ano atual (ou terceiro domingo de março em alguns anos)
+
+  // Simplificação: considerar DST ativo de outubro a fevereiro
+  // Isso cobre a grande maioria dos casos com precisão suficiente para astrologia
+  if (month === 11 || month === 12 || month === 1) return true;
+  if (month === 10 && day >= 15) return true;
+  if (month === 2 && day <= 15) return true;
+
+  // Alguns anos tinham março também
+  if (month === 2 && day <= 28) return true;
+
+  return false;
+}
+
+export function getBrazilianTimezone(lon: number): number {
+  // Garantir longitude negativa para o hemisfério ocidental
+  const normalizedLon = lon > 0 ? -lon : lon;
+
+  if (normalizedLon >= -35) return -2;      // Fernando de Noronha
+  if (normalizedLon >= -44.5) return -3;      // Brasília (SP, RJ, MG, BA, etc.)
+  if (normalizedLon >= -52) return -3;        // Sul (PR, SC, RS)
+  if (normalizedLon >= -56) return -4;        // Mato Grosso do Sul oeste
+  if (normalizedLon >= -60) return -4;        // Mato Grosso, Amazonas leste
+  if (normalizedLon >= -66) return -4;        // Amazonas, Rondônia, Roraima
+  if (normalizedLon >= -74) return -5;        // Acre
+
+  return -3; // Default: Brasília
+}
+
 export function getTimezoneFromCoordinates(lat: number, lon: number): string {
-  // Simplificação: usar timezone do browser ou Intl API
-  // Em produção, seria melhor usar uma API como timezone-db
-  try {
-    const formatter = new Intl.DateTimeFormat('pt-BR', {
-      timeZone: 'UTC',
-      timeZoneName: 'short',
-    });
-    
-    // Estimar timezone baseado na longitude (aproximação grosseira)
-    const offset = Math.round(lon / 15);
-    const sign = offset >= 0 ? '+' : '-';
-    const hours = Math.abs(offset).toString().padStart(2, '0');
-    
-    return `UTC${sign}${hours}:00`;
-  } catch {
-    return 'UTC';
-  }
+  const baseOffset = getBrazilianTimezone(lon);
+
+  return `UTC${baseOffset >= 0 ? '+' : ''}${baseOffset}:00`;
+}
+
+export function getTimezoneOffsetForDate(lat: number, lon: number, date: Date): string {
+  const baseOffset = getBrazilianTimezone(lon);
+  const dst = isBrazilianDST(date);
+  const effectiveOffset = dst ? baseOffset + 1 : baseOffset;
+
+  return `UTC${effectiveOffset >= 0 ? '+' : ''}${effectiveOffset}:00`;
 }
