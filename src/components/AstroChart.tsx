@@ -252,7 +252,16 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         <g transform={`translate(${x}, ${y})`}>
           {isFocused && <circle r="22" fill="none" stroke="#fbbf24" strokeWidth="2" opacity="0.7" />}
           <circle r={isFocused ? 16 : 14} fill="#0f172a" stroke={planet.retrograde ? '#ef4444' : '#fbbf24'} strokeWidth={isFocused ? 3 : 2} className="transition-all duration-200" />
-          <text textAnchor="middle" dominantBaseline="central" fill="#fbbf24" fontSize="18" fontWeight="bold" className="select-none">
+          <text 
+            textAnchor="middle" 
+            dominantBaseline="central" 
+            fill="#fbbf24" 
+            stroke="#fbbf24"
+            strokeWidth={['Marte', 'Vênus', 'Mercúrio'].includes(planet.name) ? "0.6" : "0.2"}
+            fontSize="18" 
+            fontWeight="bold" 
+            className="select-none"
+          >
             {planetInfo?.symbol || '●'}
           </text>
           

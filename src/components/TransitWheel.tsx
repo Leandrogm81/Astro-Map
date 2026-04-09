@@ -271,7 +271,16 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
           <g transform={`translate(${x}, ${y})`}>
             {focus && <circle r="20" fill="none" stroke={color} strokeWidth="2" opacity="0.6" />}
             <circle r={focus ? 15 : 12} fill="#0f172a" stroke={p.retrograde ? '#ef4444' : color} strokeWidth={focus ? 3 : 2} className="transition-all duration-200" />
-            <text textAnchor="middle" dominantBaseline="central" fill={color} fontSize="14" fontWeight="bold" className="select-none">
+            <text 
+              textAnchor="middle" 
+              dominantBaseline="central" 
+              fill={color} 
+              stroke={color}
+              strokeWidth={['Marte', 'Vênus', 'Mercúrio'].includes(p.name) ? "0.6" : "0.2"}
+              fontSize="14" 
+              fontWeight="bold" 
+              className="select-none"
+            >
               {info?.symbol || '●'}
             </text>
             
