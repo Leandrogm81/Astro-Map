@@ -93,11 +93,12 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
       <div className="space-y-4">
         {/* Nome */}
         <div>
-          <label className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="birthName" className="block text-sm font-medium text-purple-200 mb-2">
             <User className="inline w-4 h-4 mr-2" />
             Nome Completo
           </label>
           <input
+            id="birthName"
             type="text"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -109,11 +110,12 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
         {/* Data */}
         <div>
-          <label className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="birthDate" className="block text-sm font-medium text-purple-200 mb-2">
             <Calendar className="inline w-4 h-4 mr-2" />
             Data de Nascimento
           </label>
           <input
+            id="birthDate"
             type="date"
             value={formData.date}
             onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
@@ -124,11 +126,12 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
         {/* Hora */}
         <div>
-          <label className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="birthTime" className="block text-sm font-medium text-purple-200 mb-2">
             <Clock className="inline w-4 h-4 mr-2" />
             Hora de Nascimento
           </label>
           <input
+            id="birthTime"
             type="time"
             value={formData.time}
             onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
@@ -139,12 +142,13 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
         {/* Localização */}
         <div className="relative">
-          <label className="block text-sm font-medium text-purple-200 mb-2">
+          <label htmlFor="birthLocation" className="block text-sm font-medium text-purple-200 mb-2">
             <MapPin className="inline w-4 h-4 mr-2" />
             Local de Nascimento
           </label>
           <div className="flex gap-2">
             <input
+              id="birthLocation"
               type="text"
               ref={searchInputRef}
               value={searchQuery}
@@ -157,6 +161,8 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
               type="button"
               onClick={handleSearch}
               disabled={isSearching || searchQuery.length < 3}
+              title="Pesquisar local"
+              aria-label="Pesquisar local"
               className="px-4 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800/50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
             >
               <Search className="w-5 h-5" />
