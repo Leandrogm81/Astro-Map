@@ -632,16 +632,22 @@ export async function calculateSolarReturn(birthChart: NatalChart, year: number)
     timezoneOffset
   );
   
+  // Map UTC solarReturnDate to the correct Local Time at the event's location
+  const dstTimezone = getTimezoneOffsetForDate(birthChart.birthData.latitude, birthChart.birthData.longitude, solarReturnDate);
+  const dstOffset = parseTimezoneOffset(dstTimezone);
+  
+  const localReturnDate = new Date(solarReturnDate.getTime() + dstOffset * 3600000);
+
   // Create birth data for solar return
   // Use the same location as natal chart (traditional approach)
   const returnData: BirthData = {
     name: birthChart.birthData.name,
-    date: solarReturnDate.toISOString().split('T')[0],
-    time: `${solarReturnDate.getUTCHours().toString().padStart(2, '0')}:${solarReturnDate.getUTCMinutes().toString().padStart(2, '0')}`,
+    date: `${localReturnDate.getUTCFullYear()}-${String(localReturnDate.getUTCMonth() + 1).padStart(2, '0')}-${String(localReturnDate.getUTCDate()).padStart(2, '0')}`,
+    time: `${String(localReturnDate.getUTCHours()).padStart(2, '0')}:${String(localReturnDate.getUTCMinutes()).padStart(2, '0')}`,
     location: birthChart.birthData.location,
     latitude: birthChart.birthData.latitude,
     longitude: birthChart.birthData.longitude,
-    timezone: birthChart.birthData.timezone,
+    timezone: dstTimezone,
   };
   
   console.log('Solar Return Debug:', {
