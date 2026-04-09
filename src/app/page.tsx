@@ -17,19 +17,20 @@ import Image from 'next/image';
 import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 function isValidChart(chart: unknown): chart is NatalChart {
+  const c = chart as any;
   return (
-    chart &&
-    typeof chart === 'object' &&
-    chart.birthData &&
-    typeof chart.birthData === 'object' &&
-    chart.birthData.name &&
-    chart.birthData.date &&
-    chart.birthData.time &&
-    Array.isArray(chart.planets) &&
-    chart.planets.length > 0 &&
-    Array.isArray(chart.housesPlacidus) &&
-    Array.isArray(chart.housesWhole) &&
-    Array.isArray(chart.aspects)
+    c &&
+    typeof c === 'object' &&
+    c.birthData &&
+    typeof c.birthData === 'object' &&
+    c.birthData.name &&
+    c.birthData.date &&
+    c.birthData.time &&
+    Array.isArray(c.planets) &&
+    c.planets.length > 0 &&
+    Array.isArray(c.housesPlacidus) &&
+    Array.isArray(c.housesWhole) &&
+    Array.isArray(c.aspects)
   );
 }
 
