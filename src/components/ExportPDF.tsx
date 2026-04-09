@@ -304,8 +304,16 @@ const Footer = () => (
   </View>
 );
 
+const stripEmojis = (text: string) => {
+  if (!text) return text;
+  // Expressão regular moderna para remover a maioria dos emojis e pictogramas estendidos
+  // Mantém letras acentuadas da língua portuguesa e pontuações comuns
+  return text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
+};
+
 const MarkdownParagraphs = ({ text }: { text: string }) => {
-  const paragraphs = text.split('\n').filter(p => p.trim() !== '');
+  const cleanFullText = stripEmojis(text);
+  const paragraphs = cleanFullText.split('\n').filter(p => p.trim() !== '');
   return (
     <View style={{ marginTop: 10 }}>
       {paragraphs.map((p, i) => {
