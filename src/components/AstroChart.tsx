@@ -253,19 +253,24 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
             <text x="10" y="-10" textAnchor="middle" dominantBaseline="central" fill="#ef4444" fontSize="12" fontWeight="bold">R</text>
           )}
 
-          {isHovered && !isSelected && (
-            <g transform={`translate(${x > CX ? -190 : 20}, -60)`} style={{ pointerEvents: 'none' }}>
-              <rect width="180" height="90" rx="6" fill="#0f172a" stroke="#7c3aed" strokeWidth="1" />
-              <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="bold">{planet.name}</text>
-              <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">{planet.sign} {Math.floor(planet.degree)}°{Math.floor((planet.degree % 1) * 60)}'</text>
-              <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">Casa {planet.house} • {getDignity(planet.name, planet.sign)}</text>
-              <text x="90" y="75" textAnchor="middle" fill="#94a3b8" fontSize="11">{planet.speed > 0 ? `Rapidez: ${planet.speed.toFixed(2)}°/d` : ''} {planet.retrograde ? '(Retrógrado)' : ''}</text>
-            </g>
-          )}
         </g>
       </g>
     );
   });
+
+  // Encontrar planeta em foco para o Tooltip (renderizado por último para ficar em cima)
+  const focusedPlanetPos = planetPositions.find(p => (hoveredPlanet === p.planet.name || selectedPlanet === p.planet.name) && (hoveredPlanet === p.planet.name ? !selectedPlanet : true));
+  const tooltipElement = focusedPlanetPos && (
+    <g transform={`translate(${focusedPlanetPos.x}, ${focusedPlanetPos.y})`}>
+      <g transform={`translate(${focusedPlanetPos.x > CX ? -190 : 20}, -60)`} style={{ pointerEvents: 'none' }}>
+        <rect width="180" height="90" rx="6" fill="#0f172a" stroke="#7c3aed" strokeWidth="1" />
+        <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="bold">{focusedPlanetPos.planet.name}</text>
+        <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">{focusedPlanetPos.planet.sign} {Math.floor(focusedPlanetPos.planet.degree)}°{Math.floor((focusedPlanetPos.planet.degree % 1) * 60)}'</text>
+        <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">Casa {focusedPlanetPos.planet.house} • {getDignity(focusedPlanetPos.planet.name, focusedPlanetPos.planet.sign)}</text>
+        <text x="90" y="75" textAnchor="middle" fill="#94a3b8" fontSize="11">{focusedPlanetPos.planet.speed > 0 ? `Rapidez: ${focusedPlanetPos.planet.speed.toFixed(2)}°/d` : ''} {focusedPlanetPos.planet.retrograde ? '(Retrógrado)' : ''}</text>
+      </g>
+    </g>
+  );
 
   const filteredAspects = chart.aspects.filter(aspect => {
     if (!hoveredPlanet && !selectedPlanet) return true;

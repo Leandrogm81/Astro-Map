@@ -271,28 +271,75 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
             {p.retrograde && (
               <text x="8" y="-8" textAnchor="middle" fill="#ef4444" fontSize="10" fontWeight="bold">R</text>
             )}
-
-            {isHovered && !isSelected && (
-              <g transform={`translate(${x > CX ? -190 : 20}, -50)`} style={{ pointerEvents: 'none' }}>
-                <rect width="180" height="90" rx="6" fill="#0f172a" stroke={color} strokeWidth="1" />
-                <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="bold">
-                  {p.name} {isTransit ? '(Transitando)' : '(Natal)'}
-                </text>
-                <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">
-                  {p.sign} {Math.floor(p.degree)}°{Math.floor((p.degree % 1) * 60)}'
-                </text>
-                <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">
-                  Casa {p.house} • {getDignity(p.name, p.sign)}
-                </text>
-                <text x="90" y="75" textAnchor="middle" fill={p.retrograde ? '#ef4444' : '#94a3b8'} fontSize="11">
-                  {p.speed > 0 ? `Rapidez: ${p.speed.toFixed(2)}°/d` : ''} {p.retrograde ? '(Retrógrado)' : ''}
-                </text>
-              </g>
-            )}
           </g>
         </g>
       );
     });
+  };
+
+  // Encontrar o planeta em foco (Natal ou Trânsito) para o Tooltip
+  const allPlanetPositions = [
+    ...natalChart.planets.map(p => ({ p, isTransit: false, startRadius: R_NATAL_OUTER })),
+    ...transitChart.planets.map(p => ({ p, isTransit: true, startRadius: R_TRANSIT_OUTER - 15 }))
+  ];
+
+  // Logic to find the focused one again for the top-level tooltip
+  const getFocusedTooltip = () => {
+    if (!hoveredPlanet && !selectedPlanet) return null;
+    const focus = hoveredPlanet || selectedPlanet;
+    const isTransit = focus === hoveredPlanet ? hoveredPlanet.isTransit : selectedPlanet?.isTransit;
+    const name = focus === hoveredPlanet ? hoveredPlanet.name : selectedPlanet?.name;
+    
+    // We need to recalculate the position (x, y) exactly as plotPlanets does
+    // This is a bit redundant but ensures the tooltip is at the right place
+    const isNatal = !isTransit;
+    const planetsToCalc = isNatal ? natalChart.planets : transitChart.planets;
+    const startRadius = isNatal ? R_NATAL_OUTER : R_TRANSIT_OUTER - 15;
+    
+    // Simple position find logic (ideally we store these in state or ref, but for now we follow the math)
+    const positions: { p: PlanetPosition; x: number; y: number }[] = [];
+    planetsToCalc.forEach(planet => {
+      const angle = longitudeToAngle(planet.longitude);
+      let currentR = startRadius;
+      let overlap = true;
+      let attempts = 0;
+      while (overlap && attempts < 8) {
+        overlap = false;
+        const x = CX + currentR * Math.cos(angle);
+        const y = CY + currentR * Math.sin(angle);
+        for (const pos of positions) {
+          const dist = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2));
+          if (dist < 22) { overlap = true; currentR -= 15; break; }
+        }
+        attempts++;
+      }
+      positions.push({ p: planet, x: CX + currentR * Math.cos(angle), y: CY + currentR * Math.sin(angle) });
+    });
+
+    const focused = positions.find(pos => pos.p.name === name);
+    if (!focused) return null;
+
+    const color = isTransit ? '#10b981' : '#fbbf24';
+    
+    return (
+      <g transform={`translate(${focused.x}, ${focused.y})`} style={{ pointerEvents: 'none' }}>
+         <g transform={`translate(${focused.x > CX ? -190 : 20}, -50)`}>
+          <rect width="180" height="90" rx="6" fill="#0f172a" stroke={color} strokeWidth="1" />
+          <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="bold">
+            {focused.p.name} {isTransit ? '(Transitando)' : '(Natal)'}
+          </text>
+          <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">
+            {focused.p.sign} {Math.floor(focused.p.degree)}°{Math.floor((focused.p.degree % 1) * 60)}'
+          </text>
+          <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">
+            Casa {focused.p.house} • {getDignity(focused.p.name, focused.p.sign)}
+          </text>
+          <text x="90" y="75" textAnchor="middle" fill={focused.p.retrograde ? '#ef4444' : '#94a3b8'} fontSize="11">
+            {focused.p.speed > 0 ? `Rapidez: ${focused.p.speed.toFixed(2)}°/d` : ''} {focused.p.retrograde ? '(Retrógrado)' : ''}
+          </text>
+        </g>
+      </g>
+    );
   };
 
   return (
@@ -321,7 +368,8 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
           
           {plotPlanets(natalChart.planets, false)}
           {plotPlanets(transitChart.planets, true)}
-
+          {getFocusedTooltip()}
+          
           <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
           <line x1={CX - 8} y1={CY} x2={CX + 8} y2={CY} stroke="#64748b" strokeWidth="2" />
           <line x1={CX} y1={CY - 8} x2={CX} y2={CY + 8} stroke="#64748b" strokeWidth="2" />
