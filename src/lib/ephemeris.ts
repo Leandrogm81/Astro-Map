@@ -123,13 +123,10 @@ function getMC(LST: number, obliquity: number): number {
   const y = Math.sin(RAMC);
   const x = Math.cos(RAMC) * Math.cos(oblRad);
   
-  let mcRad = Math.atan2(y, x);
-  let mc = mcRad * 180 / Math.PI;
+  const mcRad = Math.atan2(y, x);
+  const mc = (mcRad * 180 / Math.PI) % 360;
   
-  mc = mc % 360;
-  if (mc < 0) mc += 360;
-  
-  return mc;
+  return mc < 0 ? mc + 360 : mc;
 }
 
 // Calculate Placidus House cusps using the iterative method
@@ -173,9 +170,9 @@ function calculatePlacidusHouses(jd: number, latitude: number, longitude: number
     }
     
     // Convert Right Ascension to Ecliptic Longitude
-    let lonRad = Math.atan2(Math.sin(R) / Math.cos(oblRad), Math.cos(R));
-    let lonDeg = lonRad * RAD2DEG;
-    return ((lonDeg % 360) + 360) % 360;
+    const lonRad = Math.atan2(Math.sin(R) / Math.cos(oblRad), Math.cos(R));
+    const lonDeg = (lonRad * RAD2DEG) % 360;
+    return (lonDeg + 360) % 360;
   };
 
   const cusp11 = solveIterativeCusp(30, 1/3);
@@ -246,7 +243,7 @@ async function calculatePlanetPosition(date: Date, planetId: string): Promise<Pl
     throw new Error('Astronomy Engine not initialized');
   }
   
-  const bodyMap: Record<string, any> = {
+  const bodyMap: Record<string, Astronomy.Body> = {
     sun: Astronomy.Body.Sun,
     moon: Astronomy.Body.Moon,
     mercury: Astronomy.Body.Mercury,
