@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BirthData, NatalChart, AIReport as AIReportType, SavedChart } from '@/types';
 import { initSweph, calculateNatalChart } from '@/lib/ephemeris';
-import { saveChart, getSavedCharts, updateChart } from '@/lib/storage';
+import { saveChart, updateChart } from '@/lib/storage';
 import BirthForm from '@/components/BirthForm';
 import AstroChart from '@/components/AstroChart';
 import PlanetTable from '@/components/PlanetTable';
@@ -13,9 +13,10 @@ import AIReport from '@/components/AIReport';
 import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
 import ExportPDF from '@/components/ExportPDF';
+import Image from 'next/image';
 import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
-function isValidChart(chart: any): chart is NatalChart {
+function isValidChart(chart: unknown): chart is NatalChart {
   return (
     chart &&
     typeof chart === 'object' &&
@@ -41,10 +42,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'chart' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form', 'saved']));
   const [aiReport, setAiReport] = useState<AIReportType | null>(null);
-  const [solarReport, setSolarReport] = useState<AIReportType | null>(null);
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
-  const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     initSweph()
@@ -94,10 +93,9 @@ export default function Home() {
   const handleSelectChart = useCallback((savedChart: SavedChart) => {
     if (isValidChart(savedChart.chart)) {
       setChart(savedChart.chart);
-      setAiReport(savedChart.aiReport || null);
-      setSolarReport(savedChart.solarReport || null);
-      setSolarRevolution(savedChart.solarRevolution || null);
-      setSolarYear(savedChart.solarYear);
+      setAiReport(null);
+      setSolarRevolution(null);
+      setSolarYear(undefined);
       setSavedChartId(savedChart.id);
       setError(null);
     } else {
@@ -109,27 +107,6 @@ export default function Home() {
     setAiReport(report);
     if (savedChartId && report) {
       updateChart(savedChartId, { aiReport: report });
-    }
-  }, [savedChartId]);
-
-  const handleReportDeleted = useCallback(() => {
-    setAiReport(null);
-    if (savedChartId) {
-      updateChart(savedChartId, { aiReport: undefined });
-    }
-  }, [savedChartId]);
-
-  const handleSolarReportGenerated = useCallback((report: AIReportType | null) => {
-    setSolarReport(report);
-    if (savedChartId && report) {
-      updateChart(savedChartId, { solarReport: report, solarRevolution: solarRevolution || undefined, solarYear: solarYear });
-    }
-  }, [savedChartId, solarRevolution, solarYear]);
-
-  const handleSolarReportDeleted = useCallback(() => {
-    setSolarReport(null);
-    if (savedChartId) {
-      updateChart(savedChartId, { solarReport: undefined });
     }
   }, [savedChartId]);
 
@@ -161,15 +138,20 @@ export default function Home() {
       <header className="border-b border-purple-500/20 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-4">
+              <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/20 border border-purple-500/30">
+                <Image 
+                  src="/assets/logo-premium.png" 
+                  alt="AstroMap Logo" 
+                  fill
+                  className="object-cover"
+                />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">
-                  AstroMap
+                <h1 className="text-2xl font-black tracking-tight text-white">
+                  Astro<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Map</span>
                 </h1>
-                <p className="text-xs text-slate-400">Mapa Astral com IA</p>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Premium Astrological Suite</p>
               </div>
             </div>
 
@@ -256,8 +238,7 @@ export default function Home() {
             {hasValidChart && (
               <ExportPDF 
                 chart={chart} 
-                report={aiReport}
-                solarReport={solarReport}
+                reportText={activeTab === 'revolution' ? undefined : (typeof aiReport === 'string' ? aiReport : aiReport?.summary)}
                 solarRevolution={solarRevolution}
                 solarYear={solarYear}
               />
@@ -351,19 +332,14 @@ export default function Home() {
                   {activeTab === 'report' && (
                     <AIReport 
                       chart={chart} 
-                      report={aiReport}
                       onReportGenerated={handleReportGenerated}
-                      onReportDeleted={handleReportDeleted}
                     />
                   )}
 
                   {activeTab === 'revolution' && (
                     <SolarRevolution 
                       natalChart={chart}
-                      solarReport={solarReport}
                       onRevolutionCalculated={handleRevolutionCalculated}
-                      onSolarReportGenerated={handleSolarReportGenerated}
-                      onSolarReportDeleted={handleSolarReportDeleted}
                     />
                   )}
                 </div>

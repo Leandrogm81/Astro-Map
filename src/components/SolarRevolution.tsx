@@ -1,33 +1,40 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { NatalChart, PlanetPosition, AIReport } from '@/types';
+import { NatalChart } from '@/types';
 import { calculateSolarReturn } from '@/lib/ephemeris';
-import { Sun, ArrowRight, Loader2, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sun, Loader2, Sparkles, ScrollText, Trash2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import TransitWheel from './TransitWheel';
 
 interface SolarRevolutionProps {
   natalChart: NatalChart;
-  solarReport?: AIReport | null;
   onRevolutionCalculated?: (solarReturn: NatalChart | null, year: number) => void;
-  onSolarReportGenerated?: (report: AIReport | null) => void;
-  onSolarReportDeleted?: () => void;
 }
 
-export default function SolarRevolution({ natalChart, solarReport: propSolarReport, onRevolutionCalculated, onSolarReportGenerated, onSolarReportDeleted }: SolarRevolutionProps) {
+export default function SolarRevolution({ natalChart, onRevolutionCalculated }: SolarRevolutionProps) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [solarReturn, setSolarReturn] = useState<NatalChart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [internalSolarReport, setInternalSolarReport] = useState<AIReport | null>(null);
-  const solarReport = propSolarReport ?? internalSolarReport;
+  const [reportText, setReportText] = useState<string>('');
   const [generatingReport, setGeneratingReport] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  // Carregar relatório salvo ao mudar de mapa/ano
+  useEffect(() => {
+    if (natalChart && year) {
+      const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
+      const savedReport = localStorage.getItem(reportKey);
+      if (savedReport) setReportText(savedReport);
+      else setReportText('');
+    }
+  }, [natalChart, year]);
 
   const calculateRevolution = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setInternalSolarReport(null);
 
     try {
       const result = await calculateSolarReturn(natalChart, year);
@@ -49,30 +56,18 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
     }
   }, [initialized, calculateRevolution]);
 
-  useEffect(() => {
-    if (initialized && year) {
-      calculateRevolution();
-    }
-  }, [year, initialized, calculateRevolution]);
-
-  useEffect(() => {
-    if (onSolarReportGenerated && solarReport) {
-      onSolarReportGenerated(solarReport);
-    }
-  }, [solarReport, onSolarReportGenerated]);
-
   const handleGenerateReport = async () => {
     if (!solarReturn) return;
     
     const storedApiKey = localStorage.getItem('openrouter_api_key') || '';
-    
     if (!storedApiKey) {
-      setError('Por favor, insira sua chave API da OpenRouter na seção de Relatório IA');
+      setError('Por favor, configure sua chave API na aba "Relatório IA" primeiro.');
       return;
     }
 
     setGeneratingReport(true);
     setError(null);
+    setReportText('');
 
     try {
       const response = await fetch('/api/report', {
@@ -82,8 +77,8 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
           chart: natalChart,
           solarRevolution: solarReturn,
           solarYear: year,
-          model: 'google/gemini-2.5-flash',
           apiKey: storedApiKey,
+          model: 'google/gemini-2.0-flash-001',
         }),
       });
 
@@ -92,8 +87,24 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
         throw new Error(data.error || 'Erro ao gerar relatório');
       }
 
-      const data = await response.json();
-      setInternalSolarReport(data.report);
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Falha ao iniciar stream');
+
+      const decoder = new TextDecoder();
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        accumulated += chunk;
+        setReportText(accumulated);
+      }
+
+      // Salvar
+      const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
+      localStorage.setItem(reportKey, accumulated);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao gerar relatório');
     } finally {
@@ -101,10 +112,12 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
     }
   };
 
-  const getZodiacSign = (longitude: number): string => {
-    const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem',
-                   'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'];
-    return signs[Math.floor(longitude / 30) % 12];
+  const handleDeleteReport = () => {
+    if (confirm('Deseja apagar este relatório anual?')) {
+      const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
+      localStorage.removeItem(reportKey);
+      setReportText('');
+    }
   };
 
   const formatDegree = (degree: number): string => {
@@ -113,93 +126,30 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
     return `${d}°${m}'`;
   };
 
-  const getAscendantInterpretation = (natalAsc: string, solarAsc: string): string => {
-    if (natalAsc === solarAsc) {
-      return `O Ascendente da Revolução é o mesmo do mapa natal (${natalAsc}). Este é um ano de grande importância pessoal, onde temas fundamentais da sua vida ganham destaque. É um momento propício para autodesenvolvimento e concretização de objetivos pessoais de longo prazo.`;
-    }
-
-    const interpretations: Record<string, string> = {
-      'Áries': 'ano de novos começos, iniciativa e afirmação pessoal. Momento de assumir liderança.',
-      'Touro': 'ano focado em estabilidade financeira, valores materiais e construção de segurança.',
-      'Gêmeos': 'ano de comunicação, aprendizado, conexões e diversificação de interesses.',
-      'Câncer': 'ano voltado para família, emoções, lar e questões domésticas.',
-      'Leão': 'ano de criatividade, expressão pessoal, romance e busca por reconhecimento.',
-      'Virgem': 'ano de organização, saúde, trabalho aprimoramento pessoal.',
-      'Libra': 'ano de relacionamentos, parcerias, equilíbrio e questões jurídicas.',
-      'Escorpião': 'ano de transformação, recursos compartilhados, profundidade emocional.',
-      'Sagitário': 'ano de expansão, filosofia, viagens, ensino e busca por significado.',
-      'Capricórnio': 'ano de ambição, carreira, status público e conquistas materiais.',
-      'Aquário': 'ano de inovação, grupos, redes sociais e ideias progressistas.',
-      'Peixes': 'ano de espiritualidade, intuição, compaixão e conclusão de ciclos.',
-    };
-
-    return `O Ascendente da Revolução em ${solarAsc} indica ${interpretations[solarAsc] || 'mudanças significativas na abordagem de vida.'}`;
-  };
-
-  const getSunHouseInterpretation = (house: number): string => {
-    const interpretations: Record<number, string> = {
-      1: 'Este ano o foco está em VOCÊ. Sua personalidade, aparência e como se apresenta ao mundo ganham destaque. É momento de cuidar de si mesmo.',
-      2: 'Ano focado em finanças pessoais, valores e autoestima. Momento de avaliar o que é valioso para você.',
-      3: 'Ano de comunicação, aprendizado, irmãos e vizinhos. Momento de expandir sua rede de contatos locais.',
-      4: 'Ano voltado para lar, família, propriedade e raízes. Momento de cuidar do seu espaço pessoal.',
-      5: 'Ano de criatividade, romance, filhos e diversão. Momento de expressar sua alegria e criatividade.',
-      6: 'Ano focado em saúde, trabalho diário e rotinas. Momento de aprimorar hábitos e organização.',
-      7: 'Ano de parcerias, casamento e relacionamentos próximos. Momento de equilibrar dar e receber.',
-      8: 'Ano de transformação, recursos compartilhados e intimidade. Momento de lidar com mudanças profundas.',
-      9: 'Ano de expansão, viagens, filosofia e ensino superior. Momento de ampliar horizontes.',
-      10: 'Ano focado em carreira, status público e realizações. Momento de consolidar sua posição profissional.',
-      11: 'Ano de amizades, grupos e aspirações futuras. Momento de conectar com comunidades.',
-      12: 'Ano de espiritualidade, retiro e conclusão de ciclos. Momento de introspecção e processamento interior.',
-    };
-    return interpretations[house] || 'Área importante da vida ativada este ano.';
-  };
-
-  const getMoonSignInterpretation = (sign: string): string => {
-    const interpretations: Record<string, string> = {
-      'Áries': 'emoções impulsivas e diretas. Momento de agir com coragem emocional.',
-      'Touro': 'emoções estáveis e sensuais. Momento de buscar conforto e segurança.',
-      'Gêmeos': 'emoções mentais e comunicativas. Momento de expressar sentimentos verbalmente.',
-      'Câncer': 'emoções profundas e protetoras. Momento de cuidar e ser cuidado.',
-      'Leão': 'emoções dramáticas e generosas. Momento de expressar amor de forma grandiosa.',
-      'Virgem': 'emoções analíticas e práticas. Momento de organizar sentimentos.',
-      'Libra': 'emoções equilibradas e relacionais. Momento de buscar harmonia emocional.',
-      'Escorpião': 'emoções intensas e transformadoras. Momento de profundidade emocional.',
-      'Sagitário': 'emoções expansivas e filosóficas. Momento de buscar significado emocional.',
-      'Capricórnio': 'emoções contidas e ambiciosas. Momento de responsabilidade emocional.',
-      'Aquário': 'emoções únicas e desapegadas. Momento de liberdade emocional.',
-      'Peixes': 'emoções sensíveis e universais. Momento de compaixão e intuição.',
-    };
-    return interpretations[sign] || 'Energia emocional importante este ano.';
-  };
-
-  const getRetrogradePlanets = (planets: PlanetPosition[]): PlanetPosition[] => {
-    return planets.filter(p => p.retrograde);
-  };
-
   const natalAsc = natalChart.housesPlacidus[0].sign;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h3 className="text-lg font-medium text-purple-200 flex items-center gap-2">
-          <Sun className="w-5 h-5 text-yellow-400" />
+        <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+          <Sun className="w-6 h-6 text-yellow-500 animate-pulse" />
           Revolução Solar {year}
         </h3>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
           <button
-            onClick={() => setYear(y => y - 1)}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+            onClick={() => { setYear(y => y - 1); calculateRevolution(); }}
+            className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
             ←
           </button>
-          <span className="px-4 py-2 bg-slate-800 rounded-lg text-slate-200 font-medium min-w-[80px] text-center">
+          <span className="px-4 py-2 text-slate-100 font-bold min-w-[80px] text-center">
             {year}
           </span>
           <button
-            onClick={() => setYear(y => y + 1)}
-            className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
+            onClick={() => { setYear(y => y + 1); calculateRevolution(); }}
+            className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
             →
@@ -208,228 +158,110 @@ export default function SolarRevolution({ natalChart, solarReport: propSolarRepo
       </div>
 
       {loading && (
-        <div className="p-8 text-center">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-purple-400" />
-          <p className="mt-2 text-sm text-slate-400">Calculando data exata do retorno solar...</p>
+        <div className="p-20 text-center">
+          <Loader2 className="w-10 h-10 mx-auto animate-spin text-purple-500" />
+          <p className="mt-4 text-slate-400 font-medium tracking-wide">Calculando alinhamentos astronômicos...</p>
         </div>
       )}
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-200">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200 text-sm">
           {error}
         </div>
       )}
 
       {solarReturn && !loading && (
-        <div className="space-y-6">
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-            <h4 className="text-yellow-200 font-medium mb-2 flex items-center gap-2">
-              <Sun className="w-4 h-4" />
-              Retorno Solar {year}
-            </h4>
-            <p className="text-sm text-yellow-200/70">
-              <strong>Data:</strong> {solarReturn.birthData.date} às {solarReturn.birthData.time} UTC
-            </p>
-            <p className="text-sm text-yellow-200/70 mt-1">
-              <strong>Local:</strong> {solarReturn.birthData.location}
-            </p>
-            <p className="text-xs text-yellow-200/50 mt-2">
-              Momento exato em que o Sol retorna à mesma posição zodiacal do nascimento
-            </p>
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {/* Gráfico de Revolução (Sobreposição) */}
+          <div className="bg-slate-950/40 border border-slate-800 rounded-3xl p-6 shadow-inner">
+             <div className="flex items-center justify-between mb-6">
+                <div>
+                   <h4 className="text-lg font-bold text-slate-200">Sobreposição Natal vs Revolução</h4>
+                   <p className="text-xs text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
+                </div>
+             </div>
+             <TransitWheel natalChart={natalChart} transitChart={solarReturn} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg">
-              <h5 className="text-purple-300 font-medium mb-2">Ascendente da Revolução</h5>
-              <div className="text-2xl font-bold text-white mb-1">
-                {solarReturn.housesPlacidus[0].sign} {formatDegree(solarReturn.housesPlacidus[0].degree)}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ascendente do Ano</span>
+              <div className="text-xl font-black text-white mt-1">
+                {solarReturn.housesPlacidus[0].sign}
               </div>
-              <p className="text-xs text-slate-400">
-                Natal: {natalAsc}
-                {solarReturn.housesPlacidus[0].sign === natalAsc ? ' (mesmo signo)' : ' (diferente)'}
-              </p>
+              <p className="text-[10px] text-purple-400 mt-1 font-bold">Grau {formatDegree(solarReturn.housesPlacidus[0].degree)}</p>
             </div>
 
-            <div className="p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg">
-              <h5 className="text-purple-300 font-medium mb-2">Sol na Casa</h5>
-              <div className="text-2xl font-bold text-white mb-1">
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sol na Casa</span>
+              <div className="text-xl font-black text-white mt-1">
                 Casa {solarReturn.planets.find(p => p.name === 'Sol')?.house}
               </div>
-              <p className="text-xs text-slate-400">
-                Posição: {solarReturn.planets.find(p => p.name === 'Sol')?.sign} {formatDegree(solarReturn.planets.find(p => p.name === 'Sol')?.degree || 0)}
-              </p>
+              <p className="text-[10px] text-yellow-500 mt-1 font-bold">{solarReturn.birthData.date}</p>
             </div>
 
-            <div className="p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg">
-              <h5 className="text-purple-300 font-medium mb-2">Lua na Revolução</h5>
-              <div className="text-2xl font-bold text-white mb-1">
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lua do Ano</span>
+              <div className="text-xl font-black text-white mt-1">
                 {solarReturn.planets.find(p => p.name === 'Lua')?.sign}
               </div>
-              <p className="text-xs text-slate-400">
-                Casa {solarReturn.planets.find(p => p.name === 'Lua')?.house}
-                {solarReturn.planets.find(p => p.name === 'Lua')?.retrograde ? ' (R)' : ''}
-              </p>
+              <p className="text-[10px] text-indigo-400 mt-1 font-bold">Casa {solarReturn.planets.find(p => p.name === 'Lua')?.house}</p>
             </div>
 
-            <div className="p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg">
-              <h5 className="text-purple-300 font-medium mb-2">Planetas Retrógrados</h5>
-              <div className="text-lg font-bold text-white">
-                {getRetrogradePlanets(solarReturn.planets).map(p => p.name).join(', ') || 'Nenhum'}
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tema Central</span>
+              <div className="text-sm font-bold text-purple-300 mt-2 leading-tight">
+                 {solarReturn.housesPlacidus[0].sign === natalAsc ? 'Retorno Profundo' : 'Nova Abordagem'}
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="w-full flex items-center justify-center gap-2 py-2 text-purple-300 hover:text-purple-200 transition-colors"
-          >
-            {showDetails ? 'Ocultar' : 'Mostrar'} comparação detalhada
-            {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-
-          {showDetails && (
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-purple-200">
-                Comparação: Mapa Natal × Revolução Solar
-              </h4>
-              
-              <div className="space-y-2">
-                {['Sol', 'Lua', 'Mercúrio', 'Vênus', 'Marte', 'Júpiter', 'Saturno', 'Urano', 'Netuno', 'Plutão'].map((planetName) => {
-                  const natalPlanet = natalChart.planets.find(p => p.name === planetName);
-                  const solarPlanet = solarReturn.planets.find(p => p.name === planetName);
-                  
-                  if (!natalPlanet || !solarPlanet) return null;
-
-                  const signChange = natalPlanet.sign !== solarPlanet.sign;
-                  const houseChange = natalPlanet.house !== solarPlanet.house;
-
-                  return (
-                    <div
-                      key={planetName}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        signChange || houseChange 
-                          ? 'bg-yellow-500/10 border border-yellow-500/20' 
-                          : 'bg-slate-900/50 border border-purple-500/10'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{natalPlanet.symbol}</span>
-                        <span className="text-slate-200">{planetName}</span>
-                        {(signChange || houseChange) && (
-                          <span className="text-xs text-yellow-400">*</span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="text-right">
-                          <div className="text-slate-400 text-xs">Natal</div>
-                          <div className="text-slate-300">
-                            {natalPlanet.sign} ({natalPlanet.house}ª casa)
-                            {natalPlanet.retrograde && ' R'}
-                          </div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-slate-600" />
-                        <div className="text-left">
-                          <div className="text-slate-400 text-xs">{year}</div>
-                          <div className={signChange || houseChange ? 'text-yellow-300' : 'text-purple-300'}>
-                            {solarPlanet.sign} ({solarPlanet.house}ª casa)
-                            {solarPlanet.retrograde && ' R'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <p className="text-xs text-slate-500 italic">
-                * Mudanças em relação ao mapa natal
-              </p>
-            </div>
-          )}
-
-          <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg space-y-4">
-            <h4 className="text-purple-200 font-medium">
-              Interpretação para {year}
-            </h4>
-            
-            <div className="space-y-3 text-sm text-slate-300">
-              <div>
-                <span className="text-purple-400 font-medium">Ascendente: </span>
-                {getAscendantInterpretation(natalAsc, solarReturn.housesPlacidus[0].sign)}
-              </div>
-              
-              <div>
-                <span className="text-purple-400 font-medium">Sol na {solarReturn.planets.find(p => p.name === 'Sol')?.house}ª Casa: </span>
-                {getSunHouseInterpretation(solarReturn.planets.find(p => p.name === 'Sol')?.house || 1)}
-              </div>
-              
-              <div>
-                <span className="text-purple-400 font-medium">Lua em {solarReturn.planets.find(p => p.name === 'Lua')?.sign}: </span>
-                {getMoonSignInterpretation(solarReturn.planets.find(p => p.name === 'Lua')?.sign || '')}
-              </div>
-
-              {getRetrogradePlanets(solarReturn.planets).length > 0 && (
-                <div>
-                  <span className="text-purple-400 font-medium">Planetas Retrógrados: </span>
-                  {getRetrogradePlanets(solarReturn.planets).map(p => p.name).join(', ')}. 
-                  Esses planetas pedem revisão e reflexão sobre suas áreas de influência durante o ano.
+          {/* AI Report Section for Solar Return */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="p-4 bg-slate-800/40 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  <h4 className="font-bold text-slate-100">Guia Anual Inteligente</h4>
                 </div>
-              )}
-            </div>
-          </div>
+                {reportText && !generatingReport && (
+                  <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={handleGenerateReport}
-              disabled={generatingReport}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed rounded-lg text-white font-medium flex items-center justify-center gap-2 transition-all"
-            >
-              {generatingReport ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Gerando relatório...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Gerar Relatório IA da Revolução Solar
-                </>
-              )}
-            </button>
-          </div>
-
-          {solarReport && (
-            <div className="space-y-4 mt-6">
-              <h4 className="text-lg font-semibold text-purple-200">
-                Análise Completa da Revolução Solar {year}
-              </h4>
-              
-              {solarReport.sections.map((section, index) => (
-                <div
-                  key={index}
-                  className="p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg"
-                >
-                  <h5 className="text-purple-300 font-medium mb-2">{section.title}</h5>
-                  <div className="text-sm text-slate-300 whitespace-pre-wrap">
-                    {section.content}
+              <div className="p-6 md:p-8">
+                {!reportText && !generatingReport ? (
+                  <div className="text-center py-10 space-y-4">
+                     <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center justify-center mx-auto">
+                        <ScrollText className="w-8 h-8 text-purple-400" />
+                     </div>
+                     <div className="max-w-xs mx-auto">
+                        <p className="text-slate-300 font-medium">Analise as tendências para o seu novo ciclo.</p>
+                        <p className="text-xs text-slate-500 mt-2">Nossa IA cruzará os dados da revolução com seu mapa natal para um diagnóstico completo.</p>
+                     </div>
+                     <button
+                        onClick={handleGenerateReport}
+                        className="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-bold transition-all transform active:scale-95 shadow-lg shadow-purple-500/20"
+                     >
+                        GERAR ANÁLISE {year}
+                     </button>
                   </div>
-                </div>
-              ))}
-
-              <button
-                onClick={() => {
-                  setInternalSolarReport(null);
-                  if (onSolarReportDeleted) {
-                    onSolarReportDeleted();
-                  }
-                }}
-                className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-purple-500/30 rounded-lg text-slate-300 transition-colors"
-              >
-                Apagar Relatório
-              </button>
-            </div>
-          )}
+                ) : (
+                  <article className="prose prose-invert prose-slate max-w-none prose-p:text-slate-400 prose-p:leading-relaxed prose-headings:text-purple-300 prose-strong:text-purple-200">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {reportText}
+                    </ReactMarkdown>
+                    {generatingReport && (
+                      <div className="flex items-center gap-2 mt-6 text-purple-400 animate-pulse">
+                         <Loader2 className="w-4 h-4 animate-spin" />
+                         <span className="text-[10px] font-black uppercase tracking-widest">Consultando as Estrelas de {year}...</span>
+                      </div>
+                    )}
+                  </article>
+                )}
+              </div>
+          </div>
         </div>
       )}
     </div>

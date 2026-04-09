@@ -2,7 +2,20 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart, AIReport as AIReportType } from '@/types';
-import { Sparkles, AlertCircle, Loader2, BookOpen, ChevronDown, Brain, Zap, Star, Key, Eye, EyeOff } from 'lucide-react';
+import { 
+  Sparkles, 
+  AlertCircle, 
+  Loader2, 
+  ChevronDown, 
+  Key, 
+  Eye, 
+  EyeOff, 
+  Trash2, 
+  ScrollText
+} from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import Image from 'next/image';
 
 interface Model {
   id: string;
@@ -13,46 +26,48 @@ interface Model {
 
 interface AIReportProps {
   chart: NatalChart;
-  report?: AIReportType | null;
+  solarRevolution?: NatalChart | null;
+  solarYear?: number;
   onReportGenerated?: (report: AIReportType | null) => void;
-  onReportDeleted?: () => void;
 }
 
-export default function AIReport({ chart, report: propReport, onReportGenerated, onReportDeleted }: AIReportProps) {
-  const [internalReport, setInternalReport] = useState<AIReportType | null>(null);
-  const report = propReport ?? internalReport;
+export default function AIReport({ chart, solarRevolution, solarYear, onReportGenerated }: AIReportProps) {
+  const [reportText, setReportText] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
   const [models, setModels] = useState<Model[]>([]);
-  const [modelUsed, setModelUsed] = useState<string>('');
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
-  const prevReportRef = useRef<AIReportType | null>(null);
+  
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (onReportGenerated && report !== prevReportRef.current) {
-      prevReportRef.current = report;
-      onReportGenerated(report);
-    }
-  }, [report, onReportGenerated]);
-
+  // Carregar chave e modelos no início
   useEffect(() => {
     const storedApiKey = localStorage.getItem('openrouter_api_key');
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
+    if (storedApiKey) setApiKey(storedApiKey);
+    
+    // Tentar carregar relatório salvo para este mapa
+    const reportKey = `report_${chart.birthData.name}_${chart.birthData.date}${solarYear ? `_SR${solarYear}` : ''}`;
+    const savedReport = localStorage.getItem(reportKey);
+    if (savedReport) {
+      setReportText(savedReport);
     }
     
     fetch('/api/report')
       .then(res => res.json())
-      .then(data => {
-        if (data.models) {
-          setModels(data.models);
-        }
-      })
+      .then(data => { if (data.models) setModels(data.models); })
       .catch(console.error);
-  }, []);
+  }, [chart, solarYear]);
+
+  // Auto-scroll durante o streaming
+  useEffect(() => {
+    if (isStreaming && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [reportText, isStreaming]);
 
   const handleGenerateReport = async () => {
     if (!apiKey.trim()) {
@@ -61,18 +76,19 @@ export default function AIReport({ chart, report: propReport, onReportGenerated,
     }
 
     localStorage.setItem('openrouter_api_key', apiKey.trim());
-
     setLoading(true);
+    setIsStreaming(true);
     setError(null);
+    setReportText('');
 
     try {
       const response = await fetch('/api/report', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           chart,
+          solarRevolution,
+          solarYear,
           model: selectedModel,
           apiKey: apiKey.trim(),
         }),
@@ -80,238 +96,204 @@ export default function AIReport({ chart, report: propReport, onReportGenerated,
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Erro ao gerar relatório');
+        throw new Error(data.error || 'Erro ao comunicar com a IA');
       }
 
-      const data = await response.json();
-      setInternalReport(data.report);
-      setModelUsed(data.modelUsed || selectedModel);
+      if (!response.body) throw new Error('Falha no stream de dados');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedText += chunk;
+        setReportText(accumulatedText);
+      }
+
+      // Salvar no localStorage ao finalizar
+      const reportKey = `report_${chart.birthData.name}_${chart.birthData.date}${solarYear ? `_SR${solarYear}` : ''}`;
+      localStorage.setItem(reportKey, accumulatedText);
+      
+      if (onReportGenerated) {
+        onReportGenerated({
+          sections: [], // Compatibilidade com tipo antigo
+          summary: accumulatedText.slice(0, 200),
+          generatedAt: new Date().toISOString()
+        });
+      }
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao gerar relatório');
     } finally {
       setLoading(false);
+      setIsStreaming(false);
+    }
+  };
+
+  const handleDeleteReport = () => {
+    if (confirm('Tem certeza que deseja apagar permanentemente este relatório?')) {
+      const reportKey = `report_${chart.birthData.name}_${chart.birthData.date}${solarYear ? `_SR${solarYear}` : ''}`;
+      localStorage.removeItem(reportKey);
+      setReportText('');
     }
   };
 
   const selectedModelData = models.find(m => m.id === selectedModel);
 
-  const getModelIcon = (modelId: string) => {
-    if (modelId.includes('gemini')) return <Zap className="w-4 h-4" />;
-    if (modelId.includes('claude')) return <Brain className="w-4 h-4" />;
-    return <Star className="w-4 h-4" />;
-  };
-
   return (
-    <div className="space-y-6">
-      {!report && (
-        <div className="space-y-6">
-          <div className="text-center py-4">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/10 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-purple-400" />
-            </div>
-            <h3 className="text-lg font-medium text-purple-200 mb-2">
-              Gerar Relatório com IA
+    <div className="flex flex-col h-full max-h-[85vh] bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+      {/* Header Premium */}
+      <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-purple-500/30">
+            <Image 
+              src="/assets/logo-premium.png" 
+              alt="Logo" 
+              fill 
+              className="object-cover"
+            />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-400" />
+              {solarYear ? `Revolução Solar ${solarYear}` : 'Interpretação IA'}
             </h3>
-            <p className="text-sm text-slate-400 max-w-md mx-auto">
-              Selecione um modelo de linguagem e gere uma interpretação completa 
-              e personalizada do seu mapa astral.
+            <p className="text-xs text-slate-400">
+              {reportText ? 'Relatório Astrológico Híbrido' : 'Pronto para analisar seu mapa'}
             </p>
           </div>
+        </div>
 
-          {models.length > 0 && (
-            <div className="bg-slate-900/50 border border-purple-500/20 rounded-lg p-4">
-              <label className="block text-sm font-medium text-purple-200 mb-3">
-                Selecionar Modelo de IA
-              </label>
-              
+        {reportText && !isStreaming && (
+          <button 
+            onClick={handleDeleteReport}
+            className="p-2 text-slate-500 hover:text-red-400 transition-colors"
+            title="Apagar Relatório"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Content Area */}
+      <div 
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 scroll-smooth custom-scrollbar"
+      >
+        {!reportText && !loading && (
+          <div className="max-w-md mx-auto py-12 text-center space-y-6">
+            <div className="w-20 h-20 mx-auto rounded-3xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-inner">
+              <ScrollText className="w-10 h-10 text-purple-400" />
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="text-xl font-medium text-slate-200">Seu Mapa em Profundidade</h4>
+              <p className="text-sm text-slate-400 leading-relaxed">
+                Nossa IA combina astrologia psicológica e preditiva para criar um guia único sobre seu temperamento, desafios e o momento atual.
+              </p>
+            </div>
+
+            {/* Model Selector Tooltip-style */}
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
               <div className="relative">
                 <button
                   onClick={() => setShowModelSelector(!showModelSelector)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-800 border border-purple-500/30 rounded-lg hover:border-purple-500/50 transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl hover:border-purple-500/40 transition-all text-left"
                 >
-                  <div className="flex items-center gap-3">
-                    {selectedModelData && (
-                      <>
-                        <div className="text-purple-400">
-                          {getModelIcon(selectedModelData.id)}
-                        </div>
-                        <div className="text-left">
-                          <div className="text-slate-200 font-medium">
-                            {selectedModelData.name}
-                          </div>
-                          <div className="text-xs text-slate-400">
-                            {selectedModelData.description} • {selectedModelData.cost}
-                          </div>
-                        </div>
-                      </>
-                    )}
+                  <div>
+                    <span className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold">Modelo de IA</span>
+                    <span className="text-sm text-slate-200 font-medium">{selectedModelData?.name || 'Carregando...'}</span>
                   </div>
-                  <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showModelSelector ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showModelSelector ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showModelSelector && (
-                  <div className="absolute z-10 w-full mt-2 bg-slate-800 border border-purple-500/30 rounded-lg shadow-xl max-h-80 overflow-y-auto">
-                    {models.map((model) => (
+                  <div className="absolute bottom-full mb-2 z-50 w-full bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+                    {models.map((m) => (
                       <button
-                        key={model.id}
-                        onClick={() => {
-                          setSelectedModel(model.id);
-                          setShowModelSelector(false);
-                        }}
-                        className={`w-full flex items-start gap-3 p-3 text-left hover:bg-purple-500/10 transition-colors border-b border-purple-500/10 last:border-0 ${
-                          selectedModel === model.id ? 'bg-purple-500/20' : ''
-                        }`}
+                        key={m.id}
+                        onClick={() => { setSelectedModel(m.id); setShowModelSelector(false); }}
+                        className={`w-full p-3 text-left hover:bg-purple-500/10 border-b border-slate-800 last:border-0 transition-colors ${selectedModel === m.id ? 'bg-purple-500/10' : ''}`}
                       >
-                        <div className="text-purple-400 mt-0.5">
-                          {getModelIcon(model.id)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="text-slate-200 font-medium text-sm">
-                            {model.name}
-                          </div>
-                          <div className="text-xs text-slate-400 mt-0.5">
-                            {model.description}
-                          </div>
-                          <div className="text-xs text-purple-400 mt-1">
-                            {model.cost}
-                          </div>
-                        </div>
+                        <div className="text-sm font-medium text-slate-200">{m.name}</div>
+                        <div className="text-[10px] text-slate-400">{m.description}</div>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              <p className="mt-3 text-xs text-slate-500">
-                O custo é cobrado pela OpenRouter diretamente. 
-                Crie uma conta em{' '}
-                <a 
-                  href="https://openrouter.ai/keys" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-purple-400 hover:underline"
-                >
-                  openrouter.ai/keys
-                </a>
-              </p>
-            </div>
-          )}
-
-          <div className="bg-slate-900/50 border border-purple-500/20 rounded-lg p-4">
-            <label className="block text-sm font-medium text-purple-200 mb-2">
-              <Key className="inline w-4 h-4 mr-2" />
-              Chave API OpenRouter
-            </label>
-            <div className="relative">
-              <input
-                type={showApiKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-or-v1-..."
-                className="w-full px-4 py-3 pr-12 bg-slate-800 border border-purple-500/30 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all font-mono text-sm"
-              />
-              <button
-                type="button"
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Obtenha sua chave em{' '}
-              <a 
-                href="https://openrouter.ai/keys" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-purple-400 hover:underline"
-              >
-                openrouter.ai/keys
-              </a>
-            </p>
-          </div>
-
-          <button
-            onClick={handleGenerateReport}
-            disabled={loading || !apiKey.trim()}
-            className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed rounded-lg text-white font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Gerando relatório...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                {!apiKey.trim() ? 'Insira a chave API para continuar' : 'Gerar Relatório'}
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 mt-0.5" />
-            <div>
-              <h4 className="text-red-200 font-medium">Erro ao gerar relatório</h4>
-              <p className="text-sm text-red-200/70 mt-1">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {report && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <h3 className="text-xl font-semibold text-purple-200 flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              Relatório Astrológico
-            </h3>
-            <div className="flex items-center gap-3">
-              {modelUsed && (
-                <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded-full">
-                  {models.find(m => m.id === modelUsed)?.name || modelUsed}
-                </span>
-              )}
-              <span className="text-xs text-slate-500">
-                {new Date(report.generatedAt).toLocaleDateString('pt-BR')}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {report.sections.map((section: { title: string; content: string }, index: number) => (
-              <div
-                key={index}
-                className="p-6 bg-slate-900/50 border border-purple-500/20 rounded-lg"
-              >
-                <h4 className="text-lg font-semibold text-purple-300 mb-4">
-                  {section.title}
-                </h4>
-                <div className="whitespace-pre-wrap text-slate-300 leading-relaxed text-sm">
-                  {section.content}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1">
+                    <Key className="w-3 h-3" />
+                     Chave OpenRouter
+                  </span>
+                  <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-400 hover:underline">Obter chave</a>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="sk-or-v1-..."
+                    className="w-full px-4 py-3 pr-12 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:ring-1 focus:ring-purple-500/50 transition-all font-mono text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  >
+                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
 
-          <div className="flex gap-3">
             <button
-              onClick={() => {
-                setInternalReport(null);
-                setModelUsed('');
-                if (onReportDeleted) {
-                  onReportDeleted();
-                }
-              }}
-              className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-purple-500/30 rounded-lg text-slate-300 transition-colors"
+              onClick={handleGenerateReport}
+              disabled={loading || !apiKey.trim()}
+              className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-white font-bold shadow-lg shadow-purple-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-3"
             >
-              Apagar Relatório
+              <Sparkles className="w-5 h-5 animate-pulse" />
+              GERAR RELATÓRIO
             </button>
           </div>
+        )}
+
+        {reportText && (
+          <article className="prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-p:leading-relaxed prose-headings:text-purple-300 prose-strong:text-purple-200 prose-hr:border-slate-800">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {reportText}
+            </ReactMarkdown>
+            
+            {isStreaming && (
+              <div className="flex items-center gap-2 mt-4 text-purple-400 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-xs font-medium tracking-widest uppercase">Interpretando astros...</span>
+              </div>
+            )}
+          </article>
+        )}
+
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            <div className="text-sm text-red-200/80">
+              <p className="font-bold">Houve uma interrupção cósmica</p>
+              <p className="mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {reportText && !isStreaming && (
+        <div className="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-center gap-4">
+           <p className="text-[10px] text-slate-500 font-medium">Este relatório está salvo no seu dispositivo.</p>
         </div>
       )}
     </div>
