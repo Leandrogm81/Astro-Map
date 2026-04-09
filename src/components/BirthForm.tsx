@@ -44,20 +44,19 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
   const [isSearching, setIsSearching] = useState(false);
   const [isEditingCoords, setIsEditingCoords] = useState(false); // Novo estado
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (showResults && searchInputRef.current) {
+    if (showResults && searchInputRef.current && dropdownRef.current) {
       const rect = searchInputRef.current.getBoundingClientRect();
-      setDropdownStyle({
-        position: 'fixed',
-        top: rect.bottom + 8,
-        left: rect.left,
-        width: rect.width,
-        zIndex: 9999,
-      });
+      const el = dropdownRef.current;
+      el.style.position = 'fixed';
+      el.style.top = `${rect.bottom + 8}px`;
+      el.style.left = `${rect.left}px`;
+      el.style.width = `${rect.width}px`;
+      el.style.zIndex = '9999';
     }
-  }, [showResults]);
+  }, [showResults, searchResults]);
 
   const handleSearch = useCallback(async () => {
     if (!searchQuery || searchQuery.length < 3) return;
@@ -171,8 +170,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
           {/* Resultados da busca */}
           {showResults && searchResults.length > 0 && createPortal(
-            // eslint-disable-next-line
-            <div style={dropdownStyle} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto touch-auto">
+            <div ref={dropdownRef} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto touch-auto">
               {searchResults.map((result, index) => (
                 <button
                   key={index}
@@ -191,8 +189,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
           )}
 
           {showResults && searchResults.length === 0 && !isSearching && createPortal(
-            // eslint-disable-next-line
-            <div style={dropdownStyle} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-xl p-4">
+            <div ref={dropdownRef} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-xl p-4">
               <p className="text-sm text-slate-400">Nenhum local encontrado</p>
             </div>,
             document.body
