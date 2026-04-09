@@ -79,7 +79,8 @@ function getLST(jd: number, longitude: number): number {
 }
 
 // Calculate Ascendant using correct formula
-// The standard formula works for both hemispheres - latitude sign handles the difference
+// For southern hemisphere (negative latitude), we add 180° because the formula
+// calculates the Descendant point instead - the Ascendant is opposite
 function getAscendant(LST: number, latitude: number, obliquity: number): number {
   const RAMC = LST;
   
@@ -93,13 +94,17 @@ function getAscendant(LST: number, latitude: number, obliquity: number): number 
   const cosObl = Math.cos(oblRad);
   const tanLat = Math.tan(latRad);
   
-  const y = sinRAMC * cosObl + tanLat * sinObl;
-  const x = -cosRAMC;
+  const numerator = -cosRAMC;
+  const denominator = sinRAMC * cosObl + tanLat * sinObl;
   
-  let ascRad = Math.atan2(x, y);
-  let asc = ascRad * 180 / Math.PI;
+  let asc = Math.atan2(numerator, denominator) * 180 / Math.PI;
   
-  // Normalize to 0-360
+  // For southern hemisphere (negative latitude), add 180°
+  // because the formula gives the Descendant point
+  if (latitude < 0) {
+    asc = (asc + 180) % 360;
+  }
+  
   asc = ((asc % 360) + 360) % 360;
   
   return asc;
