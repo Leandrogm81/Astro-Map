@@ -45,6 +45,7 @@ export default function Home() {
   const [aiReport, setAiReport] = useState<AIReportType | null>(null);
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
+  const [solarReportText, setSolarReportText] = useState<string>('');
 
   useEffect(() => {
     initSweph()
@@ -96,6 +97,7 @@ export default function Home() {
       setAiReport(null);
       setSolarRevolution(null);
       setSolarYear(undefined);
+      setSolarReportText('');
       setSavedChartId(savedChart.id);
       setError(null);
     } else {
@@ -238,9 +240,10 @@ export default function Home() {
             {hasValidChart && (
               <ExportPDF 
                 chart={chart} 
-                reportText={activeTab === 'revolution' ? undefined : (typeof aiReport === 'string' ? aiReport : aiReport?.summary)}
-                solarRevolution={solarRevolution}
+                solarRevolution={solarRevolution} 
                 solarYear={solarYear}
+                reportText={aiReport?.summary}
+                solarReportText={solarReportText}
               />
             )}
           </div>
@@ -340,6 +343,7 @@ export default function Home() {
                     <SolarRevolution 
                       natalChart={chart}
                       onRevolutionCalculated={handleRevolutionCalculated}
+                      onReportUpdated={setSolarReportText}
                     />
                   )}
                 </div>

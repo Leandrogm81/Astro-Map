@@ -118,8 +118,8 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
             {/* Símbolo do Signo */}
             <Text
               x={cx + symbolR * Math.cos(mid) - 4}
-              y={cy + symbolR * Math.sin(mid) + 3}
-              style={{ fontSize: 9, fill: textColor }}
+              y={cy + symbolR * Math.sin(mid) + 4}
+              style={{ fontSize: 10, fill: textColor, fontFamily: 'NotoSansSymbols' }}
             >
               {signSymbols[sign.name]}
             </Text>
@@ -146,9 +146,9 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
             {/* Números das casas */}
             {!isAngular && (
               <Text
-                x={cx + labelR * Math.cos(angle + 0.2) - 2}
-                y={cy + labelR * Math.sin(angle + 0.2) + 2}
-                style={{ fontSize: 5, fill: mediumStroke }}
+                x={cx + labelR * Math.cos(angle + 0.15) - 2}
+                y={cy + labelR * Math.sin(angle + 0.15) + 2}
+                style={{ fontSize: 6, fill: mediumStroke }}
               >
                 {house.number}
               </Text>
@@ -198,9 +198,9 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
             {/* Background circle for clarity */}
             <Circle cx={x} cy={y} r={7} fill={bgColor} />
             <Text
-              x={x - 3}
-              y={y + 3}
-              style={{ fontSize: 8, fill: textColor }}
+              x={x - 4}
+              y={y + 4}
+              style={{ fontSize: 10, fill: textColor, fontFamily: 'NotoSansSymbols' }}
             >
               {planetSymbols[planet.name] || planet.name.substring(0, 1)}
             </Text>

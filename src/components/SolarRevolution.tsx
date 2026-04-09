@@ -11,9 +11,10 @@ import TransitWheel from './TransitWheel';
 interface SolarRevolutionProps {
   natalChart: NatalChart;
   onRevolutionCalculated?: (solarReturn: NatalChart | null, year: number) => void;
+  onReportUpdated?: (reportText: string) => void;
 }
 
-export default function SolarRevolution({ natalChart, onRevolutionCalculated }: SolarRevolutionProps) {
+export default function SolarRevolution({ natalChart, onRevolutionCalculated, onReportUpdated }: SolarRevolutionProps) {
   const [year, setYear] = useState(new Date().getFullYear());
   const [solarReturn, setSolarReturn] = useState<NatalChart | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,10 +28,16 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated }: 
     if (natalChart && year) {
       const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
       const savedReport = localStorage.getItem(reportKey);
-      if (savedReport) setReportText(savedReport);
-      else setReportText('');
+      setReportText(savedReport || '');
     }
   }, [natalChart, year]);
+
+  // Propagar o texto do relatório para cima quando mudar
+  useEffect(() => {
+    if (onReportUpdated) {
+      onReportUpdated(reportText);
+    }
+  }, [reportText, onReportUpdated]);
 
   const calculateRevolution = useCallback(async () => {
     setLoading(true);
