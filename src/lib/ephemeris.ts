@@ -10,7 +10,7 @@ import type {
 } from '@/types';
 import { PLANETS, ZODIAC_SIGNS } from '@/types';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from './astrology';
-import { getTimezoneOffsetForDate, isBrazilianDST as isBrazilianDSTCheck } from './geocoding';
+import { getBrazilianTimezone } from './geocoding';
 
 import * as Astronomy from 'astronomy-engine';
 
@@ -387,36 +387,29 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const latitude = birthData.latitude > 0 && birthData.latitude < 90 ? -birthData.latitude : birthData.latitude;
   const longitude = birthData.longitude > 0 && birthData.longitude < 180 ? -birthData.longitude : birthData.longitude;
   
-  // Get timezone offset with DST detection
-  const localDateForDST = new Date(year, month - 1, day, hours, minutes);
-  const correctTimezone = getTimezoneOffsetForDate(latitude, longitude, localDateForDST);
-  
   // Get timezone offset (in hours)
-  // Priority: 1. timezone field if explicitly set by user, 2. calculated from coordinates with DST
+  // Use standard timezone for Brazil (no DST correction)
+  // In astrology, the birth time is the local time as recorded on the birth certificate
+  // We use the standard timezone offset to convert to UTC
   let timezoneOffset = parseTimezoneOffset(birthData.timezone || '');
   
-  // If the timezone was auto-generated (matches our calculation), use DST-aware version
-  const autoTimezone = getTimezoneOffsetForDate(latitude, longitude, localDateForDST);
-  const autoOffset = parseTimezoneOffset(autoTimezone);
-  
-  // Use DST-aware timezone for auto-detected timezones
-  // But respect manually set timezone if user edited it
-  if (timezoneOffset === 0 || Math.abs(timezoneOffset - parseTimezoneOffset(getTimezoneOffsetForDate(latitude, longitude, new Date(year, 0, 1)))) < 0.01) {
-    timezoneOffset = autoOffset;
+  // If no timezone set, calculate from longitude using Brazilian timezone map
+  if (timezoneOffset === 0 && birthData.longitude !== 0) {
+    timezoneOffset = getBrazilianTimezone(longitude);
   }
   
   // Convert local time to UTC
+  // UTC = local_time - timezone_offset
+  // For UTC-3 (timezoneOffset = -3): UTC = local - (-3) = local + 3
   const utcHours = hours - timezoneOffset;
   
   console.log('Debug:', {
     localTime: `${hours}:${minutes}`,
     timezone: birthData.timezone,
-    correctTimezone,
     timezoneOffset,
     utcTime: `${Math.floor(utcHours)}:${minutes}`,
     latitude,
     longitude,
-    isDST: isBrazilianDSTCheck(localDateForDST),
   });
   
   const birthDate = new Date(Date.UTC(year, month - 1, day, Math.floor(utcHours), minutes));
