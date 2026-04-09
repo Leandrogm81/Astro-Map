@@ -29,7 +29,7 @@ export async function geocodeLocation(query: string): Promise<GeocodingResult[]>
 
     const data = await response.json();
     
-    return data.map((item: any) => ({
+    return (data as any[]).map((item) => ({
       display_name: item.display_name,
       lat: parseFloat(item.lat),
       lon: parseFloat(item.lon),
