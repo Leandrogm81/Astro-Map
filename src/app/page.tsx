@@ -42,6 +42,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'chart' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form', 'saved']));
+  const [editingChartId, setEditingChartId] = useState<string | null>(null);
+  const [initialFormData, setInitialFormData] = useState<BirthData | undefined>(undefined);
   const [aiReport, setAiReport] = useState<AIReportType | null>(null);
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
@@ -76,10 +78,19 @@ export default function Home() {
       setAiReport(null);
       setSolarRevolution(null);
       setSolarYear(undefined);
+      setSolarReportText('');
       
       try {
-        const saved = saveChart(`${birthData.name} - ${birthData.date}`, calculatedChart);
-        setSavedChartId(saved.id);
+        if (editingChartId) {
+          const updatedChart = { ...chart, aiReport: undefined, solarRevolution: undefined, solarYear: undefined, solarReport: undefined };
+          updateChart(editingChartId, { chart: updatedChart, name: `${birthData.name} - ${birthData.date}` });
+          setSavedChartId(editingChartId);
+          setEditingChartId(null);
+          setInitialFormData(undefined);
+        } else {
+          const saved = saveChart(`${birthData.name} - ${birthData.date}`, calculatedChart);
+          setSavedChartId(saved.id);
+        }
       } catch (saveErr) {
         console.warn('Failed to save chart:', saveErr);
       }
@@ -94,15 +105,44 @@ export default function Home() {
   const handleSelectChart = useCallback((savedChart: SavedChart) => {
     if (isValidChart(savedChart.chart)) {
       setChart(savedChart.chart);
-      setAiReport(null);
-      setSolarRevolution(null);
-      setSolarYear(undefined);
-      setSolarReportText('');
+      
+      // Carrega relatório natal se existir cache
+      const reportKey = `report_${savedChart.chart.birthData.name}_${savedChart.chart.birthData.date}`;
+      const savedReport = localStorage.getItem(reportKey);
+      if (savedReport) {
+        setAiReport({ sections: [], summary: savedReport, generatedAt: new Date().toISOString() });
+      } else {
+        setAiReport(null);
+      }
+      
+      setSolarRevolution(savedChart.solarRevolution || null);
+      setSolarYear(savedChart.solarYear || undefined);
+
+      // Carrega relatório de revolução solar se existir cache
+      if (savedChart.solarYear) {
+         const solarReportKey = `solar_report_${savedChart.chart.birthData.name}_${savedChart.chart.birthData.date}_${savedChart.solarYear}`;
+         const savedSolarReport = localStorage.getItem(solarReportKey);
+         if (savedSolarReport) setSolarReportText(savedSolarReport);
+         else setSolarReportText('');
+      } else {
+         setSolarReportText('');
+      }
+
       setSavedChartId(savedChart.id);
+      setEditingChartId(null);
+      setInitialFormData(undefined);
       setError(null);
     } else {
       setError('Dados do mapa astral inválidos ou corrompidos');
     }
+  }, []);
+
+  const handleEditChart = useCallback((savedChart: SavedChart) => {
+    setEditingChartId(savedChart.id);
+    setInitialFormData(savedChart.chart.birthData);
+    setExpandedSections(prev => new Set([...prev, 'form']));
+    // Rola para o topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleReportGenerated = useCallback((report: AIReportType | null) => {
@@ -198,13 +238,23 @@ export default function Home() {
                 <div className="p-6">
                   {!initialized ? (
                     <div className="text-center py-8">
-                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-                      <p className="mt-2 text-sm text-slate-400">
-                        Inicializando sistema astronômico...
-                      </p>
+                      <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
+                      <p className="text-slate-400">Calculando efemérides...</p>
                     </div>
                   ) : (
-                    <BirthForm onSubmit={handleFormSubmit} loading={loading} />
+                    <div className="space-y-4">
+                      {editingChartId && (
+                        <div className="bg-blue-500/20 text-blue-200 border border-blue-500/30 p-3 rounded-lg text-sm flex justify-between items-center">
+                          <span>Você está editando um mapa salvo. Clique em "Calcular" para atualizar.</span>
+                          <button onClick={() => { setEditingChartId(null); setInitialFormData(undefined); }} className="text-blue-400 hover:text-blue-300 underline">Cancelar</button>
+                        </div>
+                      )}
+                      <BirthForm 
+                        onSubmit={handleFormSubmit} 
+                        loading={loading} 
+                        initialData={initialFormData}
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -231,7 +281,7 @@ export default function Home() {
 
               {expandedSections.has('saved') && (
                 <div className="p-6">
-                  <SavedCharts onSelectChart={handleSelectChart} />
+                  <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
                 </div>
               )}
             </div>

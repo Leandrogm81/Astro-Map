@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { SavedChart, NatalChart } from '@/types';
 import { getSavedCharts, loadChart, deleteChart } from '@/lib/storage';
-import { Calendar, MapPin, Trash2, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Trash2, ChevronRight, Pencil } from 'lucide-react';
 
 interface SavedChartsProps {
   onSelectChart: (savedChart: SavedChart) => void;
+  onEditChart?: (savedChart: SavedChart) => void;
 }
 
-export default function SavedCharts({ onSelectChart }: SavedChartsProps) {
+export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsProps) {
   const [charts, setCharts] = useState<SavedChart[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +43,11 @@ export default function SavedCharts({ onSelectChart }: SavedChartsProps) {
 
   const handleSelect = (savedChart: SavedChart) => {
     onSelectChart(savedChart);
+  };
+
+  const handleEdit = (savedChart: SavedChart, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEditChart) onEditChart(savedChart);
   };
 
   const formatDate = (dateString: string): string => {
@@ -118,6 +124,13 @@ export default function SavedCharts({ onSelectChart }: SavedChartsProps) {
                 </div>
 
                 <div className="flex items-center gap-2 ml-4">
+                  <button
+                    onClick={(e) => handleEdit(savedChart, e)}
+                    className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                    title="Editar Dados e Recalcular"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={(e) => handleDelete(savedChart.id, e)}
                     className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"

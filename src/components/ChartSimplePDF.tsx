@@ -38,12 +38,14 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
     'Netuno': '♆', 'Plutão': '♇', 'North Node': '☊', 'Chiron': '⚷',
   };
 
-  const ascLongitude = chart.ascendant;
+  const ascendantDegree = chart.ascendant || chart.housesPlacidus.find(h => h.number === 1)?.longitude || 0;
 
-  // Função para converter longitude em ângulo SVG (fixando ASC à esquerda)
-  const toAngle = (lon: number) => {
-    const rotatedLon = (lon - ascLongitude + 180) % 360;
-    return (rotatedLon - 90) * (Math.PI / 180);
+  // A função converte a longitude para radianos, ajustando de forma que o Ascendente fique na esquerda (180° = Math.PI)
+  // e o zodíaco cresça no sentido anti-horário.
+  const toAngle = (deg: number) => {
+    const diff = deg - ascendantDegree;
+    const angleDeg = 180 + diff;
+    return angleDeg * (Math.PI / 180);
   };
 
   const describeArc = (radius: number, startAngle: number, endAngle: number) => {
@@ -53,11 +55,6 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
     const endY = cy + radius * Math.sin(endAngle);
     const largeArcFlag = endAngle - startAngle <= Math.PI ? "0" : "1";
     return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-  };
-
-  const formatDegree = (lon: number): string => {
-    const deg = Math.floor(lon % 30);
-    return `${deg}°`;
   };
 
   return (
@@ -119,7 +116,7 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
             <Text
               x={cx + symbolR * Math.cos(mid) - 4}
               y={cy + symbolR * Math.sin(mid) + 4}
-              style={{ fontSize: 10, fill: textColor, fontFamily: 'NotoSansSymbols' }}
+              style={{ fontSize: 10, fill: textColor, fontFamily: 'DejaVu Sans' }}
             >
               {signSymbols[sign.name]}
             </Text>
@@ -157,30 +154,7 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
         );
       })}
 
-      {/* Aspectos */}
-      {chart.aspects.filter(a => a.orb <= 8).map((aspect, i) => {
-        const p1 = chart.planets.find(p => p.name === aspect.planet1);
-        const p2 = chart.planets.find(p => p.name === aspect.planet2);
-        if (!p1 || !p2) return null;
-
-        const a1 = toAngle(p1.longitude);
-        const a2 = toAngle(p2.longitude);
-        const color = aspect.type === 'trine' || aspect.type === 'sextile' ? '#3b82f6' : '#ef4444';
-
-        return (
-          <Line
-            key={`pdf-aspect-${i}`}
-            x1={cx + (innerR - 5) * Math.cos(a1)}
-            y1={cy + (innerR - 5) * Math.sin(a1)}
-            x2={cx + (innerR - 5) * Math.cos(a2)}
-            y2={cy + (innerR - 5) * Math.sin(a2)}
-            stroke={color}
-            strokeWidth={0.3}
-            strokeOpacity={0.4}
-            strokeDasharray={aspect.orb > 5 ? '1,1' : undefined}
-          />
-        );
-      })}
+      {/* Aspectos Removidos por solicitação do usuário para simplificar a versão impressa */}
 
       {/* Inner Circle (White out for aspects) */}
       <Circle cx={cx} cy={cy} r={innerR} fill="none" stroke={liteStroke} strokeWidth="0.5" />
@@ -197,25 +171,18 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
           <G key={`pdf-planet-${planet.name}`}>
             {/* Background circle for clarity */}
             <Circle cx={x} cy={y} r={7} fill={bgColor} />
+            {/* Símbolo do Planeta */}
             <Text
               x={x - 4}
               y={y + 4}
-              style={{ fontSize: 10, fill: textColor, fontFamily: 'NotoSansSymbols' }}
+              style={{ fontSize: 10, fill: textColor, fontFamily: 'DejaVu Sans' }}
             >
               {planetSymbols[planet.name] || planet.name.substring(0, 1)}
             </Text>
-            {/* Grau do planeta */}
-            <Text
-              x={x + 5}
-              y={y - 2}
-              style={{ fontSize: 4, fill: mediumStroke }}
-            >
-              {formatDegree(planet.longitude)}
-            </Text>
             {planet.retrograde && (
               <Text
-                x={x + 5}
-                y={y + 4}
+                x={x + 3}
+                y={y + 5}
                 style={{ fontSize: 4, fill: '#ef4444' }}
               >
                 R

@@ -22,8 +22,8 @@ Font.register({
 });
 
 Font.register({
-  family: 'NotoSansSymbols',
-  src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts/hinted/ttf/NotoSansSymbols/NotoSansSymbols-Regular.ttf'
+  family: 'DejaVu Sans',
+  src: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.4/ttf/DejaVuSans.ttf'
 });
 
 const styles = StyleSheet.create({
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   symbol: {
-    fontFamily: 'NotoSansSymbols',
+    fontFamily: 'DejaVu Sans',
     fontSize: 10,
   }
 });
@@ -202,7 +202,7 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
             <Text style={styles.tableCellBold}>Casa</Text>
           </View>
           {chart.planets.map((p, i) => (
-            <View key={i} style={styles.tableRow}>
+            <View wrap={false} key={i} style={styles.tableRow}>
               <Text style={[styles.symbol, { flex: 0.5 }]}>{getPlanetSymbol(p.name)}</Text>
               <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{p.name}</Text>
               <Text style={[styles.tableCell, { flex: 1 }]}>{p.sign}</Text>
@@ -224,13 +224,13 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
             <Text style={styles.tableCellBold}>Grau</Text>
           </View>
           {chart.housesPlacidus.map((h, i) => (
-            <View key={i} style={styles.tableRow}>
+            <View wrap={false} key={i} style={styles.tableRow}>
               <Text style={[styles.tableCell, { flex: 0.5 }]}>{h.number}</Text>
               <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>
                 {h.number === 1 ? 'Ascendente (AC)' : h.number === 10 ? 'Meio do Céu (MC)' : `Casa ${h.number}`}
               </Text>
               <Text style={[styles.tableCell, { flex: 1 }]}>{h.sign}</Text>
-              <Text style={styles.tableCell}>{formatDeg(h.longitude)}</Text>
+              <Text style={styles.tableCell}>{formatDeg(h.degree)}</Text>
             </View>
           ))}
         </View>
@@ -255,7 +255,7 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
             'trine': 'Trígono', 'opposition': 'Oposição'
           };
           return (
-            <View key={i} style={styles.tableRow}>
+            <View wrap={false} key={i} style={styles.tableRow}>
               <Text style={styles.tableCell}>{a.planet1}</Text>
               <Text style={styles.tableCellBold}>{typeLabels[a.type] || a.type}</Text>
               <Text style={styles.tableCell}>{a.planet2}</Text>

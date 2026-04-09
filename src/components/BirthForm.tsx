@@ -23,6 +23,21 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
     timezone: initialData?.timezone || '',
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        date: initialData.date || '',
+        time: initialData.time || '',
+        location: initialData.location || '',
+        latitude: initialData.latitude || 0,
+        longitude: initialData.longitude || 0,
+        timezone: initialData.timezone || '',
+      });
+      setSearchQuery(initialData.location || '');
+    }
+  }, [initialData]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
   const [showResults, setShowResults] = useState(false);
