@@ -14,7 +14,7 @@ import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
 import ExportPDF from '@/components/ExportPDF';
 import Image from 'next/image';
-import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save, Loader2 } from 'lucide-react';
 
 function isValidChart(chart: unknown): chart is NatalChart {
   if (!chart || typeof chart !== 'object') return false;
@@ -82,8 +82,14 @@ export default function Home() {
       
       try {
         if (editingChartId) {
-          const updatedChart = { ...chart, aiReport: undefined, solarRevolution: undefined, solarYear: undefined, solarReport: undefined };
-          updateChart(editingChartId, { chart: updatedChart, name: `${birthData.name} - ${birthData.date}` });
+          updateChart(editingChartId, { 
+            chart: calculatedChart, 
+            name: `${birthData.name} - ${birthData.date}`,
+            aiReport: undefined,
+            solarRevolution: undefined,
+            solarYear: undefined,
+            solarReport: undefined 
+          });
           setSavedChartId(editingChartId);
           setEditingChartId(null);
           setInitialFormData(undefined);
