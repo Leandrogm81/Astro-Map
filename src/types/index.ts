@@ -143,6 +143,8 @@ export const PLANETS = [
   { id: 'pluto', name: 'Plutão', symbol: '♇', sweId: 9 },
   { id: 'node', name: 'Nodo Norte', symbol: '☊', sweId: 10 }, // Mean node
   { id: 'chiron', name: 'Quíron', symbol: '⚷', sweId: 15 },
+  { id: 'lilith', name: 'Lilith', symbol: '⚸', sweId: 12 },
+  { id: 'partOfFortune', name: 'Roda da Fortuna', symbol: '⊗', sweId: 11 },
 ] as const;
 
 export const ASPECT_ORBS: Record<AspectType, { angle: number; orb: number }> = {

@@ -11,6 +11,7 @@ import type {
 import { PLANETS, ZODIAC_SIGNS } from '@/types';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from './astrology';
 import { getBrazilianTimezone, getTimezoneOffsetForDate, isBrazilianDST as isBrazilianDSTCheck } from './geocoding';
+import { useSettingsStore } from './settingsStore';
 
 import * as Astronomy from 'astronomy-engine';
 
@@ -281,6 +282,8 @@ async function calculatePlanetPosition(date: Date, planetId: string): Promise<Pl
   if (!body) {
     if (planetId === 'node') return calculateNodePosition(date);
     if (planetId === 'chiron') return calculateChironPosition(date);
+    if (planetId === 'lilith') return calculateLilithPosition(date);
+    if (planetId === 'partOfFortune') throw new Error('partOfFortune handled separately');
     throw new Error(`Unknown planet: ${planetId}`);
   }
   
@@ -354,6 +357,27 @@ function calculateChironPosition(date: Date): PlanetPosition {
   };
 }
 
+function calculateLilithPosition(date: Date): PlanetPosition {
+  const jd = dateToJD(date);
+  const T = (jd - 2451545.0) / 36525.0;
+  // Mean lunar apogee
+  let longitude = 83.3532430 + 4069.0137111 * T - 0.0103238 * T * T - T * T * T / 80058;
+  longitude = longitude % 360;
+  if (longitude < 0) longitude += 360;
+
+  return {
+    name: 'Lilith',
+    symbol: '⚸',
+    longitude,
+    latitude: 0,
+    speed: 0.11,
+    sign: getZodiacSign(longitude),
+    degree: getSignDegree(longitude),
+    house: 1,
+    retrograde: false,
+  };
+}
+
 // Parse timezone offset from string like "UTC-3:00" or "UTC+2:00"
 function parseTimezoneOffset(timezone: string): number {
   if (!timezone) return 0;
@@ -420,6 +444,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   // Calculate planets
   const planets: PlanetPosition[] = [];
   for (const planet of PLANETS) {
+    if (planet.id === 'partOfFortune') continue;
     try {
       const position = await calculatePlanetPosition(birthDate, planet.id);
       planets.push(position);
@@ -436,6 +461,35 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const housesPlacidus = calculatePlacidusHouses(jd, latitude, longitude);
   const ascendant = housesPlacidus[0].longitude;
   const housesWhole = calculateWholeSignsHouses(ascendant);
+
+  // Calculate Part of Fortune
+  const sun = planets.find(p => p.name === 'Sol');
+  const moon = planets.find(p => p.name === 'Lua');
+  
+  if (sun && moon) {
+    const sunHouse = getHouseForPlanet(sun.longitude, housesPlacidus);
+    const isDayBirth = sunHouse >= 7 && sunHouse <= 12;
+
+    let pofLongitude = 0;
+    if (isDayBirth) {
+      pofLongitude = (ascendant + moon.longitude - sun.longitude) % 360;
+    } else {
+      pofLongitude = (ascendant + sun.longitude - moon.longitude) % 360;
+    }
+    pofLongitude = (pofLongitude + 360) % 360;
+
+    planets.push({
+      name: 'Roda da Fortuna',
+      symbol: '⊗',
+      longitude: pofLongitude,
+      latitude: 0,
+      speed: 0,
+      sign: getZodiacSign(pofLongitude),
+      degree: getSignDegree(pofLongitude),
+      house: 1,
+      retrograde: false,
+    });
+  }
   
   // Assign houses to planets
   for (const planet of planets) {
@@ -457,13 +511,14 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
 }
 
 function calculateAspects(planets: PlanetPosition[]): Aspect[] {
+  const orbs = useSettingsStore.getState().orbs;
   const aspects: Aspect[] = [];
   const majorAspects = [
-    { angle: 0, name: 'conjunction', orb: 8 },
-    { angle: 60, name: 'sextile', orb: 6 },
-    { angle: 90, name: 'square', orb: 8 },
-    { angle: 120, name: 'trine', orb: 8 },
-    { angle: 180, name: 'opposition', orb: 8 },
+    { angle: 0, name: 'conjunction', orb: orbs.conjunction },
+    { angle: 60, name: 'sextile', orb: orbs.sextile },
+    { angle: 90, name: 'square', orb: orbs.square },
+    { angle: 120, name: 'trine', orb: orbs.trine },
+    { angle: 180, name: 'opposition', orb: orbs.opposition },
   ];
   
   for (let i = 0; i < planets.length; i++) {
