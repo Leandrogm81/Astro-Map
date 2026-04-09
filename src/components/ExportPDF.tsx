@@ -23,7 +23,7 @@ Font.register({
 
 Font.register({
   family: 'DejaVu Sans',
-  src: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.4/ttf/DejaVuSans.ttf'
+  src: 'https://unpkg.com/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'
 });
 
 const styles = StyleSheet.create({
