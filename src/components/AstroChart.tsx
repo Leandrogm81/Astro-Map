@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS, PLANETS } from '@/types';
@@ -13,7 +11,6 @@ interface AstroChartProps {
 export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 500, height: 500 });
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
   const [showAspects, setShowAspects] = useState(true);
@@ -45,67 +42,67 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     setZoom(newZoom);
   };
 
-  // ResizeObserver for responsiveness
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const observer = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      const size = Math.min(width, height, 800);
-      setDimensions({ width: size, height: size });
-    });
-
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // Notify parent when chart is ready
   useEffect(() => {
     if (svgRef.current && onChartReady) {
       onChartReady(svgRef.current);
     }
-  }, [onChartReady]);
+  }, [onChartReady, chart]);
 
-  const { width, height } = dimensions;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const outerRadius = Math.min(width, height) / 2 - 20;
-  const innerRadius = outerRadius * 0.35;
-  const houseRadius = outerRadius * 0.75;
-  const scale = width / 500; // Scale factor for font sizes
+  // Constants for 800x800 viewBox
+  const CX = 400;
+  const CY = 400;
+  const R_OUTER = 380;
+  const R_ZODIAC_INNER = 330;
+  const R_TICK_INNER = 320;
+  const R_PLANETS_OUTER = 300;
+  const R_PLANETS_INNER = 250;
+  const R_ASPECTS = 210;
 
-  // Converter longitude eclíptica para ângulo SVG
+  // Ascendant is anchor (9 o'clock / 180 degrees)
+  const ascendantLongitude = chart.housesPlacidus.find(h => h.number === 1)?.longitude || 0;
+
   const longitudeToAngle = (longitude: number): number => {
-    return (longitude - 90) * (Math.PI / 180);
+    // 180 at left, decreasing angle moves UP and RIGHT (Counter-Clockwise in standard rect, where +y is down)
+    return (180 - (longitude - ascendantLongitude)) * (Math.PI / 180);
   };
 
-  // Gerar fatias do zodíaco
-  const zodiacSlices = ZODIAC_SIGNS.map((sign, index) => {
+  // Gerar fatias do zodíaco (Annular Arcs)
+  const zodiacSlices = ZODIAC_SIGNS.map((sign) => {
     const startAngle = longitudeToAngle(sign.start);
-    const endAngle = longitudeToAngle((sign.start + 30) % 360);
+    const endAngle = longitudeToAngle(sign.start + 30);
     
-    const x1 = centerX + outerRadius * Math.cos(startAngle);
-    const y1 = centerY + outerRadius * Math.sin(startAngle);
-    const x2 = centerX + outerRadius * Math.cos(endAngle);
-    const y2 = centerY + outerRadius * Math.sin(endAngle);
+    const x1_out = CX + R_OUTER * Math.cos(startAngle);
+    const y1_out = CY + R_OUTER * Math.sin(startAngle);
+    const x2_out = CX + R_OUTER * Math.cos(endAngle);
+    const y2_out = CY + R_OUTER * Math.sin(endAngle);
+    
+    const x1_in = CX + R_ZODIAC_INNER * Math.cos(startAngle);
+    const y1_in = CY + R_ZODIAC_INNER * Math.sin(startAngle);
+    const x2_in = CX + R_ZODIAC_INNER * Math.cos(endAngle);
+    const y2_in = CY + R_ZODIAC_INNER * Math.sin(endAngle);
+
+    // Midpoint para o ícone
+    const midAngle = (startAngle + endAngle) / 2;
+    const rMid = (R_OUTER + R_ZODIAC_INNER) / 2;
+    const iconX = CX + rMid * Math.cos(midAngle);
+    const iconY = CY + rMid * Math.sin(midAngle);
 
     return (
       <g key={sign.name}>
         <path
-          d={`M ${centerX} ${centerY} L ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 0 1 ${x2} ${y2} Z`}
+          d={`M ${x1_out} ${y1_out} A ${R_OUTER} ${R_OUTER} 0 0 0 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${R_ZODIAC_INNER} ${R_ZODIAC_INNER} 0 0 1 ${x1_in} ${y1_in} Z`}
           fill={`${getElementColor(sign.element)}15`}
           stroke={getElementColor(sign.element)}
-          strokeWidth="0.5"
-          className="transition-all duration-300"
+          strokeWidth="1.5"
         />
-        {/* Símbolo do signo - maior */}
         <text
-          x={centerX + (outerRadius - 28 * scale) * Math.cos((startAngle + endAngle) / 2)}
-          y={centerY + (outerRadius - 28 * scale) * Math.sin((startAngle + endAngle) / 2)}
+          x={iconX}
+          y={iconY}
           textAnchor="middle"
-          dominantBaseline="middle"
+          dominantBaseline="central"
           fill={getElementColor(sign.element)}
-          fontSize={20 * scale}
+          fontSize="24"
           fontWeight="bold"
           className="select-none"
         >
@@ -115,35 +112,68 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     );
   });
 
-  // Gerar linhas de casas com números
-  const houseLines = chart.housesPlacidus.map((house, index) => {
-    const angle = longitudeToAngle(house.longitude);
-    const x = centerX + houseRadius * Math.cos(angle);
-    const y = centerY + houseRadius * Math.sin(angle);
+  // Ticks rings
+  const degreeTicks = [];
+  for (let i = 0; i < 360; i++) {
+    const angle = longitudeToAngle(i);
+    const is10 = i % 10 === 0;
+    const is5 = i % 5 === 0;
+    const tickLen = is10 ? 10 : is5 ? 6 : 3;
+    const r2 = R_ZODIAC_INNER - tickLen;
+    degreeTicks.push(
+      <line 
+        key={`tick-${i}`}
+        x1={CX + R_ZODIAC_INNER * Math.cos(angle)}
+        y1={CY + R_ZODIAC_INNER * Math.sin(angle)}
+        x2={CX + r2 * Math.cos(angle)}
+        y2={CY + r2 * Math.sin(angle)}
+        stroke={is10 ? '#cbd5e1' : '#64748b'}
+        strokeWidth={is10 ? 1.5 : 1}
+      />
+    );
+  }
 
-    const isAscendant = house.number === 1;
+  // Linhas das casas e Números
+  const houseElements = chart.housesPlacidus.map((house) => {
+    const angle = longitudeToAngle(house.longitude);
+    
+    // As linhas de casa vão da borda da Roda Aspectos até a borda de Ticks
+    const xIn = CX + R_ASPECTS * Math.cos(angle);
+    const yIn = CY + R_ASPECTS * Math.sin(angle);
+    const xOut = CX + R_TICK_INNER * Math.cos(angle);
+    const yOut = CY + R_TICK_INNER * Math.sin(angle);
+
+    const isAsc = house.number === 1;
+    const isDsc = house.number === 7;
     const isMC = house.number === 10;
+    const isIC = house.number === 4;
+    const isCardinal = isAsc || isDsc || isMC || isIC;
+
+    // Números das casas colocados adjacentes à linha da casa
+    const numAngle = angle - (4 * (Math.PI / 180)); 
+    const rNum = R_ASPECTS + 20;
+    const numX = CX + rNum * Math.cos(numAngle);
+    const numY = CY + rNum * Math.sin(numAngle);
 
     return (
-      <g key={house.number}>
+      <g key={`house-${house.number}`}>
         <line
-          x1={centerX}
-          y1={centerY}
-          x2={x}
-          y2={y}
-          stroke={isAscendant ? '#fbbf24' : isMC ? '#22c55e' : '#7c3aed'}
-          strokeWidth={isAscendant ? 2 : 1}
-          opacity={isAscendant ? 1 : isMC ? 0.8 : 0.4}
+          x1={isCardinal ? CX : xIn}
+          y1={isCardinal ? CY : yIn}
+          x2={isCardinal ? CX + R_ZODIAC_INNER * Math.cos(angle) : xOut}
+          y2={isCardinal ? CY + R_ZODIAC_INNER * Math.sin(angle) : yOut}
+          stroke={isAsc || isDsc ? '#fbbf24' : isMC || isIC ? '#22c55e' : '#7c3aed'}
+          strokeWidth={isCardinal ? 3 : 1.5}
+          opacity={isCardinal ? 1 : 0.6}
         />
-        {/* Número da casa */}
         <text
-          x={centerX + (houseRadius + 15 * scale) * Math.cos(angle)}
-          y={centerY + (houseRadius + 15 * scale) * Math.sin(angle)}
+          x={numX}
+          y={numY}
           textAnchor="middle"
-          dominantBaseline="middle"
-          fill={isAscendant ? '#fbbf24' : isMC ? '#22c55e' : '#94a3b8'}
-          fontSize={12 * scale}
-          fontWeight={isAscendant || isMC ? 'bold' : 'normal'}
+          dominantBaseline="central"
+          fill={isCardinal ? '#e2e8f0' : '#94a3b8'}
+          fontSize="16"
+          fontWeight={isCardinal ? 'bold' : 'normal'}
         >
           {house.number}
         </text>
@@ -151,30 +181,29 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     );
   });
 
-  // Posicionar planetas evitando sobreposição
-  const planetPositions: { planet: PlanetPosition; x: number; y: number }[] = [];
+  // Planetas e seus ponteiros
+  const planetPositions: { planet: PlanetPosition; x: number; y: number; angle: number }[] = [];
   
   chart.planets.forEach((planet) => {
     const angle = longitudeToAngle(planet.longitude);
     
-    // Distribuir planetas em diferentes raios para evitar sobreposição
-    let planetRadius = innerRadius + 10;
-    let attempts = 0;
+    let currentR = R_PLANETS_OUTER;
     let overlap = true;
+    let attempts = 0;
     
-    while (overlap && attempts < 10) {
+    while (overlap && attempts < 8) {
       overlap = false;
-      const x = centerX + planetRadius * Math.cos(angle);
-      const y = centerY + planetRadius * Math.sin(angle);
+      const x = CX + currentR * Math.cos(angle);
+      const y = CY + currentR * Math.sin(angle);
       
       for (const pos of planetPositions) {
         const dx = pos.x - x;
         const dy = pos.y - y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 20 * scale) {
+        if (dist < 26) {
           overlap = true;
-          planetRadius += 15;
-          break;
+          currentR -= 16;
+          break; // Try smaller radius
         }
       }
       attempts++;
@@ -182,116 +211,68 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     
     planetPositions.push({ 
       planet, 
-      x: centerX + planetRadius * Math.cos(angle), 
-      y: centerY + planetRadius * Math.sin(angle) 
+      angle,
+      x: CX + currentR * Math.cos(angle), 
+      y: CY + currentR * Math.sin(angle) 
     });
   });
 
-  // Filtrar aspectos conectados ao planeta selecionado/hover
+  const planetElements = planetPositions.map(({ planet, x, y, angle }) => {
+    const isHovered = hoveredPlanet === planet.name;
+    const isSelected = selectedPlanet === planet.name;
+    const isFocused = isHovered || isSelected;
+    const planetInfo = PLANETS.find(p => p.name === planet.name);
+    
+    const tickX = CX + R_TICK_INNER * Math.cos(angle);
+    const tickY = CY + R_TICK_INNER * Math.sin(angle);
+
+    const aspectX = CX + R_ASPECTS * Math.cos(angle);
+    const aspectY = CY + R_ASPECTS * Math.sin(angle);
+
+    return (
+      <g key={planet.name}
+         onMouseEnter={() => setHoveredPlanet(planet.name)}
+         onMouseLeave={() => setHoveredPlanet(null)}
+         onClick={() => setSelectedPlanet(selectedPlanet === planet.name ? null : planet.name)}
+         className="cursor-pointer"
+      >
+        {/* Linha ponteiro do planeta para a régua */}
+        <line x1={x} y1={y} x2={tickX} y2={tickY} stroke="#cbd5e1" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" />
+        
+        {/* Linha sutil do planeta para o núcleo de aspectos */}
+        <line x1={x} y1={y} x2={aspectX} y2={aspectY} stroke="#475569" strokeWidth="0.5" opacity="0.3" />
+
+        <g transform={`translate(${x}, ${y})`}>
+          {isFocused && <circle r="22" fill="none" stroke="#fbbf24" strokeWidth="2" opacity="0.7" />}
+          <circle r={isFocused ? 16 : 14} fill="#0f172a" stroke={planet.retrograde ? '#ef4444' : '#fbbf24'} strokeWidth={isFocused ? 3 : 2} className="transition-all duration-200" />
+          <text textAnchor="middle" dominantBaseline="central" fill="#fbbf24" fontSize="18" fontWeight="bold" className="select-none">
+            {planetInfo?.symbol || '●'}
+          </text>
+          
+          {planet.retrograde && (
+            <text x="10" y="-10" textAnchor="middle" dominantBaseline="central" fill="#ef4444" fontSize="12" fontWeight="bold">R</text>
+          )}
+
+          {isHovered && !isSelected && (
+            <g transform={`translate(${x > CX ? -190 : 20}, -60)`} style={{ pointerEvents: 'none' }}>
+              <rect width="180" height="90" rx="6" fill="#0f172a" stroke="#7c3aed" strokeWidth="1" />
+              <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="bold">{planet.name}</text>
+              <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">{planet.sign} {Math.floor(planet.degree)}°{Math.floor((planet.degree % 1) * 60)}'</text>
+              <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">Casa {planet.house} • {getDignity(planet.name, planet.sign)}</text>
+              <text x="90" y="75" textAnchor="middle" fill="#94a3b8" fontSize="11">{planet.speed > 0 ? `Rapidez: ${planet.speed.toFixed(2)}°/d` : ''} {planet.retrograde ? '(Retrógrado)' : ''}</text>
+            </g>
+          )}
+        </g>
+      </g>
+    );
+  });
+
   const filteredAspects = chart.aspects.filter(aspect => {
     if (!hoveredPlanet && !selectedPlanet) return true;
     const focus = selectedPlanet || hoveredPlanet;
     return aspect.planet1 === focus || aspect.planet2 === focus;
   });
 
-  // Renderizar planetas
-  const planetElements = planetPositions.map(({ planet, x, y }) => {
-    const isHovered = hoveredPlanet === planet.name;
-    const isSelected = selectedPlanet === planet.name;
-    const isFocused = isHovered || isSelected;
-    const planetInfo = PLANETS.find(p => p.name === planet.name);
-
-    return (
-      <g
-        key={planet.name}
-        transform={`translate(${x}, ${y})`}
-        className="cursor-pointer"
-        onMouseEnter={() => setHoveredPlanet(planet.name)}
-        onMouseLeave={() => setHoveredPlanet(null)}
-        onClick={() => setSelectedPlanet(selectedPlanet === planet.name ? null : planet.name)}
-      >
-        {/* Glow effect when hovered/selected */}
-        {isFocused && (
-          <circle
-            r={18 * scale}
-            fill="none"
-            stroke="#fbbf24"
-            strokeWidth={2}
-            opacity={0.5}
-          />
-        )}
-        
-        {/* Planet circle */}
-        <circle
-          r={isFocused ? 14 : 12}
-          fill="#1e293b"
-          stroke={planet.retrograde ? '#ef4444' : '#fbbf24'}
-          strokeWidth={isFocused ? 3 : 2}
-          className="transition-all duration-200"
-        />
-        
-        {/* Planet symbol */}
-        <text
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="#fbbf24"
-          fontSize={14 * scale}
-          fontWeight="bold"
-          className="select-none"
-        >
-          {planetInfo?.symbol || '●'}
-        </text>
-        
-        {/* Retrograde indicator */}
-        {planet.retrograde && (
-          <text
-            x={8 * scale}
-            y={-8 * scale}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="#ef4444"
-            fontSize={10 * scale}
-            fontWeight="bold"
-          >
-            R
-          </text>
-        )}
-        
-        {/* Tooltip */}
-        {isHovered && !isSelected && (
-          <g transform={`translate(${x > centerX ? -180 : 20}, -50)`}>
-            <rect
-              x="0"
-              y="0"
-              width="180"
-              height="85"
-              rx="6"
-              fill="#0f172a"
-              stroke="#7c3aed"
-              strokeWidth="1"
-            />
-            <text x="90" y="18" textAnchor="middle" fill="#e2e8f0" fontSize={13} fontWeight="bold">
-              {planet.name}
-            </text>
-            <text x="90" y="35" textAnchor="middle" fill="#94a3b8" fontSize={11}>
-              {planet.sign} {Math.floor(planet.degree)}°{Math.floor((planet.degree % 1) * 60)}'
-            </text>
-            <text x="90" y="50" textAnchor="middle" fill="#94a3b8" fontSize={11}>
-              Casa {planet.house} • {getDignity(planet.name, planet.sign)}
-            </text>
-            <text x="90" y="65" textAnchor="middle" fill="#94a3b8" fontSize={10}>
-              {planet.speed > 0 ? `Rapidez: ${planet.speed.toFixed(2)}°/d` : ''}
-            </text>
-            <text x="90" y="78" textAnchor="middle" fill="#ef4444" fontSize={10}>
-              {planet.retrograde ? 'Retrógrado' : ''}
-            </text>
-          </g>
-        )}
-      </g>
-    );
-  });
-
-  // Linhas de aspectos
   const aspectLines = showAspects ? filteredAspects.slice(0, 15).map((aspect, index) => {
     const p1 = planetPositions.find(pp => pp.planet.name === aspect.planet1);
     const p2 = planetPositions.find(pp => pp.planet.name === aspect.planet2);
@@ -301,51 +282,48 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     const isFocused = hoveredPlanet || selectedPlanet;
 
     let strokeColor = '#64748b';
+    let strokeWidth = isFocused ? 2 : 1;
     switch (aspect.type) {
       case 'conjunction':
         strokeColor = '#fbbf24';
-        break;
+        break; 
       case 'trine':
-        strokeColor = '#22c55e';
+        strokeColor = '#3b82f6'; 
         break;
       case 'square':
-        strokeColor = '#ef4444';
+        strokeColor = '#ef4444'; 
         break;
       case 'opposition':
-        strokeColor = '#f97316';
+        strokeColor = '#ef4444'; 
+        strokeWidth = isFocused ? 2.5 : 1.5;
         break;
       case 'sextile':
-        strokeColor = '#3b82f6';
+        strokeColor = '#3b82f6'; 
         break;
     }
+
+    const x1 = CX + R_ASPECTS * Math.cos(p1.angle);
+    const y1 = CY + R_ASPECTS * Math.sin(p1.angle);
+    const x2 = CX + R_ASPECTS * Math.cos(p2.angle);
+    const y2 = CY + R_ASPECTS * Math.sin(p2.angle);
 
     return (
       <line
         key={`${aspect.planet1}-${aspect.planet2}-${index}`}
-        x1={p1.x}
-        y1={p1.y}
-        x2={p2.x}
-        y2={p2.y}
+        x1={x1} y1={y1} x2={x2} y2={y2}
         stroke={strokeColor}
-        strokeWidth={isFocused ? 2 : 1}
-        opacity={isFocused ? 0.8 : 0.3}
-        strokeDasharray={aspect.type === 'opposition' ? '5,3' : undefined}
+        strokeWidth={strokeWidth}
+        opacity={isFocused ? 0.9 : 0.4}
       />
     );
   }) : [];
 
-  // Get Sun sign for center
-  const sunSign = chart.planets.find(p => p.name === 'Sol')?.sign || '';
-  const sunSymbol = ZODIAC_SIGNS.find(s => s.name === sunSign)?.symbol || '☉';
-
   return (
-    <div ref={containerRef} className="w-full aspect-square max-w-[800px] mx-auto">
+    <div ref={containerRef} className="w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800">
       <svg
         ref={svgRef}
-        width={width}
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-full touch-none cursor-grab active:cursor-grabbing"
+        viewBox="0 0 800 800"
+        className="w-full h-full touch-none cursor-grab active:cursor-grabbing font-sans"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -353,77 +331,31 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         onWheel={handleWheel}
       >
         <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'center' }}>
-          {/* Fundo */}
-          <circle
-            cx={centerX}
-            cy={centerY}
-            r={outerRadius}
-            fill="#0f172a"
-            stroke="#7c3aed"
-            strokeWidth="2"
-          />
-
-          {/* Fatias do zodíaco */}
+          
+          <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
+          <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />
+          <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} fill="none" stroke="#7c3aed" strokeWidth="1.5" />
+          
           {zodiacSlices}
+          
+          <circle cx={CX} cy={CY} r={R_TICK_INNER} fill="none" stroke="#334155" strokeWidth="1" />
+          {degreeTicks}
 
-          {/* Círculo das casas */}
-          <circle
-            cx={centerX}
-            cy={centerY}
-            r={houseRadius}
-            fill="none"
-            stroke="#7c3aed"
-            strokeWidth="1"
-            opacity="0.3"
-          />
-
-          {/* Linhas de casas */}
-          {houseLines}
-
-          {/* Linhas de aspectos */}
+          <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
+          
+          {houseElements}
           {aspectLines}
-
-          {/* Círculo interno */}
-          <circle
-            cx={centerX}
-            cy={centerY}
-            r={innerRadius}
-            fill="#1e293b"
-            stroke="#7c3aed"
-            strokeWidth="1"
-            opacity="0.8"
-          />
-
-          {/* Planetas */}
           {planetElements}
-
-          {/* Centro com símbolo do signo solar */}
-          <circle
-            cx={centerX}
-            cy={centerY}
-            r={25 * scale}
-            fill="#1e293b"
-            stroke="#fbbf24"
-            strokeWidth="2"
-          />
-          <text
-            x={centerX}
-            y={centerY}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            fill="#fbbf24"
-            fontSize={20 * scale}
-            className="select-none"
-          >
-            {sunSymbol}
-          </text>
+          
+          <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
+          <line x1={CX - 8} y1={CY} x2={CX + 8} y2={CY} stroke="#64748b" strokeWidth="2" />
+          <line x1={CX} y1={CY - 8} x2={CX} y2={CY + 8} stroke="#64748b" strokeWidth="2" />
         </g>
       </svg>
 
-      {/* Controles */}
       <div className="mt-4 flex flex-col items-center gap-3">
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-300">
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
             <input
               type="checkbox"
               checked={showAspects}
@@ -433,60 +365,24 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
             Mostrar aspectos
           </label>
           
-          <button
-            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
-            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            Resetar Visualização
+          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-xs text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-full">
+            Resetar Visão
           </button>
           
           {selectedPlanet && (
-            <button
-              onClick={() => setSelectedPlanet(null)}
-              className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
-            >
-              Limpar seleção ({selectedPlanet})
+            <button onClick={() => setSelectedPlanet(null)} className="text-xs text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-3 py-1.5 rounded-full">
+              Limpar foco ({selectedPlanet})
             </button>
           )}
         </div>
 
-        {/* Legenda de aspectos */}
         {showAspects && (
-          <div className="flex flex-wrap justify-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-yellow-400"></span>
-              Conjunção
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-green-500"></span>
-              Trígono
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-red-500"></span>
-              Quadratura
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-orange-500"></span>
-              Oposição
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-4 h-0.5 bg-blue-500"></span>
-              Sextil
-            </span>
+          <div className="flex flex-wrap justify-center gap-4 text-xs font-medium text-slate-300 bg-slate-800/50 px-4 py-2 rounded-xl">
+            <span className="flex items-center gap-2"><span className="w-4 h-0.5 bg-yellow-400"></span>Conjunção</span>
+            <span className="flex items-center gap-2"><span className="w-4 h-0.5 bg-blue-500"></span>Trígono / Sextil</span>
+            <span className="flex items-center gap-2"><span className="w-4 h-0.5 bg-red-500"></span>Quadratura / Oposição</span>
           </div>
         )}
-
-        {/* Legenda de casas */}
-        <div className="flex flex-wrap justify-center gap-3 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 border-2 border-yellow-400 rounded-full"></span>
-            Ascendente (Casa 1)
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 border-2 border-green-500 rounded-full"></span>
-            Meio do Céu (Casa 10)
-          </span>
-        </div>
       </div>
     </div>
   );
