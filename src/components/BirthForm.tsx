@@ -171,6 +171,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
           {/* Resultados da busca */}
           {showResults && searchResults.length > 0 && createPortal(
+            // eslint-disable-next-line
             <div style={dropdownStyle} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto touch-auto">
               {searchResults.map((result, index) => (
                 <button
@@ -190,6 +191,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
           )}
 
           {showResults && searchResults.length === 0 && !isSearching && createPortal(
+            // eslint-disable-next-line
             <div style={dropdownStyle} className="z-[9999] bg-slate-900 border border-purple-500/30 rounded-lg shadow-xl p-4">
               <p className="text-sm text-slate-400">Nenhum local encontrado</p>
             </div>,
