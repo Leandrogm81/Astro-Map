@@ -50,33 +50,64 @@ export function getElementColor(element: 'fire' | 'earth' | 'air' | 'water'): st
 }
 
 export function getDignity(planet: string, sign: ZodiacSign): string {
-  // Dignidades planetárias clássicas
-  const dignities: Record<string, ZodiacSign[]> = {
-    sun: ['Leão'],
-    moon: ['Câncer'],
-    mercury: ['Gêmeos', 'Virgem'],
-    venus: ['Touro', 'Libra'],
-    mars: ['Áries', 'Escorpião'],
-    jupiter: ['Sagitário', 'Peixes'],
-    saturn: ['Capricórnio', 'Aquário'],
-    uranus: ['Aquário'],
-    neptune: ['Peixes'],
-    pluto: ['Escorpião'],
+  // Traduzir para chaves internas simplificadas se vier em português
+  const p = planet.toLowerCase();
+  
+  // Domicílios
+  const dom: Record<string, ZodiacSign[]> = {
+    'sol': ['Leão'],
+    'lua': ['Câncer'],
+    'mercúrio': ['Gêmeos', 'Virgem'],
+    'vênus': ['Touro', 'Libra'],
+    'marte': ['Áries', 'Escorpião'],
+    'júpiter': ['Sagitário', 'Peixes'],
+    'saturno': ['Capricórnio', 'Aquário'],
+    'urano': ['Aquário'], // Moderno
+    'netuno': ['Peixes'], // Moderno
+    'plutão': ['Escorpião'], // Moderno
   };
 
-  const fall: Record<string, ZodiacSign[]> = {
-    sun: ['Aquário'],
-    moon: ['Capricórnio'],
-    mercury: ['Sagitário', 'Peixes'],
-    venus: ['Áries', 'Escorpião'],
-    mars: ['Libra', 'Touro'],
-    jupiter: ['Gêmeos', 'Virgem'],
-    saturn: ['Câncer', 'Leão'],
+  // Exílio (Oposto do Domicílio)
+  const exilio: Record<string, ZodiacSign[]> = {
+    'sol': ['Aquário'],
+    'lua': ['Capricórnio'],
+    'mercúrio': ['Sagitário', 'Peixes'],
+    'vênus': ['Escorpião', 'Áries'],
+    'marte': ['Libra', 'Touro'],
+    'júpiter': ['Gêmeos', 'Virgem'],
+    'saturno': ['Câncer', 'Leão'],
+    'urano': ['Leão'],
+    'netuno': ['Virgem'],
+    'plutão': ['Touro'],
   };
 
-  if (dignities[planet]?.includes(sign)) return 'domicílio';
-  if (fall[planet]?.includes(sign)) return 'queda';
-  return 'neutro';
+  // Exaltações
+  const exaltacao: Record<string, ZodiacSign[]> = {
+    'sol': ['Áries'],
+    'lua': ['Touro'],
+    'mercúrio': ['Virgem'],
+    'vênus': ['Peixes'],
+    'marte': ['Capricórnio'],
+    'júpiter': ['Câncer'],
+    'saturno': ['Libra'],
+  };
+
+  // Queda (Oposto da exaltação)
+  const queda: Record<string, ZodiacSign[]> = {
+    'sol': ['Libra'],
+    'lua': ['Escorpião'],
+    'mercúrio': ['Peixes'],
+    'vênus': ['Virgem'],
+    'marte': ['Câncer'],
+    'júpiter': ['Capricórnio'],
+    'saturno': ['Áries'],
+  };
+
+  if (dom[p]?.includes(sign)) return 'Domicílio';
+  if (exaltacao[p]?.includes(sign)) return 'Exaltação';
+  if (exilio[p]?.includes(sign)) return 'Exílio';
+  if (queda[p]?.includes(sign)) return 'Queda';
+  return 'Neutro / Peregrino';
 }
 
 export function calculateAspectType(angle: number): { type: string; exactAngle: number } | null {

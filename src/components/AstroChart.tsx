@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS, PLANETS } from '@/types';
-import { getElementColor } from '@/lib/astrology';
+import { getElementColor, getDignity } from '@/lib/astrology';
 
 interface AstroChartProps {
   chart: NatalChart;
@@ -17,6 +17,33 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
   const [showAspects, setShowAspects] = useState(true);
+
+  // Zoom and Pan states
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!isDragging) return;
+    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
+    const scaleAmount = -e.deltaY * 0.001;
+    let newZoom = zoom * (1 + scaleAmount);
+    newZoom = Math.max(0.5, Math.min(newZoom, 5));
+    setZoom(newZoom);
+  };
 
   // ResizeObserver for responsiveness
   useEffect(() => {
@@ -232,28 +259,31 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         
         {/* Tooltip */}
         {isHovered && !isSelected && (
-          <g transform={`translate(${x > centerX ? -160 : 20}, -40)`}>
+          <g transform={`translate(${x > centerX ? -180 : 20}, -50)`}>
             <rect
               x="0"
               y="0"
-              width="150"
-              height="70"
+              width="180"
+              height="85"
               rx="6"
               fill="#0f172a"
               stroke="#7c3aed"
               strokeWidth="1"
             />
-            <text x="75" y="18" textAnchor="middle" fill="#e2e8f0" fontSize={13} fontWeight="bold">
+            <text x="90" y="18" textAnchor="middle" fill="#e2e8f0" fontSize={13} fontWeight="bold">
               {planet.name}
             </text>
-            <text x="75" y="35" textAnchor="middle" fill="#94a3b8" fontSize={11}>
+            <text x="90" y="35" textAnchor="middle" fill="#94a3b8" fontSize={11}>
               {planet.sign} {Math.floor(planet.degree)}°{Math.floor((planet.degree % 1) * 60)}'
             </text>
-            <text x="75" y="50" textAnchor="middle" fill="#94a3b8" fontSize={11}>
-              Casa {planet.house}
+            <text x="90" y="50" textAnchor="middle" fill="#94a3b8" fontSize={11}>
+              Casa {planet.house} • {getDignity(planet.name, planet.sign)}
             </text>
-            <text x="75" y="63" textAnchor="middle" fill="#94a3b8" fontSize={10}>
-              {planet.retrograde ? 'Retrógrado • Direto em breve' : 'Direto'}
+            <text x="90" y="65" textAnchor="middle" fill="#94a3b8" fontSize={10}>
+              {planet.speed > 0 ? `Rapidez: ${planet.speed.toFixed(2)}°/d` : ''}
+            </text>
+            <text x="90" y="78" textAnchor="middle" fill="#ef4444" fontSize={10}>
+              {planet.retrograde ? 'Retrógrado' : ''}
             </text>
           </g>
         )}
@@ -315,72 +345,79 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        className="w-full h-full"
+        className="w-full h-full touch-none cursor-grab active:cursor-grabbing"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onWheel={handleWheel}
       >
-        {/* Fundo */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={outerRadius}
-          fill="#0f172a"
-          stroke="#7c3aed"
-          strokeWidth="2"
-        />
+        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: 'center' }}>
+          {/* Fundo */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={outerRadius}
+            fill="#0f172a"
+            stroke="#7c3aed"
+            strokeWidth="2"
+          />
 
-        {/* Fatias do zodíaco */}
-        {zodiacSlices}
+          {/* Fatias do zodíaco */}
+          {zodiacSlices}
 
-        {/* Círculo das casas */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={houseRadius}
-          fill="none"
-          stroke="#7c3aed"
-          strokeWidth="1"
-          opacity="0.3"
-        />
+          {/* Círculo das casas */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={houseRadius}
+            fill="none"
+            stroke="#7c3aed"
+            strokeWidth="1"
+            opacity="0.3"
+          />
 
-        {/* Linhas de casas */}
-        {houseLines}
+          {/* Linhas de casas */}
+          {houseLines}
 
-        {/* Linhas de aspectos */}
-        {aspectLines}
+          {/* Linhas de aspectos */}
+          {aspectLines}
 
-        {/* Círculo interno */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={innerRadius}
-          fill="#1e293b"
-          stroke="#7c3aed"
-          strokeWidth="1"
-          opacity="0.8"
-        />
+          {/* Círculo interno */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={innerRadius}
+            fill="#1e293b"
+            stroke="#7c3aed"
+            strokeWidth="1"
+            opacity="0.8"
+          />
 
-        {/* Planetas */}
-        {planetElements}
+          {/* Planetas */}
+          {planetElements}
 
-        {/* Centro com símbolo do signo solar */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={25 * scale}
-          fill="#1e293b"
-          stroke="#fbbf24"
-          strokeWidth="2"
-        />
-        <text
-          x={centerX}
-          y={centerY}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="#fbbf24"
-          fontSize={20 * scale}
-          className="select-none"
-        >
-          {sunSymbol}
-        </text>
+          {/* Centro com símbolo do signo solar */}
+          <circle
+            cx={centerX}
+            cy={centerY}
+            r={25 * scale}
+            fill="#1e293b"
+            stroke="#fbbf24"
+            strokeWidth="2"
+          />
+          <text
+            x={centerX}
+            y={centerY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="#fbbf24"
+            fontSize={20 * scale}
+            className="select-none"
+          >
+            {sunSymbol}
+          </text>
+        </g>
       </svg>
 
       {/* Controles */}
@@ -395,6 +432,13 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
             />
             Mostrar aspectos
           </label>
+          
+          <button
+            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Resetar Visualização
+          </button>
           
           {selectedPlanet && (
             <button
