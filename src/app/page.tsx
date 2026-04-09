@@ -17,10 +17,10 @@ import Image from 'next/image';
 import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save } from 'lucide-react';
 
 function isValidChart(chart: unknown): chart is NatalChart {
-  const c = chart as any;
+  if (!chart || typeof chart !== 'object') return false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const c = chart as Record<string, any>;
   return (
-    c &&
-    typeof c === 'object' &&
     c.birthData &&
     typeof c.birthData === 'object' &&
     c.birthData.name &&
@@ -73,7 +73,6 @@ export default function Home() {
       
       setChart(calculatedChart);
       setAiReport(null);
-      setSolarReport(null);
       setSolarRevolution(null);
       setSolarYear(undefined);
       
