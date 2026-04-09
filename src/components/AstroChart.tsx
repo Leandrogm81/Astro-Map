@@ -11,6 +11,7 @@ interface AstroChartProps {
 export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const chartGroupRef = useRef<SVGGElement>(null);
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
   const [showAspects, setShowAspects] = useState(true);
@@ -41,6 +42,12 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     newZoom = Math.max(0.5, Math.min(newZoom, 5));
     setZoom(newZoom);
   };
+
+  useEffect(() => {
+    if (chartGroupRef.current) {
+      chartGroupRef.current.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+    }
+  }, [pan, zoom]);
 
   // Notify parent when chart is ready
   useEffect(() => {
@@ -335,7 +342,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         onPointerLeave={handlePointerUp}
         onWheel={handleWheel}
       >
-        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }} className="origin-center">
+        <g ref={chartGroupRef} className="origin-center">
           
           <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
           <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />
@@ -351,6 +358,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
           {houseElements}
           {aspectLines}
           {planetElements}
+          {tooltipElement}
           
           <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
           <line x1={CX - 8} y1={CY} x2={CX + 8} y2={CY} stroke="#64748b" strokeWidth="2" />

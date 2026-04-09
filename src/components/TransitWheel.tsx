@@ -14,6 +14,7 @@ interface TransitWheelProps {
 export default function TransitWheel({ natalChart, transitChart, onChartReady }: TransitWheelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const chartGroupRef = useRef<SVGGElement>(null);
   
   // Interactions
   const [hoveredPlanet, setHoveredPlanet] = useState<{name: string, isTransit: boolean} | null>(null);
@@ -44,6 +45,12 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
     newZoom = Math.max(0.5, Math.min(newZoom, 5));
     setZoom(newZoom);
   };
+
+  useEffect(() => {
+    if (chartGroupRef.current) {
+      chartGroupRef.current.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+    }
+  }, [pan, zoom]);
 
   useEffect(() => {
     if (svgRef.current && onChartReady) {
@@ -350,7 +357,7 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
         onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onWheel={handleWheel}
       >
-        <g style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }} className="origin-center">
+        <g ref={chartGroupRef} className="origin-center">
           
           <circle cx={CX} cy={CY} r={R_TRANSIT_OUTER} fill="#0f172a" />
           
