@@ -132,7 +132,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
           {/* Resultados da busca */}
           {showResults && searchResults.length > 0 && (
-            <div className="absolute z-10 w-full mt-2 bg-slate-900 border border-purple-500/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+            <div className="absolute z-20 w-full mt-2 bg-slate-900 border border-purple-500/30 rounded-lg shadow-2xl max-h-60 overflow-y-auto touch-auto">
               {searchResults.map((result, index) => (
                 <button
                   key={index}
@@ -140,8 +140,8 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
                   onClick={() => handleSelectLocation(result)}
                   className="w-full px-4 py-3 text-left hover:bg-purple-500/20 transition-colors border-b border-purple-500/10 last:border-0"
                 >
-                  <p className="text-sm text-white">{result.display_name}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm text-white whitespace-normal break-words leading-snug">{result.display_name}</p>
+                  <p className="text-xs text-slate-400 mt-1">
                     {result.lat.toFixed(4)}°, {result.lon.toFixed(4)}°
                   </p>
                 </button>
