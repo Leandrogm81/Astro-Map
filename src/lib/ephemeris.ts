@@ -132,101 +132,83 @@ function getMC(LST: number, obliquity: number): number {
   return mc;
 }
 
-// Calculate Placidus House cusps
+// Calculate Placidus House cusps using the iterative method
 function calculatePlacidusHouses(jd: number, latitude: number, longitude: number): HouseCusp[] {
   const LST = getLST(jd, longitude);
   const obliquity = getObliquity(jd);
   
-  // Calculate Ascendant and MC
   const ascendant = getAscendant(LST, latitude, obliquity);
   const MC = getMC(LST, obliquity);
-  
-  const houses: HouseCusp[] = [];
-  
-  // House 1 = Ascendant
-  // House 10 = MC
-  // House 4 = IC (opposite of MC)
-  // House 7 = DESC (opposite of Ascendant)
   
   const IC = (MC + 180) % 360;
   const DESC = (ascendant + 180) % 360;
   
-  // For Placidus, we need to calculate the times when points on the ecliptic
-  // reach certain house divisions. This is complex and requires iterative solutions.
-  // 
-  // A simplified but more accurate approach:
-  // House cusps 11 and 12 are between MC and ASC (above horizon)
-  // House cusps 2 and 3 are between ASC and IC (below horizon)
-  // House cusps 5 and 6 are between IC and DESC (below horizon)
-  // House cusps 8 and 9 are between DESC and MC (above horizon)
+  // Placidus iterative solver
+  const DEG2RAD = Math.PI / 180;
+  const RAD2DEG = 180 / Math.PI;
+  const oblRad = obliquity * DEG2RAD;
+  const latRad = latitude * DEG2RAD;
+  const ramcRad = LST * DEG2RAD;
   
-  // We calculate these by interpolation in the ecliptic, adjusted for latitude
+  // X = tan(lat) * tan(obliquity)
+  const X = Math.tan(latRad) * Math.tan(oblRad);
   
-  // Calculate House 11 and 12
-  // These are calculated by finding points that have the same RAMC ratio
-  // House 11 is at 1/3 of the distance from MC to ASC
-  // House 12 is at 2/3 of the distance from MC to ASC
+  const solveIterativeCusp = (D_deg: number, F: number): number => {
+    let R = ramcRad + D_deg * DEG2RAD;
+    let prev_R = 0;
+    
+    // Iterate to find Right Ascension of house cusp
+    for (let i = 0; i < 100; i++) {
+      let sinA = X * Math.sin(R);
+      // Fallback for Polar regions (Porphyry-like approximation)
+      if (Math.abs(sinA) > 1) {
+        sinA = Math.sign(sinA); 
+      }
+      const A = Math.asin(sinA);
+      
+      prev_R = R;
+      R = ramcRad + D_deg * DEG2RAD + A * F;
+      
+      if (Math.abs(R - prev_R) < 1e-6) break;
+    }
+    
+    // Convert Right Ascension to Ecliptic Longitude
+    let lonRad = Math.atan2(Math.sin(R) / Math.cos(oblRad), Math.cos(R));
+    let lonDeg = lonRad * RAD2DEG;
+    return ((lonDeg % 360) + 360) % 360;
+  };
+
+  const cusp11 = solveIterativeCusp(30, 1/3);
+  const cusp12 = solveIterativeCusp(60, 2/3);
+  const cusp2 = solveIterativeCusp(120, 2/3);
+  const cusp3 = solveIterativeCusp(150, 1/3);
   
-  const mcToAsc = ((ascendant - MC + 360) % 360);
-  
-  // House 11
-  const cusp11 = (MC + mcToAsc / 3) % 360;
-  
-  // House 12
-  const cusp12 = (MC + 2 * mcToAsc / 3) % 360;
-  
-  // House 2 and 3 (between ASC and IC, going through the bottom of the chart)
-  const ascToIc = ((IC - ascendant + 360) % 360);
-  
-  // House 2
-  const cusp2 = (ascendant + ascToIc / 3) % 360;
-  
-  // House 3
-  const cusp3 = (ascendant + 2 * ascToIc / 3) % 360;
-  
-  // House 5 and 6 (between IC and DESC)
-  const icToDesc = ((DESC - IC + 360) % 360);
-  
-  // House 5
-  const cusp5 = (IC + icToDesc / 3) % 360;
-  
-  // House 6
-  const cusp6 = (IC + 2 * icToDesc / 3) % 360;
-  
-  // House 8 and 9 (between DESC and MC)
-  const descToMc = ((MC - DESC + 360) % 360);
-  
-  // House 8
-  const cusp8 = (DESC + descToMc / 3) % 360;
-  
-  // House 9
-  const cusp9 = (DESC + 2 * descToMc / 3) % 360;
-  
-  // Build the houses array (cusps 1-12)
-  // House 1 = ASC, House 2, House 3, House 4 = IC, House 5, House 6,
-  // House 7 = DESC, House 8, House 9, House 10 = MC, House 11, House 12
+  const cusp5 = (cusp11 + 180) % 360;
+  const cusp6 = (cusp12 + 180) % 360;
+  const cusp8 = (cusp2 + 180) % 360;
+  const cusp9 = (cusp3 + 180) % 360;
+
   const cuspArray = [
-    ascendant, // House 1
-    cusp2,      // House 2
-    cusp3,      // House 3
-    IC,         // House 4
-    cusp5,      // House 5
-    cusp6,      // House 6
-    DESC,       // House 7
-    cusp8,      // House 8
-    cusp9,      // House 9
-    MC,         // House 10
-    cusp11,     // House 11
-    cusp12,     // House 12
+    ascendant, // 1
+    cusp2,     // 2
+    cusp3,     // 3
+    IC,        // 4
+    cusp5,     // 5
+    cusp6,     // 6
+    DESC,      // 7
+    cusp8,     // 8
+    cusp9,     // 9
+    MC,        // 10
+    cusp11,    // 11
+    cusp12,    // 12
   ];
   
+  const houses: HouseCusp[] = [];
   for (let i = 0; i < 12; i++) {
     let cusp = cuspArray[i];
     if (isNaN(cusp)) {
       cusp = (ascendant + i * 30) % 360;
     }
-    cusp = ((cusp % 360) + 360) % 360;
-    
     houses.push({
       number: i + 1,
       longitude: cusp,
