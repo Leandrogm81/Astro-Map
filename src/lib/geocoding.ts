@@ -14,6 +14,7 @@ export async function geocodeLocation(query: string): Promise<GeocodingResult[]>
       limit: '5',
       addressdetails: '1',
       'accept-language': 'pt-BR',
+      countrycodes: 'br', // Filtra resultados para o Brasil
     });
 
     const response = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {

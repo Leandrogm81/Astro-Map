@@ -27,6 +27,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
   const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isEditingCoords, setIsEditingCoords] = useState(false); // Novo estado
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [dropdownStyle, setDropdownStyle] = useState({});
 
@@ -176,15 +177,45 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
         </div>
 
         {/* Coordenadas selecionadas */}
-        {formData.latitude !== 0 && formData.longitude !== 0 && (
+        {(formData.latitude !== 0 || formData.longitude !== 0) && (
           <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-            <p className="text-sm text-purple-200">
-              <MapPin className="inline w-4 h-4 mr-2" />
-              Coordenadas selecionadas:
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              Latitude: {formData.latitude.toFixed(4)}° | Longitude: {formData.longitude.toFixed(4)}°
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-purple-200">
+                <MapPin className="inline w-4 h-4 mr-2" />
+                Coordenadas:
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsEditingCoords(!isEditingCoords)}
+                className="text-xs text-purple-400 hover:text-purple-300 underline"
+              >
+                {isEditingCoords ? 'Salvar' : 'Editar manualmente'}
+              </button>
+            </div>
+            {isEditingCoords ? (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={formData.latitude}
+                  onChange={(e) => setFormData(prev => ({ ...prev, latitude: parseFloat(e.target.value) || 0 }))}
+                  className="flex-1 px-2 py-1 bg-slate-900 border border-purple-500/30 rounded text-sm text-white"
+                  placeholder="Lat"
+                />
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={formData.longitude}
+                  onChange={(e) => setFormData(prev => ({ ...prev, longitude: parseFloat(e.target.value) || 0 }))}
+                  className="flex-1 px-2 py-1 bg-slate-900 border border-purple-500/30 rounded text-sm text-white"
+                  placeholder="Lon"
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1">
+                Latitude: {formData.latitude.toFixed(4)}° | Longitude: {formData.longitude.toFixed(4)}°
+              </p>
+            )}
           </div>
         )}
       </div>
