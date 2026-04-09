@@ -10,7 +10,7 @@ import type {
 } from '@/types';
 import { PLANETS, ZODIAC_SIGNS } from '@/types';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from './astrology';
-import { getBrazilianTimezone } from './geocoding';
+import { getBrazilianTimezone, getTimezoneOffsetForDate, isBrazilianDST as isBrazilianDSTCheck } from './geocoding';
 
 import * as Astronomy from 'astronomy-engine';
 
@@ -79,7 +79,7 @@ function getLST(jd: number, longitude: number): number {
 }
 
 // Calculate Ascendant using correct formula
-// For the southern hemisphere, we need to add 180° to get the correct Ascendant
+// The standard formula works for both hemispheres - latitude sign handles the difference
 function getAscendant(LST: number, latitude: number, obliquity: number): number {
   const RAMC = LST;
   
@@ -93,17 +93,13 @@ function getAscendant(LST: number, latitude: number, obliquity: number): number 
   const cosObl = Math.cos(oblRad);
   const tanLat = Math.tan(latRad);
   
-  const y = -cosRAMC;
-  const x = sinRAMC * cosObl + tanLat * sinObl;
+  const y = sinRAMC * cosObl + tanLat * sinObl;
+  const x = -cosRAMC;
   
-  let ascRad = Math.atan2(y, x);
+  let ascRad = Math.atan2(x, y);
   let asc = ascRad * 180 / Math.PI;
   
-  // For southern hemisphere (negative latitude), add 180° to get correct Ascendant
-  if (latitude < 0) {
-    asc = (asc + 180) % 360;
-  }
-  
+  // Normalize to 0-360
   asc = ((asc % 360) + 360) % 360;
   
   return asc;
@@ -387,29 +383,30 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const latitude = birthData.latitude > 0 && birthData.latitude < 90 ? -birthData.latitude : birthData.latitude;
   const longitude = birthData.longitude > 0 && birthData.longitude < 180 ? -birthData.longitude : birthData.longitude;
   
-  // Get timezone offset (in hours)
-  // Use standard timezone for Brazil (no DST correction)
-  // In astrology, the birth time is the local time as recorded on the birth certificate
-  // We use the standard timezone offset to convert to UTC
-  let timezoneOffset = parseTimezoneOffset(birthData.timezone || '');
+  // Determine timezone offset with DST detection
+  const birthDateForDST = new Date(year, month - 1, day, hours, minutes);
+  const dstTimezone = getTimezoneOffsetForDate(latitude, longitude, birthDateForDST);
+  const dstOffset = parseTimezoneOffset(dstTimezone);
   
-  // If no timezone set, calculate from longitude using Brazilian timezone map
-  if (timezoneOffset === 0 && birthData.longitude !== 0) {
-    timezoneOffset = getBrazilianTimezone(longitude);
-  }
+  // Always use DST-aware timezone
+  // In astrology, the birth time on the certificate is the local clock time
+  // which includes DST if it was in effect at the time of birth
+  const timezoneOffset = dstOffset;
   
   // Convert local time to UTC
   // UTC = local_time - timezone_offset
-  // For UTC-3 (timezoneOffset = -3): UTC = local - (-3) = local + 3
+  // For UTC-2 (DST, timezoneOffset = -2): UTC = local - (-2) = local + 2
+  // For UTC-3 (standard, timezoneOffset = -3): UTC = local - (-3) = local + 3
   const utcHours = hours - timezoneOffset;
   
   console.log('Debug:', {
     localTime: `${hours}:${minutes}`,
-    timezone: birthData.timezone,
+    timezone: dstTimezone,
     timezoneOffset,
     utcTime: `${Math.floor(utcHours)}:${minutes}`,
     latitude,
     longitude,
+    isDST: isBrazilianDSTCheck(birthDateForDST),
   });
   
   const birthDate = new Date(Date.UTC(year, month - 1, day, Math.floor(utcHours), minutes));
