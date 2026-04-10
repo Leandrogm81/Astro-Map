@@ -21,7 +21,6 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
   const [error, setError] = useState<string | null>(null);
   const [reportText, setReportText] = useState<string>('');
   const [generatingReport, setGeneratingReport] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
   // Carregar relatório salvo ao mudar de mapa/ano
   useEffect(() => {
@@ -39,15 +38,16 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
     }
   }, [reportText, onReportUpdated]);
 
-  const calculateRevolution = useCallback(async () => {
+  const calculateRevolution = useCallback(async (targetYear?: number) => {
+    const calcYear = targetYear ?? year;
     setLoading(true);
     setError(null);
 
     try {
-      const result = await calculateSolarReturn(natalChart, year);
+      const result = await calculateSolarReturn(natalChart, calcYear);
       setSolarReturn(result);
       if (onRevolutionCalculated) {
-        onRevolutionCalculated(result, year);
+        onRevolutionCalculated(result, calcYear);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao calcular revolução solar');
@@ -56,12 +56,11 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
     }
   }, [natalChart, year, onRevolutionCalculated]);
 
+  // Calcular automaticamente quando o mapa natal mudar ou o ano mudar
   useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
-      calculateRevolution();
-    }
-  }, [initialized, calculateRevolution]);
+    calculateRevolution();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [natalChart]);
 
   const handleGenerateReport = async () => {
     if (!solarReturn) return;
@@ -145,7 +144,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
         
         <div className="flex items-center gap-1 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
           <button
-            onClick={() => { setYear(y => y - 1); calculateRevolution(); }}
+            onClick={() => { const newYear = year - 1; setYear(newYear); calculateRevolution(newYear); }}
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
@@ -155,7 +154,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
             {year}
           </span>
           <button
-            onClick={() => { setYear(y => y + 1); calculateRevolution(); }}
+            onClick={() => { const newYear = year + 1; setYear(newYear); calculateRevolution(newYear); }}
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
