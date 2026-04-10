@@ -157,6 +157,14 @@ body::before {
 .bg-element-soft { background-color: rgba(var(--el-rgb), 0.1); }
 .border-element-soft { border-color: rgba(var(--el-rgb), 0.2); }
 
+/* Aspect Utility Classes */
+.aspect-conjuncao { color: #fbbf24; }
+.aspect-sextil { color: #3b82f6; }
+.aspect-quadratura { color: #ef4444; }
+.aspect-trigono { color: #22c55e; }
+.aspect-oposicao { color: #f97316; }
+.aspect-neutral { color: #64748b; }
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

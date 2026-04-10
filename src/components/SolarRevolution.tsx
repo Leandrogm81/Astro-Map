@@ -45,11 +45,15 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
     return symbols[type] || '◦';
   };
 
-  const getAspectColor = (type: string): string => {
-    const colors: Record<string, string> = {
-      'conjunção': '#fbbf24', 'sextil': '#3b82f6', 'quadratura': '#ef4444', 'trígono': '#22c55e', 'oposição': '#f97316'
+  const getAspectClass = (type: string): string => {
+    const classes: Record<string, string> = {
+      'conjunção': 'aspect-conjuncao',
+      'sextil': 'aspect-sextil',
+      'quadratura': 'aspect-quadratura',
+      'trígono': 'aspect-trigono',
+      'oposição': 'aspect-oposicao'
     };
-    return colors[type] || '#64748b';
+    return classes[type] || 'aspect-neutral';
   };
 
   // Funções de análise
@@ -296,7 +300,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
                       <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                          <div className="flex items-center gap-4">
                             <span className="text-sm font-bold text-white min-w-[70px]">{aspect.planet1} (RS)</span>
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border border-white/5" style={{ color: getAspectColor(aspect.type) }}>
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border border-white/5 ${getAspectClass(aspect.type)}`}>
                                <span className="text-xl">{getAspectSymbol(aspect.type)}</span>
                             </div>
                             <span className="text-sm font-bold text-slate-300 min-w-[70px]">{aspect.planet2} (Natal)</span>

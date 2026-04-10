@@ -1,4 +1,6 @@
-import { ZODIAC_SIGNS, ZodiacSign, PlanetPosition, HouseCusp } from '@/types';
+export { ZODIAC_SIGNS } from '@/types';
+import { ZodiacSign, PlanetPosition, HouseCusp } from '@/types';
+import { ZODIAC_SIGNS } from '@/types';
 
 export function getZodiacSign(longitude: number): ZodiacSign {
   const normalized = longitude % 360;
