@@ -139,6 +139,7 @@ export default function Home() {
       setSavedChartId(savedChart.id);
       setEditingChartId(null);
       setInitialFormData(undefined);
+      setSidebarVisible(false); // Esconde a sidebar ao selecionar um mapa
       setError(null);
     } else {
       setError('Dados do mapa astral inválidos ou corrompidos');
@@ -358,7 +359,7 @@ export default function Home() {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-3 p-1 bg-slate-900/40 rounded-2xl border border-white/5">
+                <div className="sticky top-[56px] z-40 flex flex-wrap gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20">
                   {[
                     { id: 'chart', label: 'Mapa', icon: Star },
                     { id: 'houses', label: 'Casas', icon: Moon },
