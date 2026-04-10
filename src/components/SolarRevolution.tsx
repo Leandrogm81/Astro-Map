@@ -344,22 +344,22 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
                 <Compass className="w-5 h-5 text-purple-400" />
                 Estrutura de Casas da Revolução Solar
              </h4>
-             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {solarReturn.housesPlacidus.map((house, i) => {
                    const planetInHouse = solarReturn.planets.filter(p => p.house === house.number);
                    return (
-                      <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all">
-                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-black text-slate-500 uppercase">Casa {house.number}</span>
-                            <span className="text-[10px] font-bold text-purple-400">{house.sign}</span>
+                      <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all min-h-[140px] flex flex-col overflow-hidden">
+                         <div className="mb-2">
+                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Casa {house.number}</span>
+                            <span className="text-[10px] font-bold text-purple-400 block truncate">{house.sign}</span>
                          </div>
-                         <p className="text-sm font-bold text-white mb-1 font-serif">{HOUSE_MEANINGS[house.number].title}</p>
-                         <div className="flex flex-wrap gap-1 mt-2 min-h-[1.5rem]">
+                         <p className="text-sm font-bold text-white mb-1 font-serif truncate">{HOUSE_MEANINGS[house.number].title}</p>
+                         <div className="flex flex-wrap gap-1 mt-auto py-2 max-h-[2.5rem] overflow-hidden">
                             {planetInHouse.map(p => (
-                               <span key={p.name} title={p.name} className="text-lg leading-none">{p.symbol}</span>
+                               <span key={p.name} title={p.name} className="text-xl leading-none">{p.symbol}</span>
                             ))}
                          </div>
-                         <p className="text-[9px] text-slate-500 mt-2 leading-tight uppercase tracking-tighter">{HOUSE_MEANINGS[house.number].area}</p>
+                         <p className="text-[9px] text-slate-500 mt-2 leading-tight uppercase tracking-tighter line-clamp-2">{HOUSE_MEANINGS[house.number].area}</p>
                       </div>
                    );
                 })}
