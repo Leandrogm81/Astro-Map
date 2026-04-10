@@ -24,61 +24,85 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const pointers = useRef<Map<number, { x: number, y: number }>>(new Map());
-  const initialPinchDist = useRef<number | null>(null);
-  const initialPinchZoom = useRef<number | null>(null);
+  const initialDist = useRef<number>(0);
+  const initialZoom = useRef<number>(1);
+  const initialPan = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+  const initialMid = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
 
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
     if (e.target instanceof Element) {
       e.target.setPointerCapture(e.pointerId);
     }
-    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const clientPos = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, clientPos);
 
     if (pointers.current.size === 1) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     } else if (pointers.current.size === 2) {
-      setIsDragging(false); // disable panning when pinching
+      setIsDragging(false);
       const pts = Array.from(pointers.current.values());
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      initialPinchDist.current = dist;
-      initialPinchZoom.current = zoom;
+      initialDist.current = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      initialZoom.current = zoom;
+      initialPan.current = { ...pan };
+      initialMid.current = {
+        x: (pts[0].x + pts[1].x) / 2,
+        y: (pts[0].y + pts[1].y) / 2
+      };
     }
   };
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!pointers.current.has(e.pointerId)) return;
-    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const clientPos = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, clientPos);
 
     if (pointers.current.size === 1 && isDragging) {
-      setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
-    } else if (pointers.current.size === 2 && initialPinchDist.current && initialPinchZoom.current) {
+      // Direct update for better sensitivity
+      const newPan = { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y };
+      setPan(newPan);
+    } else if (pointers.current.size === 2 && initialDist.current > 0) {
       const pts = Array.from(pointers.current.values());
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      const scale = dist / initialPinchDist.current;
-      let newZoom = initialPinchZoom.current * scale;
-      newZoom = Math.max(0.5, Math.min(newZoom, 5));
+      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const currentMid = {
+        x: (pts[0].x + pts[1].x) / 2,
+        y: (pts[0].y + pts[1].y) / 2
+      };
+
+      const scale = currentDist / initialDist.current;
+      const newZoom = Math.max(0.7, Math.min(initialZoom.current * scale, 5));
+      
+      // Zoom at point logic
+      // We compensate the pan so the point under the Fingers midpoint stays under the midpoint
+      const dx = currentMid.x - initialMid.current.x;
+      const dy = currentMid.y - initialMid.current.y;
+      
+      // The image content should shift with the fingers AND scale away from initial midpoint
+      const newPan = {
+        x: currentMid.x - (initialMid.current.x - initialPan.current.x) * (newZoom / initialZoom.current),
+        y: currentMid.y - (initialMid.current.y - initialPan.current.y) * (newZoom / initialZoom.current)
+      };
+
       setZoom(newZoom);
+      setPan(newPan);
     }
   };
 
   const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     pointers.current.delete(e.pointerId);
-    if (pointers.current.size < 2) {
-      initialPinchDist.current = null;
-      initialPinchZoom.current = null;
-    }
-    if (pointers.current.size === 1) {
-      const pts = Array.from(pointers.current.values());
-      setIsDragging(true);
-      setDragStart({ x: pts[0].x - pan.x, y: pts[0].y - pan.y });
-    } else if (pointers.current.size === 0) {
+    
+    if (pointers.current.size === 0) {
       setIsDragging(false);
+    } else if (pointers.current.size === 1) {
+      const remaining = Array.from(pointers.current.values())[0];
+      setDragStart({ x: remaining.x - pan.x, y: remaining.y - pan.y });
+      setIsDragging(true);
     }
   };
 
   useEffect(() => {
     if (chartGroupRef.current) {
-      chartGroupRef.current.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+      // Removed direct transform sync to use React state + transform-origin for predictability
     }
   }, [pan, zoom]);
 
@@ -372,11 +396,10 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     );
   }) : [];
 
-  return (
     <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
       
-      {/* Controles de Zoom Overlay */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
+      {/* Controles de Zoom Overlay - Somente no Desktop */}
+      <div className="absolute top-4 right-4 hidden lg:flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
         <button 
           onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
           className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
@@ -410,7 +433,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         onPointerLeave={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        <g ref={chartGroupRef} className="origin-center">
+        <g ref={chartGroupRef} transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
           
           <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
           <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS, PLANETS } from '@/types';
 import { getElementColor, getDignity } from '@/lib/astrology';
@@ -27,28 +28,78 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  const pointers = useRef<Map<number, { x: number, y: number }>>(new Map());
+  const initialDist = useRef<number>(0);
+  const initialZoom = useRef<number>(1);
+  const initialPan = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+  const initialMid = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
+
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    if (e.target instanceof Element) {
+      e.target.setPointerCapture(e.pointerId);
+    }
+    const clientPos = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, clientPos);
+
+    if (pointers.current.size === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    } else if (pointers.current.size === 2) {
+      setIsDragging(false);
+      const pts = Array.from(pointers.current.values());
+      initialDist.current = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      initialZoom.current = zoom;
+      initialPan.current = { ...pan };
+      initialMid.current = {
+        x: (pts[0].x + pts[1].x) / 2,
+        y: (pts[0].y + pts[1].y) / 2
+      };
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!isDragging) return;
-    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    if (!pointers.current.has(e.pointerId)) return;
+    const clientPos = { x: e.clientX, y: e.clientY };
+    pointers.current.set(e.pointerId, clientPos);
+
+    if (pointers.current.size === 1 && isDragging) {
+      const newPan = { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y };
+      setPan(newPan);
+    } else if (pointers.current.size === 2 && initialDist.current > 0) {
+      const pts = Array.from(pointers.current.values());
+      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const currentMid = {
+        x: (pts[0].x + pts[1].x) / 2,
+        y: (pts[0].y + pts[1].y) / 2
+      };
+
+      const scale = currentDist / initialDist.current;
+      const newZoom = Math.max(0.7, Math.min(initialZoom.current * scale, 5));
+      
+      const newPan = {
+        x: currentMid.x - (initialMid.current.x - initialPan.current.x) * (newZoom / initialZoom.current),
+        y: currentMid.y - (initialMid.current.y - initialPan.current.y) * (newZoom / initialZoom.current)
+      };
+
+      setZoom(newZoom);
+      setPan(newPan);
+    }
   };
 
-  const handlePointerUp = () => setIsDragging(false);
-
-  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    const scaleAmount = -e.deltaY * 0.001;
-    let newZoom = zoom * (1 + scaleAmount);
-    newZoom = Math.max(0.5, Math.min(newZoom, 5));
-    setZoom(newZoom);
+  const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size === 0) {
+      setIsDragging(false);
+    } else if (pointers.current.size === 1) {
+      const remaining = Array.from(pointers.current.values())[0];
+      setDragStart({ x: remaining.x - pan.x, y: remaining.y - pan.y });
+      setIsDragging(true);
+    }
   };
 
   useEffect(() => {
     if (chartGroupRef.current) {
-      chartGroupRef.current.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+      // Sync moved to inline transform for predictability
     }
   }, [pan, zoom]);
 
@@ -359,14 +410,43 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   };
 
   return (
-    <div ref={containerRef} className="w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800">
+    <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
+      
+      {/* Controles de Zoom Overlay - Somente no Desktop */}
+      <div className="absolute top-4 right-4 hidden lg:flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
+        <button 
+          onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
+          className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+          title="Aumentar Zoom"
+        >
+          <ZoomIn className="w-5 h-5" />
+        </button>
+        <button 
+          onClick={() => setZoom(z => Math.max(0.5, z - 0.3))} 
+          className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+          title="Diminuir Zoom"
+        >
+          <ZoomOut className="w-5 h-5" />
+        </button>
+        <button 
+          onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
+          className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors mt-1 border-t border-slate-700/50 pt-3"
+          title="Resetar Visão"
+        >
+          <Maximize className="w-5 h-5" />
+        </button>
+      </div>
+
       <svg
         ref={svgRef} viewBox="0 0 800 800"
         className="w-full h-full touch-none cursor-grab active:cursor-grabbing font-sans"
-        onPointerDown={handlePointerDown} onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} onWheel={handleWheel}
+        onPointerDown={handlePointerDown} 
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp} 
+        onPointerLeave={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       >
-        <g ref={chartGroupRef} className="origin-center">
+        <g ref={chartGroupRef} transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
           
           <circle cx={CX} cy={CY} r={R_TRANSIT_OUTER} fill="#0f172a" />
           
@@ -393,9 +473,6 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
       </svg>
 
       <div className="mt-4 flex flex-col items-center gap-2">
-        <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-xs text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-full">
-          Resetar Visão
-        </button>
         <div className="flex gap-4 text-xs font-medium text-slate-300 bg-slate-800/50 px-4 py-2 rounded-xl">
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-yellow-400 rounded-full"></span> Planetas Natais</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-full"></span> Planetas Transitando</span>
