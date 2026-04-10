@@ -40,8 +40,10 @@ export default function AdvancedAnalysis({ chart }: AdvancedAnalysisProps) {
       )}
 
       {/* Cadeia de Disposição */}
-      <div className="glass p-8 rounded-3xl border border-white/5 bg-slate-950/40 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 blur-[80px] rounded-full -mr-32 -mt-32" />
+      <div className="glass p-8 rounded-3xl border border-white/5 bg-slate-950/40 relative">
+        <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 blur-[80px] rounded-full -mr-32 -mt-32" />
+        </div>
         
         <div className="flex items-center gap-3 mb-8 relative z-10">
           <h4 className="text-sm font-black uppercase tracking-[0.2em] text-gold-500/80">Cadeia de Disposição Final</h4>

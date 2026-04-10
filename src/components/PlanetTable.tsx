@@ -101,10 +101,12 @@ export default function PlanetTable({ chart }: PlanetTableProps) {
           return (
             <div 
               key={planet.name}
-              className={`group element-${element} relative overflow-hidden p-5 min-h-[140px] rounded-2xl bg-white/5 border border-white/10 hover:border-gold-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/5 flex flex-col justify-between`}
+              className={`group element-${element} relative p-5 min-h-[140px] rounded-2xl bg-white/5 border border-white/10 hover:border-gold-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/5 flex flex-col justify-between`}
             >
-              {/* Element Glow */}
-              <div className="absolute -top-12 -right-12 w-24 h-24 blur-[40px] opacity-20 transition-opacity group-hover:opacity-40 bg-element-gradient" />
+              {/* Element Glow - Wrapped to handle overflow-hidden without clipping tooltips */}
+              <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                <div className="absolute -top-12 -right-12 w-24 h-24 blur-[40px] opacity-20 transition-opacity group-hover:opacity-40 bg-element-gradient" />
+              </div>
               
               <div className="flex items-start justify-between relative z-10">
                 <div className="flex items-center gap-3">
