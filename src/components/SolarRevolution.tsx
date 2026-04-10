@@ -349,9 +349,9 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
                    const planetInHouse = solarReturn.planets.filter(p => p.house === house.number);
                    return (
                       <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all min-h-[140px] flex flex-col overflow-hidden">
-                         <div className="mb-2">
-                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Casa {house.number}</span>
-                            <span className="text-[10px] font-bold text-purple-400 block truncate">{house.sign}</span>
+                         <div className="mb-2 overflow-hidden">
+                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">Casa {house.number}</span>
+                            <span className="text-sm font-bold text-purple-300 block truncate">{house.sign}</span>
                          </div>
                          <p className="text-sm font-bold text-white mb-1 font-serif truncate">{HOUSE_MEANINGS[house.number].title}</p>
                          <div className="flex flex-wrap gap-1 mt-auto py-2 max-h-[2.5rem] overflow-hidden">
@@ -359,7 +359,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
                                <span key={p.name} title={p.name} className="text-xl leading-none">{p.symbol}</span>
                             ))}
                          </div>
-                         <p className="text-[9px] text-slate-500 mt-2 leading-tight uppercase tracking-tighter line-clamp-2">{HOUSE_MEANINGS[house.number].area}</p>
+                         <p className="text-[11px] text-slate-400 mt-2 leading-snug uppercase tracking-normal line-clamp-2">{HOUSE_MEANINGS[house.number].area}</p>
                       </div>
                    );
                 })}
