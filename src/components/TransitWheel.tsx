@@ -490,13 +490,6 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   };
 
   // Cálculo de Aspectos
-  const natalAspects = showAspects ? natalChart.aspects.filter(a => {
-    if (!hoveredPlanet && !selectedPlanet) return true;
-    const focus = (selectedPlanet || hoveredPlanet)?.name;
-    const isTransit = (selectedPlanet || hoveredPlanet)?.isTransit;
-    return !isTransit && (a.planet1 === focus || a.planet2 === focus);
-  }) : [];
-
   const crossAspects = showAspects ? calculateCrossAspects(transitChart.planets, natalChart.planets).filter(a => {
     // Apenas aspectos principais para não poluir
     if (!['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type)) return false;
@@ -520,21 +513,6 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   };
 
   const aspectLines = [
-    ...natalAspects.map((a, i) => {
-      const p1 = natalChart.planets.find(p => p.name === a.planet1);
-      const p2 = natalChart.planets.find(p => p.name === a.planet2);
-      if (!p1 || !p2) return null;
-      const ang1 = longitudeToAngle(p1.longitude);
-      const ang2 = longitudeToAngle(p2.longitude);
-      return (
-        <line
-          key={`natal-asp-${i}`}
-          x1={CX + R_ASPECTS * Math.cos(ang1)} y1={CY + R_ASPECTS * Math.sin(ang1)}
-          x2={CX + R_ASPECTS * Math.cos(ang2)} y2={CY + R_ASPECTS * Math.sin(ang2)}
-          stroke={getAspectColor(a.type)} strokeWidth="1" opacity="0.3"
-        />
-      );
-    }),
     ...crossAspects.map((a, i) => {
       const pSR = transitChart.planets.find(p => p.name === a.planet1);
       const pNatal = natalChart.planets.find(p => p.name === a.planet2);
