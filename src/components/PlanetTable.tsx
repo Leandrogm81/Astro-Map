@@ -137,6 +137,13 @@ export default function PlanetTable({ chart }: PlanetTableProps) {
                           {planet.name === 'Urano' && 'A inovação, originalidade, rebeldia e mudanças súbitas.'}
                           {planet.name === 'Netuno' && 'A espiritualidade, sonhos, imaginação e dissolução de fronteiras.'}
                           {planet.name === 'Plutão' && 'A transformação profunda, poder, renascimento e processos ocultos.'}
+                          {planet.name === 'Quíron' && 'A ferida profunda que se torna o portal para a cura.'}
+                          {planet.name === 'Lilith' && 'A sombra selvagem, o poder reprimido e a rebeldia.'}
+                          {planet.name === 'Nodo Norte' && 'O propósito evolutivo e a missão desta existência.'}
+                          {planet.name === 'Nodo Sul' && 'Talentos inatos e comportamentos do passado a serem equilibrados.'}
+                          {planet.name === 'Fortuna' && 'O ponto de maior harmonia, alegria e fluxo de abundancia.'}
+                          {planet.name === 'Ascendente' && 'A forma como você se apresenta e inicia novos ciclos.'}
+                          {planet.name === 'Meio do Céu' && 'A vocação, o status social e a realização profissional.'}
                         </div>
                       </div>
                     </div>
