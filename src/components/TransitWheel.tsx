@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS, PLANETS } from '@/types';
-import { getElementColor, getDignity } from '@/lib/astrology';
+import { getElementColor, getDignity, calculateCrossAspects } from '@/lib/astrology';
 
 interface TransitWheelProps {
   natalChart: NatalChart;
@@ -231,7 +231,6 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
       />
     );
   }
-
   // Linhas das casas Natais
   const houseLines = natalChart.housesPlacidus.map((house) => {
     const angle = longitudeToAngle(house.longitude);
@@ -274,6 +273,68 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
       </g>
     );
   });
+  const srHouseLines = transitChart.housesPlacidus.map((house) => {
+    const angle = longitudeToAngle(house.longitude);
+    const xIn = CX + R_TRANSIT_INNER * Math.cos(angle);
+    const yIn = CY + R_TRANSIT_INNER * Math.sin(angle);
+    const xOut = CX + R_TRANSIT_OUTER * Math.cos(angle);
+    const yOut = CY + R_TRANSIT_OUTER * Math.sin(angle);
+    
+    const isAsc = house.number === 1;
+    const isDsc = house.number === 7;
+    const isMC = house.number === 10;
+    const isIC = house.number === 4;
+    const isCardinal = isAsc || isDsc || isMC || isIC;
+
+    return (
+      <g key={`sr-house-${house.number}`}>
+        <line
+          x1={xIn} y1={yIn} x2={xOut} y2={yOut}
+          stroke={isAsc || isDsc ? '#22d3ee' : isMC || isIC ? '#e879f9' : '#94a3b8'}
+          strokeWidth={isCardinal ? 2 : 1}
+          strokeDasharray={isCardinal ? "none" : "2,2"}
+          opacity={isCardinal ? 0.8 : 0.4}
+        />
+      </g>
+    );
+  });
+
+  // Eixos AC/DC/IC/MC da Revolução Solar
+  const srAxisLines = transitChart.housesPlacidus
+    .filter(h => [1, 4, 7, 10].includes(h.number))
+    .map((house) => {
+      const angle = longitudeToAngle(house.longitude);
+      const isAsc = house.number === 1;
+      const isMC = house.number === 10;
+      const label = house.number === 1 ? 'AC(RS)' : house.number === 7 ? 'DC(RS)' : house.number === 10 ? 'MC(RS)' : 'IC(RS)';
+      
+      const x2 = CX + R_TRANSIT_OUTER * Math.cos(angle);
+      const y2 = CY + R_TRANSIT_OUTER * Math.sin(angle);
+      
+      const labelX = CX + (R_TRANSIT_OUTER + 25) * Math.cos(angle);
+      const labelY = CY + (R_TRANSIT_OUTER + 25) * Math.sin(angle);
+
+      return (
+        <g key={`sr-axis-${house.number}`}>
+          <line
+            x1={CX} y1={CY} x2={x2} y2={y2}
+            stroke={isAsc || house.number === 7 ? '#06b6d4' : '#d946ef'}
+            strokeWidth="1.5"
+            strokeDasharray="5,5"
+            opacity="0.6"
+          />
+          <text
+            x={labelX} y={labelY}
+            textAnchor="middle" dominantBaseline="central"
+            fill={isAsc || house.number === 7 ? '#22d3ee' : '#e879f9'}
+            fontSize="10" fontWeight="bold"
+            className="select-none"
+          >
+            {label}
+          </text>
+        </g>
+      );
+    });
 
   const plotPlanets = (planets: PlanetPosition[], isTransit: boolean) => {
     const startRadius = isTransit ? R_TRANSIT_OUTER - 15 : R_NATAL_OUTER;
@@ -428,6 +489,69 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
     );
   };
 
+  // Cálculo de Aspectos
+  const natalAspects = showAspects ? natalChart.aspects.filter(a => {
+    if (!hoveredPlanet && !selectedPlanet) return true;
+    const focus = (selectedPlanet || hoveredPlanet)?.name;
+    const isTransit = (selectedPlanet || hoveredPlanet)?.isTransit;
+    return !isTransit && (a.planet1 === focus || a.planet2 === focus);
+  }) : [];
+
+  const crossAspects = showAspects ? calculateCrossAspects(transitChart.planets, natalChart.planets).filter(a => {
+    // Apenas aspectos principais para não poluir
+    if (!['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type)) return false;
+    
+    if (!hoveredPlanet && !selectedPlanet) return true;
+    const focus = selectedPlanet || hoveredPlanet;
+    if (focus!.isTransit) {
+      return a.planet1 === focus!.name;
+    } else {
+      return a.planet2 === focus!.name;
+    }
+  }) : [];
+
+  const getAspectColor = (type: string) => {
+    switch (type) {
+      case 'conjunction': case 'conjunção': return '#fbbf24';
+      case 'trine': case 'trígono': case 'sextile': case 'sextil': return '#3b82f6';
+      case 'square': case 'quadratura': case 'opposition': case 'oposição': return '#ef4444';
+      default: return '#64748b';
+    }
+  };
+
+  const aspectLines = [
+    ...natalAspects.map((a, i) => {
+      const p1 = natalChart.planets.find(p => p.name === a.planet1);
+      const p2 = natalChart.planets.find(p => p.name === a.planet2);
+      if (!p1 || !p2) return null;
+      const ang1 = longitudeToAngle(p1.longitude);
+      const ang2 = longitudeToAngle(p2.longitude);
+      return (
+        <line
+          key={`natal-asp-${i}`}
+          x1={CX + R_ASPECTS * Math.cos(ang1)} y1={CY + R_ASPECTS * Math.sin(ang1)}
+          x2={CX + R_ASPECTS * Math.cos(ang2)} y2={CY + R_ASPECTS * Math.sin(ang2)}
+          stroke={getAspectColor(a.type)} strokeWidth="1" opacity="0.3"
+        />
+      );
+    }),
+    ...crossAspects.map((a, i) => {
+      const pSR = transitChart.planets.find(p => p.name === a.planet1);
+      const pNatal = natalChart.planets.find(p => p.name === a.planet2);
+      if (!pSR || !pNatal) return null;
+      const angSR = longitudeToAngle(pSR.longitude);
+      const angNatal = longitudeToAngle(pNatal.longitude);
+      return (
+        <line
+          key={`cross-asp-${i}`}
+          x1={CX + R_ASPECTS * Math.cos(angSR)} y1={CY + R_ASPECTS * Math.sin(angSR)}
+          x2={CX + R_ASPECTS * Math.cos(angNatal)} y2={CY + R_ASPECTS * Math.sin(angNatal)}
+          stroke={getAspectColor(a.type)} strokeWidth="1.5" strokeDasharray="4,3" opacity="0.6"
+        />
+      );
+    })
+  ].filter(Boolean);
+
   return (
     <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
       
@@ -482,6 +606,9 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
           <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
           
           {houseLines}
+          {srHouseLines}
+          {srAxisLines}
+          {aspectLines}
           
           {plotPlanets(natalChart.planets, false)}
           {plotPlanets(transitChart.planets, true)}
@@ -493,11 +620,23 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
         </g>
       </svg>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
-        <div className="flex gap-4 text-xs font-medium text-slate-300 bg-slate-800/50 px-4 py-2 rounded-xl">
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-yellow-400 rounded-full"></span> Planetas Natais</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-full"></span> Planetas Transitando</span>
+      <div className="mt-4 flex flex-col items-center gap-3">
+        <div className="flex flex-wrap justify-center gap-4 text-[10px] font-medium text-slate-300 bg-slate-800/50 px-4 py-2 rounded-xl">
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-yellow-400 rounded-full"></span> Natais</span>
+          <span className="flex items-center gap-1.5"><span className="w-3 h-3 bg-emerald-500 rounded-full"></span> Revolução</span>
+          <span className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-cyan-400 border-t border-dashed"></span> Casas RS</span>
+          <span className="flex items-center gap-1.5"><span className="w-4 h-0.5 bg-blue-500 border-t border-dashed"></span> Aspectos Cruzados</span>
         </div>
+        
+        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showAspects}
+            onChange={(e) => setShowAspects(e.target.checked)}
+            className="w-4 h-4 rounded border-purple-500/30 bg-slate-900 text-purple-600 focus:ring-purple-500/50"
+          />
+          Mostrar aspectos
+        </label>
       </div>
     </div>
   );
