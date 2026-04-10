@@ -396,6 +396,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     );
   }) : [];
 
+  return (
     <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
       
       {/* Controles de Zoom Overlay - Somente no Desktop */}
