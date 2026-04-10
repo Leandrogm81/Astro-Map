@@ -104,7 +104,7 @@ export default function AspectsList({ chart }: AspectsListProps) {
                 </span>
 
                 <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 aspect-${aspect.type}`}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 shrink-0 border border-white/5"
                   title={getAspectName(aspect.type)}
                 >
                   <span className="text-lg">{getAspectSymbol(aspect.type)}</span>
@@ -117,7 +117,7 @@ export default function AspectsList({ chart }: AspectsListProps) {
 
               <div className="flex items-center gap-4 text-xs">
                 <span
-                  className={`px-2 py-1 rounded bg-aspect-${aspect.type} aspect-${aspect.type}`}
+                  className={`px-3 py-1 rounded-full bg-aspect-${aspect.type} text-white/90 font-bold uppercase tracking-tighter text-[10px] shadow-lg border border-white/10`}
                 >
                   {getAspectName(aspect.type)}
                 </span>
