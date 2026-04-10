@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS, PLANETS } from '@/types';
 import { getElementColor, getDignity } from '@/lib/astrology';
@@ -22,25 +23,57 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
+  const pointers = useRef<Map<number, { x: number, y: number }>>(new Map());
+  const initialPinchDist = useRef<number | null>(null);
+  const initialPinchZoom = useRef<number | null>(null);
+
   const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    if (e.target instanceof Element) {
+      e.target.setPointerCapture(e.pointerId);
+    }
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size === 1) {
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    } else if (pointers.current.size === 2) {
+      setIsDragging(false); // disable panning when pinching
+      const pts = Array.from(pointers.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      initialPinchDist.current = dist;
+      initialPinchZoom.current = zoom;
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!isDragging) return;
-    setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.current.size === 1 && isDragging) {
+      setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    } else if (pointers.current.size === 2 && initialPinchDist.current && initialPinchZoom.current) {
+      const pts = Array.from(pointers.current.values());
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const scale = dist / initialPinchDist.current;
+      let newZoom = initialPinchZoom.current * scale;
+      newZoom = Math.max(0.5, Math.min(newZoom, 5));
+      setZoom(newZoom);
+    }
   };
 
-  const handlePointerUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-    const scaleAmount = -e.deltaY * 0.001;
-    let newZoom = zoom * (1 + scaleAmount);
-    newZoom = Math.max(0.5, Math.min(newZoom, 5));
-    setZoom(newZoom);
+  const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) {
+      initialPinchDist.current = null;
+      initialPinchZoom.current = null;
+    }
+    if (pointers.current.size === 1) {
+      const pts = Array.from(pointers.current.values());
+      setIsDragging(true);
+      setDragStart({ x: pts[0].x - pan.x, y: pts[0].y - pan.y });
+    } else if (pointers.current.size === 0) {
+      setIsDragging(false);
+    }
   };
 
   useEffect(() => {
@@ -340,7 +373,33 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   }) : [];
 
   return (
-    <div ref={containerRef} className="w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800">
+    <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
+      
+      {/* Controles de Zoom Overlay */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
+        <button 
+          onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
+          className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+          title="Aumentar Zoom"
+        >
+          <ZoomIn className="w-5 h-5" />
+        </button>
+        <button 
+          onClick={() => setZoom(z => Math.max(0.5, z - 0.3))} 
+          className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+          title="Diminuir Zoom"
+        >
+          <ZoomOut className="w-5 h-5" />
+        </button>
+        <button 
+          onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
+          className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors mt-1 border-t border-slate-700/50 pt-3"
+          title="Resetar Visão"
+        >
+          <Maximize className="w-5 h-5" />
+        </button>
+      </div>
+
       <svg
         ref={svgRef}
         viewBox="0 0 800 800"
@@ -349,7 +408,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        onWheel={handleWheel}
+        onPointerCancel={handlePointerUp}
       >
         <g ref={chartGroupRef} className="origin-center">
           
@@ -386,10 +445,6 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
             />
             Mostrar aspectos
           </label>
-          
-          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="text-xs text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3 py-1.5 rounded-full">
-            Resetar Visão
-          </button>
           
           {selectedPlanet && (
             <button onClick={() => setSelectedPlanet(null)} className="text-xs text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-3 py-1.5 rounded-full">
