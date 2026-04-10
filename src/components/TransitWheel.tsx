@@ -27,6 +27,20 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
+
+  const getLocalCoords = (clientX: number, clientY: number) => {
+    if (!svgRef.current) return { x: clientX, y: clientY };
+    const pt = svgRef.current.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const transformed = pt.matrixTransform(svgRef.current.getScreenCTM()?.inverse());
+    return { x: transformed.x, y: transformed.y };
+  };
 
   const pointers = useRef<Map<number, { x: number, y: number }>>(new Map());
   const initialDist = useRef<number>(0);
@@ -39,39 +53,41 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
       e.target.setPointerCapture(e.pointerId);
     }
     const clientPos = { x: e.clientX, y: e.clientY };
+    const localPos = getLocalCoords(e.clientX, e.clientY);
     pointers.current.set(e.pointerId, clientPos);
 
     if (pointers.current.size === 1) {
       setIsDragging(true);
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+      setDragStart({ x: localPos.x - pan.x, y: localPos.y - pan.y });
     } else if (pointers.current.size === 2) {
       setIsDragging(false);
       const pts = Array.from(pointers.current.values());
+      const midClient = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const midLocal = getLocalCoords(midClient.x, midClient.y);
+
       initialDist.current = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       initialZoom.current = zoom;
       initialPan.current = { ...pan };
-      initialMid.current = {
-        x: (pts[0].x + pts[1].x) / 2,
-        y: (pts[0].y + pts[1].y) / 2
-      };
+      initialMid.current = midLocal;
     }
   };
+
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (!pointers.current.has(e.pointerId)) return;
     const clientPos = { x: e.clientX, y: e.clientY };
+    const localPos = getLocalCoords(e.clientX, e.clientY);
     pointers.current.set(e.pointerId, clientPos);
 
     if (pointers.current.size === 1 && isDragging) {
-      const newPan = { x: e.clientX - dragStart.x, y: e.clientY - dragStart.y };
+      const newPan = { x: localPos.x - dragStart.x, y: localPos.y - dragStart.y };
       setPan(newPan);
     } else if (pointers.current.size === 2 && initialDist.current > 0) {
       const pts = Array.from(pointers.current.values());
       const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      const currentMid = {
-        x: (pts[0].x + pts[1].x) / 2,
-        y: (pts[0].y + pts[1].y) / 2
-      };
+      
+      const midClient = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      const currentMid = getLocalCoords(midClient.x, midClient.y);
 
       const scale = currentDist / initialDist.current;
       const newZoom = Math.max(0.7, Math.min(initialZoom.current * scale, 5));
@@ -86,16 +102,19 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
     }
   };
 
+
   const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     pointers.current.delete(e.pointerId);
     if (pointers.current.size === 0) {
       setIsDragging(false);
     } else if (pointers.current.size === 1) {
       const remaining = Array.from(pointers.current.values())[0];
-      setDragStart({ x: remaining.x - pan.x, y: remaining.y - pan.y });
+      const localPos = getLocalCoords(remaining.x, remaining.y);
+      setDragStart({ x: localPos.x - pan.x, y: localPos.y - pan.y });
       setIsDragging(true);
     }
   };
+
 
   useEffect(() => {
     if (chartGroupRef.current) {
@@ -412,30 +431,32 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   return (
     <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
       
-      {/* Controles de Zoom Overlay - Somente no Desktop */}
-      <div className="absolute top-4 right-4 hidden lg:flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
-        <button 
-          onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
-          className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
-          title="Aumentar Zoom"
-        >
-          <ZoomIn className="w-5 h-5" />
-        </button>
-        <button 
-          onClick={() => setZoom(z => Math.max(0.5, z - 0.3))} 
-          className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
-          title="Diminuir Zoom"
-        >
-          <ZoomOut className="w-5 h-5" />
-        </button>
-        <button 
-          onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
-          className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors mt-1 border-t border-slate-700/50 pt-3"
-          title="Resetar Visão"
-        >
-          <Maximize className="w-5 h-5" />
-        </button>
-      </div>
+      {/* Controles de Zoom Overlay - Somente no Desktop (JS detected) */}
+      {!isTouchDevice && (
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
+          <button 
+            onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
+            className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+            title="Aumentar Zoom"
+          >
+            <ZoomIn className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setZoom(z => Math.max(0.5, z - 0.3))} 
+            className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+            title="Diminuir Zoom"
+          >
+            <ZoomOut className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
+            className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors mt-1 border-t border-slate-700/50 pt-3"
+            title="Resetar Visão"
+          >
+            <Maximize className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       <svg
         ref={svgRef} viewBox="0 0 800 800"
