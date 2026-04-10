@@ -123,18 +123,21 @@ export default function PlanetTable({ chart }: PlanetTableProps) {
                       </p>
                     </div>
                     <div className="group relative">
-                      <Info className="w-3 h-3 text-slate-600 cursor-help" />
-                      <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-slate-950 border border-white/10 rounded-lg text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                        {planet.name === 'Sol' && 'A essência, vitalidade e a identidade central.'}
-                        {planet.name === 'Lua' && 'As emoções, reações intuitivas e necessidades de segurança.'}
-                        {planet.name === 'Mercúrio' && 'A comunicação, o intelecto e a forma como processamos dados.'}
-                        {planet.name === 'Vênus' && 'Os valores, relacionamentos e o senso de beleza e prazer.'}
-                        {planet.name === 'Marte' && 'A ação, energia física, desejo e como afirmamos nossa vontade.'}
-                        {planet.name === 'Júpiter' && 'A expansão, sorte, sabedoria e busca por significado.'}
-                        {planet.name === 'Saturno' && 'A estrutura, responsabilidade, limitações e lições de tempo.'}
-                        {planet.name === 'Urano' && 'A inovação, originalidade, rebeldia e mudanças súbitas.'}
-                        {planet.name === 'Netuno' && 'A espiritualidade, sonhos, imaginação e dissolução de fronteiras.'}
-                        {planet.name === 'Plutão' && 'A transformação profunda, poder, renascimento e processos ocultos.'}
+                      <Info className="w-4 h-4 text-slate-400 hover:text-gold-400 cursor-help transition-colors" />
+                      <div className="absolute left-0 bottom-full mb-2 w-52 p-3 bg-slate-900 border border-white/20 rounded-xl text-[11px] leading-relaxed text-slate-200 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] translate-y-2 group-hover:translate-y-0">
+                        <div className="flex flex-col gap-1">
+                          <span className="font-black uppercase tracking-tighter text-gold-500 text-[9px]">Significado</span>
+                          {planet.name === 'Sol' && 'A essência, vitalidade e a identidade central.'}
+                          {planet.name === 'Lua' && 'As emoções, reações intuitivas e necessidades de segurança.'}
+                          {planet.name === 'Mercúrio' && 'A comunicação, o intelecto e a forma como processamos dados.'}
+                          {planet.name === 'Vênus' && 'Os valores, relacionamentos e o senso de beleza e prazer.'}
+                          {planet.name === 'Marte' && 'A ação, energia física, desejo e como afirmamos nossa vontade.'}
+                          {planet.name === 'Júpiter' && 'A expansão, sorte, sabedoria e busca por significado.'}
+                          {planet.name === 'Saturno' && 'A estrutura, responsabilidade, limitações e lições de tempo.'}
+                          {planet.name === 'Urano' && 'A inovação, originalidade, rebeldia e mudanças súbitas.'}
+                          {planet.name === 'Netuno' && 'A espiritualidade, sonhos, imaginação e dissolução de fronteiras.'}
+                          {planet.name === 'Plutão' && 'A transformação profunda, poder, renascimento e processos ocultos.'}
+                        </div>
                       </div>
                     </div>
                   </div>

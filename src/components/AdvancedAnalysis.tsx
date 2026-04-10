@@ -23,9 +23,10 @@ export default function AdvancedAnalysis({ chart }: AdvancedAnalysisProps) {
           <div className="flex items-center gap-3 mb-4">
             <h4 className="text-sm font-black uppercase tracking-[0.2em] text-gold-500/80">Signos Interceptados</h4>
             <div className="group relative">
-              <Info className="w-3.5 h-3.5 text-slate-500 cursor-help" />
-              <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-slate-950 border border-white/10 rounded-xl text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                Signos que não aparecem em nenhuma cúspide de casa. Representam potenciais que levam mais tempo para serem acessados conscientemente.
+              <Info className="w-4 h-4 text-slate-400 hover:text-gold-400 cursor-help transition-colors" />
+              <div className="absolute left-0 bottom-full mb-3 w-72 p-4 bg-slate-900 border border-white/20 rounded-xl text-[11px] leading-relaxed text-slate-200 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] translate-y-2 group-hover:translate-y-0">
+                <span className="font-black uppercase tracking-tighter text-gold-500 text-[9px] block mb-1">Nota Técnica</span>
+                Signos que não aparecem em nenhuma cúspide de casa. Representam potenciais que levam mais tempo para serem acessados conscientemente pelo indivíduo.
               </div>
             </div>
           </div>
@@ -48,9 +49,10 @@ export default function AdvancedAnalysis({ chart }: AdvancedAnalysisProps) {
         <div className="flex items-center gap-3 mb-8 relative z-10">
           <h4 className="text-sm font-black uppercase tracking-[0.2em] text-gold-500/80">Cadeia de Disposição Final</h4>
           <div className="group relative">
-            <Info className="w-3.5 h-3.5 text-slate-500 cursor-help" />
-            <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-slate-950 border border-white/10 rounded-xl text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-              Mostra quem rege quem. Planetas que estão em seu próprio domicílio são o desfecho final da força do mapa.
+            <Info className="w-4 h-4 text-slate-400 hover:text-gold-400 cursor-help transition-colors" />
+            <div className="absolute left-0 bottom-full mb-3 w-72 p-4 bg-slate-900 border border-white/20 rounded-xl text-[11px] leading-relaxed text-slate-200 opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] translate-y-2 group-hover:translate-y-0">
+              <span className="font-black uppercase tracking-tighter text-gold-500 text-[9px] block mb-1">Conceito Profissional</span>
+              Mostra a hierarquia de regência (quem comanda quem). Planetas em seu próprio domicílio são o desfecho final da força psicológica do mapa.
             </div>
           </div>
         </div>
