@@ -1,6 +1,5 @@
 export { ZODIAC_SIGNS } from '@/types';
-import { ZodiacSign, PlanetPosition, HouseCusp } from '@/types';
-import { ZODIAC_SIGNS } from '@/types';
+import { ZodiacSign, PlanetPosition, HouseCusp, ZODIAC_SIGNS } from '@/types';
 
 export function getZodiacSign(longitude: number): ZodiacSign {
   const normalized = longitude % 360;
@@ -19,6 +18,9 @@ export function formatDegree(degree: number): string {
 }
 
 export function getHouseForPlanet(longitude: number, houses: HouseCusp[]): number {
+  // Normalizar longitude para 0-360
+  const lon = ((longitude % 360) + 360) % 360;
+
   // Encontra em qual casa o planeta está
   for (let i = 0; i < 12; i++) {
     const houseStart = houses[i].longitude;
@@ -26,16 +28,28 @@ export function getHouseForPlanet(longitude: number, houses: HouseCusp[]): numbe
     
     // Trata o caso de "wrap around" (casa que cruza 0°)
     if (houseEnd < houseStart) {
-      if (longitude >= houseStart || longitude < houseEnd) {
+      if (lon >= houseStart || lon < houseEnd) {
         return i + 1;
       }
     } else {
-      if (longitude >= houseStart && longitude < houseEnd) {
+      if (lon >= houseStart && lon < houseEnd) {
         return i + 1;
       }
     }
   }
-  return 1; // Default para casa 1
+
+  // Fallback: encontrar a casa mais próxima
+  let closestHouse = 1;
+  let minDiff = 360;
+  for (let i = 0; i < 12; i++) {
+    let diff = lon - houses[i].longitude;
+    diff = ((diff % 360) + 360) % 360;
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestHouse = i + 1;
+    }
+  }
+  return closestHouse;
 }
 
 export function getElementColor(element: 'fire' | 'earth' | 'air' | 'water'): string {
