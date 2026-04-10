@@ -126,6 +126,50 @@ export function getDignity(planet: string, sign: ZodiacSign): string {
   return 'Neutro / Peregrino';
 }
 
+export function getDomicileRuler(sign: ZodiacSign): string {
+  const rulers: Record<string, string> = {
+    'Áries': 'Marte',
+    'Touro': 'Vênus',
+    'Gêmeos': 'Mercúrio',
+    'Câncer': 'Lua',
+    'Leão': 'Sol',
+    'Virgem': 'Mercúrio',
+    'Libra': 'Vênus',
+    'Escorpião': 'Plutão',
+    'Sagitário': 'Júpiter',
+    'Capricórnio': 'Saturno',
+    'Aquário': 'Urano',
+    'Peixes': 'Netuno'
+  };
+  return rulers[sign] || '';
+}
+
+export type DispositorLink = {
+  planet: string;
+  isRuledBy: string;
+};
+
+export function calculateDispositorChain(planets: PlanetPosition[]): DispositorLink[] {
+  return planets.map(p => ({
+    planet: p.name,
+    isRuledBy: getDomicileRuler(p.sign)
+  }));
+}
+
+export function getInterceptedSigns(houses: HouseCusp[]): ZodiacSign[] {
+  const intercepted: ZodiacSign[] = [];
+  const houseSigns = houses.map(h => getZodiacSign(h.longitude));
+  
+  ZODIAC_SIGNS.forEach(sign => {
+    // Se nenhum cúspide de casa está neste signo, ele pode estar interceptado
+    if (!houseSigns.includes(sign.name)) {
+      intercepted.push(sign.name);
+    }
+  });
+
+  return intercepted;
+}
+
 export function calculateAspectType(angle: number): { type: string; exactAngle: number } | null {
   const aspects = [
     { angle: 0, name: 'conjunção' },

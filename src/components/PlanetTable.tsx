@@ -1,5 +1,7 @@
 import { NatalChart, ZODIAC_SIGNS } from '@/types';
 import { getElementColor, getDignity } from '@/lib/astrology';
+import AdvancedAnalysis from './AdvancedAnalysis';
+import { Info } from 'lucide-react';
 
 interface PlanetTableProps {
   chart: NatalChart;
@@ -109,13 +111,30 @@ export default function PlanetTable({ chart }: PlanetTableProps) {
                   <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] shrink-0">
                     {planet.symbol}
                   </span>
-                  <div className="min-w-0">
-                    <h4 className="text-lg font-serif font-semibold text-white leading-tight truncate">
-                      {planet.name}
-                    </h4>
-                    <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">
-                      Planeta
-                    </p>
+                  <div className="min-w-0 flex items-center gap-2">
+                    <div className="min-w-0">
+                      <h4 className="text-lg font-serif font-semibold text-white leading-tight truncate">
+                        {planet.name}
+                      </h4>
+                      <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">
+                        Planeta
+                      </p>
+                    </div>
+                    <div className="group relative">
+                      <Info className="w-3 h-3 text-slate-600 cursor-help" />
+                      <div className="absolute left-0 bottom-full mb-2 w-48 p-2 bg-slate-950 border border-white/10 rounded-lg text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
+                        {planet.name === 'Sol' && 'A essência, vitalidade e a identidade central.'}
+                        {planet.name === 'Lua' && 'As emoções, reações intuitivas e necessidades de segurança.'}
+                        {planet.name === 'Mercúrio' && 'A comunicação, o intelecto e a forma como processamos dados.'}
+                        {planet.name === 'Vênus' && 'Os valores, relacionamentos e o senso de beleza e prazer.'}
+                        {planet.name === 'Marte' && 'A ação, energia física, desejo e como afirmamos nossa vontade.'}
+                        {planet.name === 'Júpiter' && 'A expansão, sorte, sabedoria e busca por significado.'}
+                        {planet.name === 'Saturno' && 'A estrutura, responsabilidade, limitações e lições de tempo.'}
+                        {planet.name === 'Urano' && 'A inovação, originalidade, rebeldia e mudanças súbitas.'}
+                        {planet.name === 'Netuno' && 'A espiritualidade, sonhos, imaginação e dissolução de fronteiras.'}
+                        {planet.name === 'Plutão' && 'A transformação profunda, poder, renascimento e processos ocultos.'}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -159,6 +178,8 @@ export default function PlanetTable({ chart }: PlanetTableProps) {
           );
         })}
       </div>
+
+      <AdvancedAnalysis chart={chart} />
     </div>
   );
 }
