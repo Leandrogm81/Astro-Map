@@ -497,10 +497,43 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         </div>
 
         {showAspects && (
-          <div className="flex flex-wrap justify-center gap-4 text-xs font-medium text-slate-300 bg-slate-800/50 px-4 py-2 rounded-xl">
-            <span className="flex items-center gap-2"><span className="w-4 h-0.5 bg-yellow-400"></span>Conjunção</span>
-            <span className="flex items-center gap-2"><span className="w-4 h-0.5 bg-blue-500"></span>Trígono / Sextil</span>
-            <span className="flex items-center gap-2"><span className="w-4 h-0.5 bg-red-500"></span>Quadratura / Oposição</span>
+          <div className="flex flex-wrap justify-center gap-y-3 gap-x-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-900/60 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white/5 shadow-xl">
+            <div className="flex items-center gap-2">
+              <span className="text-sm aspect-conjunction">☌</span>
+              <span>Conjunção</span>
+              <span className="w-6 h-[2px] bg-yellow-400 opacity-80"></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm aspect-trine">△</span>
+              <span>Trígono</span>
+              <span className="w-6 h-[2px] bg-green-500 opacity-80"></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm aspect-sextile">⚹</span>
+              <span>Sextil</span>
+              <span className="w-6 h-[2px] bg-blue-500 opacity-80"></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm aspect-square">□</span>
+              <span>Quadratura</span>
+              <span className="w-6 h-[2px] bg-red-500 opacity-80"></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm aspect-opposition">☍</span>
+              <span>Oposição</span>
+              <span className="w-6 h-[2px] bg-orange-500 opacity-80"></span>
+            </div>
+            <div className="w-full h-[1px] bg-white/5 my-1 md:hidden"></div>
+            <div className="flex items-center gap-4 text-slate-500 border-l border-white/10 pl-6 hidden md:flex">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-[3px] bg-slate-500"></span>
+                <span>Exato</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-[1px] bg-slate-500 border-b border-dashed border-slate-500"></span>
+                <span>Largo</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
