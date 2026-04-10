@@ -494,7 +494,7 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
     // Apenas aspectos principais para não poluir
     if (!['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type)) return false;
     
-    if (!hoveredPlanet && !selectedPlanet) return true;
+    if (!hoveredPlanet && !selectedPlanet) return false;
     const focus = selectedPlanet || hoveredPlanet;
     if (focus!.isTransit) {
       return a.planet1 === focus!.name;
@@ -522,7 +522,7 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
       return (
         <line
           key={`cross-asp-${i}`}
-          x1={CX + R_ASPECTS * Math.cos(angSR)} y1={CY + R_ASPECTS * Math.sin(angSR)}
+          x1={CX + R_TICK_INNER * Math.cos(angSR)} y1={CY + R_TICK_INNER * Math.sin(angSR)}
           x2={CX + R_ASPECTS * Math.cos(angNatal)} y2={CY + R_ASPECTS * Math.sin(angNatal)}
           stroke={getAspectColor(a.type)} strokeWidth="1.5" strokeDasharray="4,3" opacity="0.6"
         />
