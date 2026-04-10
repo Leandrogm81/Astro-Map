@@ -286,15 +286,29 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
     const isIC = house.number === 4;
     const isCardinal = isAsc || isDsc || isMC || isIC;
 
+    // Números das casas RS (posicionados no trilho externo)
+    const numAngle = angle - (4 * (Math.PI / 180)); 
+    const rNum = (R_TRANSIT_INNER + R_TRANSIT_OUTER) / 2;
+    const numX = CX + rNum * Math.cos(numAngle);
+    const numY = CY + rNum * Math.sin(numAngle);
+
     return (
       <g key={`sr-house-${house.number}`}>
         <line
           x1={xIn} y1={yIn} x2={xOut} y2={yOut}
           stroke={isAsc || isDsc ? '#22d3ee' : isMC || isIC ? '#e879f9' : '#94a3b8'}
           strokeWidth={isCardinal ? 2 : 1}
-          strokeDasharray={isCardinal ? "none" : "2,2"}
-          opacity={isCardinal ? 0.8 : 0.4}
+          strokeDasharray="none"
+          opacity={isCardinal ? 0.9 : 0.7}
         />
+        <text
+          x={numX} y={numY}
+          textAnchor="middle" dominantBaseline="central"
+          fill={isCardinal ? '#e2e8f0' : '#94a3b8'}
+          fontSize="10" fontWeight={isCardinal ? 'bold' : 'normal'}
+        >
+          {house.number}
+        </text>
       </g>
     );
   });
