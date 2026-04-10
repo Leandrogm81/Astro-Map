@@ -158,12 +158,20 @@ body::before {
 .border-element-soft { border-color: rgba(var(--el-rgb), 0.2); }
 
 /* Aspect Utility Classes */
-.aspect-conjuncao { color: #fbbf24; }
-.aspect-sextil { color: #3b82f6; }
-.aspect-quadratura { color: #ef4444; }
-.aspect-trigono { color: #22c55e; }
-.aspect-oposicao { color: #f97316; }
+.aspect-conjunction { color: #fbbf24; }
+.aspect-sextile { color: #3b82f6; }
+.aspect-square { color: #ef4444; }
+.aspect-trine { color: #22c55e; }
+.aspect-opposition { color: #f97316; }
+.aspect-quincunx { color: #a855f7; }
 .aspect-neutral { color: #64748b; }
+
+.bg-aspect-conjunction { background-color: rgba(251, 191, 36, 0.1); }
+.bg-aspect-sextile { background-color: rgba(59, 130, 246, 0.1); }
+.bg-aspect-square { background-color: rgba(239, 68, 68, 0.1); }
+.bg-aspect-trine { background-color: rgba(34, 197, 94, 0.1); }
+.bg-aspect-opposition { background-color: rgba(249, 115, 22, 0.1); }
+.bg-aspect-quincunx { background-color: rgba(168, 85, 247, 0.1); }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {

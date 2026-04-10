@@ -363,50 +363,55 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     return aspect.planet1 === focus || aspect.planet2 === focus;
   });
 
-  const aspectLines = showAspects ? filteredAspects.slice(0, 15).map((aspect, index) => {
-    const p1 = planetPositions.find(pp => pp.planet.name === aspect.planet1);
-    const p2 = planetPositions.find(pp => pp.planet.name === aspect.planet2);
-    
-    if (!p1 || !p2) return null;
+  const aspectLines = showAspects ? chart.aspects
+    .filter(a => ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type))
+    .map((aspect, index) => {
+      const p1 = planetPositions.find(pp => pp.planet.name === aspect.planet1);
+      const p2 = planetPositions.find(pp => pp.planet.name === aspect.planet2);
+      
+      if (!p1 || !p2) return null;
 
-    const isFocused = hoveredPlanet || selectedPlanet;
+      const isFocused = hoveredPlanet === aspect.planet1 || hoveredPlanet === aspect.planet2 || 
+                        selectedPlanet === aspect.planet1 || selectedPlanet === aspect.planet2;
+      
+      const hasFocusInChart = hoveredPlanet || selectedPlanet;
 
-    let strokeColor = '#64748b';
-    let strokeWidth = isFocused ? 2 : 1;
-    switch (aspect.type) {
-      case 'conjunction':
-        strokeColor = '#fbbf24';
-        break; 
-      case 'trine':
-        strokeColor = '#3b82f6'; 
-        break;
-      case 'square':
-        strokeColor = '#ef4444'; 
-        break;
-      case 'opposition':
-        strokeColor = '#ef4444'; 
-        strokeWidth = isFocused ? 2.5 : 1.5;
-        break;
-      case 'sextile':
-        strokeColor = '#3b82f6'; 
-        break;
-    }
+      // Se houver foco em algum planeta, mas NÃO neste aspecto, esconde/atenua muito
+      if (hasFocusInChart && !isFocused) return null;
 
-    const x1 = CX + R_ASPECTS * Math.cos(p1.angle);
-    const y1 = CY + R_ASPECTS * Math.sin(p1.angle);
-    const x2 = CX + R_ASPECTS * Math.cos(p2.angle);
-    const y2 = CY + R_ASPECTS * Math.sin(p2.angle);
+      let strokeColor = '#64748b';
+      // Orb 0-8. Menor órbita = mais forte.
+      const strength = Math.max(0, 1 - (aspect.orb / 8));
+      let strokeWidth = (isFocused ? 2.5 : 1.2) + (strength * 1.5);
+      
+      switch (aspect.type) {
+        case 'conjunction': strokeColor = '#fbbf24'; break; 
+        case 'trine': strokeColor = '#22c55e'; break;
+        case 'sextile': strokeColor = '#3b82f6'; break;
+        case 'square': strokeColor = '#ef4444'; break;
+        case 'opposition': 
+          strokeColor = '#f97316'; 
+          strokeWidth += 0.5;
+          break;
+      }
 
-    return (
-      <line
-        key={`${aspect.planet1}-${aspect.planet2}-${index}`}
-        x1={x1} y1={y1} x2={x2} y2={y2}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-        opacity={isFocused ? 0.9 : 0.4}
-      />
-    );
-  }) : [];
+      const x1 = CX + R_ASPECTS * Math.cos(p1.angle);
+      const y1 = CY + R_ASPECTS * Math.sin(p1.angle);
+      const x2 = CX + R_ASPECTS * Math.cos(p2.angle);
+      const y2 = CY + R_ASPECTS * Math.sin(p2.angle);
+
+      return (
+        <line
+          key={`${aspect.planet1}-${aspect.planet2}-${index}`}
+          x1={x1} y1={y1} x2={x2} y2={y2}
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          opacity={isFocused ? 0.9 : 0.2 + (strength * 0.3)}
+          className="transition-all duration-300"
+          strokeDasharray={aspect.orb > 5 ? "4,2" : "none"}
+        />
+      );
+    }) : [];
 
   return (
     <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">

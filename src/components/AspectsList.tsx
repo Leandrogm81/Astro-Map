@@ -1,4 +1,5 @@
 import { NatalChart, Aspect } from '@/types';
+import AspectGrid from './AspectGrid';
 
 interface AspectsListProps {
   chart: NatalChart;
@@ -62,16 +63,29 @@ export default function AspectsList({ chart }: AspectsListProps) {
     return names[type] || type;
   };
 
-  // Filtrar apenas aspectos principais
   const majorAspects = chart.aspects.filter(a =>
-    ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
-  ).slice(0, 15);
+    ['conjunction', 'sextile', 'square', 'trine', 'opposition', 'quincunx'].includes(a.type)
+  ).sort((a, b) => a.orb - b.orb);
 
   return (
-    <div>
-      <h3 className="text-lg font-medium text-purple-200 mb-4">
-        Aspectos Principais
-      </h3>
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gold-500/60 mb-6 flex items-center gap-3">
+          <span className="w-8 h-[1px] bg-gold-500/30"></span>
+          Grade de Aspectos
+          <span className="flex-1 h-[1px] bg-gold-500/30"></span>
+        </h3>
+        <AspectGrid chart={chart} />
+      </div>
+
+      <hr className="border-white/5" />
+
+      <div>
+        <h3 className="text-sm font-black uppercase tracking-[0.2em] text-gold-500/60 mb-6 flex items-center gap-3">
+          <span className="w-8 h-[1px] bg-gold-500/30"></span>
+          Lista Detalhada
+          <span className="flex-1 h-[1px] bg-gold-500/30"></span>
+        </h3>
 
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {majorAspects.length === 0 ? (
@@ -90,8 +104,7 @@ export default function AspectsList({ chart }: AspectsListProps) {
                 </span>
 
                 <div
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800"
-                  style={{ color: getAspectColor(aspect.type) }}
+                  className={`flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 aspect-${aspect.type}`}
                   title={getAspectName(aspect.type)}
                 >
                   <span className="text-lg">{getAspectSymbol(aspect.type)}</span>
@@ -104,11 +117,7 @@ export default function AspectsList({ chart }: AspectsListProps) {
 
               <div className="flex items-center gap-4 text-xs">
                 <span
-                  className="px-2 py-1 rounded"
-                  style={{
-                    backgroundColor: `${getAspectColor(aspect.type)}20`,
-                    color: getAspectColor(aspect.type),
-                  }}
+                  className={`px-2 py-1 rounded bg-aspect-${aspect.type} aspect-${aspect.type}`}
                 >
                   {getAspectName(aspect.type)}
                 </span>
@@ -138,28 +147,6 @@ export default function AspectsList({ chart }: AspectsListProps) {
         )}
       </div>
 
-      {/* Legenda */}
-      <div className="mt-6 grid grid-cols-3 gap-2 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#fbbf24' }}></span>
-          <span className="text-slate-400">Conjunção (0°)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#3b82f6' }}></span>
-          <span className="text-slate-400">Sextil (60°)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }}></span>
-          <span className="text-slate-400">Quadratura (90°)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#22c55e' }}></span>
-          <span className="text-slate-400">Trígono (120°)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f97316' }}></span>
-          <span className="text-slate-400">Oposição (180°)</span>
-        </div>
       </div>
     </div>
   );
