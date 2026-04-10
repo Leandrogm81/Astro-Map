@@ -414,72 +414,74 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     }) : [];
 
   return (
-    <div ref={containerRef} className="relative w-full aspect-square max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800 overflow-hidden">
+    <div ref={containerRef} className="w-full max-w-[800px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800">
       
-      {/* Controles de Zoom Overlay - Somente no Desktop (JS detected) */}
-      {!isTouchDevice && (
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
-          <button 
-            onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
-            className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
-            title="Aumentar Zoom"
-          >
-            <ZoomIn className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setZoom(z => Math.max(0.5, z - 0.3))} 
-            className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
-            title="Diminuir Zoom"
-          >
-            <ZoomOut className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
-            className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors mt-1 border-t border-slate-700/50 pt-3"
-            title="Resetar Visão"
-          >
-            <Maximize className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+      <div className="relative w-full aspect-square overflow-hidden rounded-2xl">
+        {/* Controles de Zoom Overlay - Somente no Desktop (JS detected) */}
+        {!isTouchDevice && (
+          <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
+            <button 
+              onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
+              className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+              title="Aumentar Zoom"
+            >
+              <ZoomIn className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => setZoom(z => Math.max(0.5, z - 0.3))} 
+              className="p-2 text-slate-300 hover:text-purple-400 hover:bg-slate-800 rounded-lg transition-colors"
+              title="Diminuir Zoom"
+            >
+              <ZoomOut className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
+              className="p-2 text-slate-300 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors mt-1 border-t border-slate-700/50 pt-3"
+              title="Resetar Visão"
+            >
+              <Maximize className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
-      <svg
-        ref={svgRef}
-        viewBox="0 0 800 800"
-        className="w-full h-full touch-none cursor-grab active:cursor-grabbing font-sans"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-      >
-        <g ref={chartGroupRef} transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
-          
-          <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
-          <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />
-          <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} fill="none" stroke="#7c3aed" strokeWidth="1.5" />
-          
-          {zodiacSlices}
-          
-          <circle cx={CX} cy={CY} r={R_TICK_INNER} fill="none" stroke="#334155" strokeWidth="1" />
-          {degreeTicks}
+        <svg
+          ref={svgRef}
+          viewBox="0 0 800 800"
+          className="w-full h-full touch-none cursor-grab active:cursor-grabbing font-sans"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+        >
+          <g ref={chartGroupRef} transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
+            
+            <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
+            <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />
+            <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} fill="none" stroke="#7c3aed" strokeWidth="1.5" />
+            
+            {zodiacSlices}
+            
+            <circle cx={CX} cy={CY} r={R_TICK_INNER} fill="none" stroke="#334155" strokeWidth="1" />
+            {degreeTicks}
 
-          <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
-          
-          {houseElements}
-          {aspectLines}
-          {planetElements}
-          {tooltipElement}
-          
-          <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
-          <line x1={CX - 8} y1={CY} x2={CX + 8} y2={CY} stroke="#64748b" strokeWidth="2" />
-          <line x1={CX} y1={CY - 8} x2={CX} y2={CY + 8} stroke="#64748b" strokeWidth="2" />
-        </g>
-      </svg>
+            <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
+            
+            {houseElements}
+            {aspectLines}
+            {planetElements}
+            {tooltipElement}
+            
+            <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
+            <line x1={CX - 8} y1={CY} x2={CX + 8} y2={CY} stroke="#64748b" strokeWidth="2" />
+            <line x1={CX} y1={CY - 8} x2={CX} y2={CY + 8} stroke="#64748b" strokeWidth="2" />
+          </g>
+        </svg>
+      </div>
 
-      <div className="mt-4 flex flex-col items-center gap-3">
+      <div className="mt-6 flex flex-col items-center gap-6">
         <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
             <input
               type="checkbox"
               checked={showAspects}
@@ -490,14 +492,14 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
           </label>
           
           {selectedPlanet && (
-            <button onClick={() => setSelectedPlanet(null)} className="text-xs text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-3 py-1.5 rounded-full">
+            <button onClick={() => setSelectedPlanet(null)} className="text-xs text-purple-400 hover:text-purple-300 transition-colors bg-purple-500/10 px-4 py-1.5 rounded-full border border-purple-500/20">
               Limpar foco ({selectedPlanet})
             </button>
           )}
         </div>
 
         {showAspects && (
-          <div className="flex flex-wrap justify-center gap-y-3 gap-x-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-900/60 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white/5 shadow-xl">
+          <div className="flex flex-wrap justify-center gap-y-3 gap-x-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-900/60 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white/5 shadow-xl w-full">
             <div className="flex items-center gap-2">
               <span className="text-sm aspect-conjunction">☌</span>
               <span>Conjunção</span>
@@ -526,11 +528,11 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
             <div className="w-full h-[1px] bg-white/5 my-1 md:hidden"></div>
             <div className="flex items-center gap-4 text-slate-500 border-l border-white/10 pl-6 hidden md:flex">
               <div className="flex items-center gap-2">
-                <span className="w-4 h-[3px] bg-slate-500"></span>
+                <span className="w-4 h-[3.5px] bg-slate-500 rounded-full"></span>
                 <span>Exato</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-4 h-[1px] bg-slate-500 border-b border-dashed border-slate-500"></span>
+                <span className="w-4 h-[1px] bg-slate-500 border-b border-dashed border-slate-400 opacity-60"></span>
                 <span>Largo</span>
               </div>
             </div>
