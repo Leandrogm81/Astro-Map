@@ -326,9 +326,9 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
             dominantBaseline="central" 
             fill="#fbbf24" 
             stroke="#fbbf24"
-            strokeWidth={['Marte', 'Vênus', 'Mercúrio'].includes(planet.name) ? "0.6" : "0.2"}
+            strokeWidth={['Marte', 'Vênus'].includes(planet.name) ? "0.6" : "0.1"}
             fontSize="18" 
-            fontWeight="bold" 
+            fontWeight={['Marte', 'Vênus'].includes(planet.name) ? "bold" : "normal"}
             className="select-none"
           >
             {planetInfo?.symbol || '●'}

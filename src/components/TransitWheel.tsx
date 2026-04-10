@@ -346,9 +346,9 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
               dominantBaseline="central" 
               fill={color} 
               stroke={color}
-              strokeWidth={['Marte', 'Vênus', 'Mercúrio'].includes(p.name) ? "0.6" : "0.2"}
+              strokeWidth={['Marte', 'Vênus'].includes(p.name) ? "0.6" : "0.1"}
               fontSize="14" 
-              fontWeight="bold" 
+              fontWeight={['Marte', 'Vênus'].includes(p.name) ? "bold" : "normal"}
               className="select-none"
             >
               {info?.symbol || '●'}
