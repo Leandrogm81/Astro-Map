@@ -1,13 +1,28 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { NatalChart } from '@/types';
+import { NatalChart, PlanetPosition, Aspect } from '@/types';
 import { calculateSolarReturn } from '@/lib/ephemeris';
-import { Sun, Loader2, Sparkles, ScrollText, Trash2 } from 'lucide-react';
+import { Sun, Loader2, Sparkles, ScrollText, Trash2, Home, Compass, Zap, Target } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TransitWheel from './TransitWheel';
+import { calculateCrossAspects, getHouseForPlanet, getElementColor, ZODIAC_SIGNS } from '@/lib/astrology';
 
+const HOUSE_MEANINGS: Record<number, { title: string; area: string }> = {
+  1: { title: 'Identidade', area: 'Autoimagem, começos e vitalidade' },
+  2: { title: 'Recursos', area: 'Finanças, valores e segurança' },
+  3: { title: 'Comunicação', area: 'Estudos, viagens curtas e ambiente' },
+  4: { title: 'Raízes', area: 'Lar, família e base emocional' },
+  5: { title: 'Criatividade', area: 'Prazer, romance e projetos' },
+  6: { title: 'Rotina', area: 'Saúde, trabalho e hábitos' },
+  7: { title: 'Parcerias', area: 'Relacionamentos e contratos' },
+  8: { title: 'Transformação', area: 'Crises, intimidade e bens partilhados' },
+  9: { title: 'Expansão', area: 'Filosofia, estudos superiores e viagens' },
+  10: { title: 'Carreira', area: 'Status, metas e reputação' },
+  11: { title: 'Social', area: 'Amizades, grupos e esperanças' },
+  12: { title: 'Inconsciente', area: 'Espiritualidade, isolamento e fim de ciclos' },
+};
 interface SolarRevolutionProps {
   natalChart: NatalChart;
   onRevolutionCalculated?: (solarReturn: NatalChart | null, year: number) => void;
@@ -21,6 +36,42 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
   const [error, setError] = useState<string | null>(null);
   const [reportText, setReportText] = useState<string>('');
   const [generatingReport, setGeneratingReport] = useState(false);
+
+  const getAspectSymbol = (type: string): string => {
+    const symbols: Record<string, string> = {
+      'conjunção': '☌', 'sextil': '⚹', 'quadratura': '□', 'trígono': '△', 'oposição': '☍',
+      'semisextil': '⚺', 'semiquadratura': '∠', 'sesquiquadratura': '⚼', 'quincúncio': '⚻',
+    };
+    return symbols[type] || '◦';
+  };
+
+  const getAspectColor = (type: string): string => {
+    const colors: Record<string, string> = {
+      'conjunção': '#fbbf24', 'sextil': '#3b82f6', 'quadratura': '#ef4444', 'trígono': '#22c55e', 'oposição': '#f97316'
+    };
+    return colors[type] || '#64748b';
+  };
+
+  // Funções de análise
+  const crossAspects = solarReturn ? calculateCrossAspects(solarReturn.planets, natalChart.planets)
+    .filter(a => ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type))
+    .sort((a, b) => a.orb - b.orb)
+    .slice(0, 12) : [];
+
+  const getYearThemes = () => {
+    if (!solarReturn) return [];
+    const themes: { label: string; icon: any }[] = [];
+    const srAsc = solarReturn.housesPlacidus[0].sign;
+    const natalAsc = natalChart.housesPlacidus[0].sign;
+    const srSunHouse = solarReturn.planets.find(p => p.name === 'Sol')?.house;
+
+    if (srAsc === natalAsc) themes.push({ label: 'Retorno Profundo', icon: Target });
+    if (srSunHouse === 10 || srSunHouse === 1) themes.push({ label: 'Destaque e Visibilidade', icon: Sun });
+    if (solarReturn.planets.find(p => p.name === 'Saturno')?.house === 10) themes.push({ label: 'Construção de Carreira', icon: Zap });
+    if (solarReturn.planets.find(p => p.name === 'Júpiter')?.house === 2) themes.push({ label: 'Expansão Financeira', icon: Sparkles });
+    
+    return themes.length > 0 ? themes : [{ label: 'Novo Ciclo', icon: Compass }];
+  };
 
   // Carregar relatório salvo ao mudar de mapa/ano
   useEffect(() => {
@@ -137,7 +188,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+        <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2 font-serif">
           <Sun className="w-6 h-6 text-yellow-500 animate-pulse" />
           Revolução Solar {year}
         </h3>
@@ -150,7 +201,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
           >
             ←
           </button>
-          <span className="px-4 py-2 text-slate-100 font-bold min-w-[80px] text-center">
+          <span className="px-4 py-2 text-slate-100 font-bold min-w-[80px] text-center font-mono">
             {year}
           </span>
           <button
@@ -178,56 +229,145 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
 
       {solarReturn && !loading && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          
+          {/* Painel de Temas */}
+          <div className="flex flex-wrap gap-3">
+             {getYearThemes().map((theme, i) => (
+                <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/20 text-gold-400 text-xs font-bold uppercase tracking-widest shadow-lg shadow-gold-500/5">
+                   <theme.icon className="w-3.5 h-3.5" />
+                   {theme.label}
+                </div>
+             ))}
+          </div>
+
           {/* Gráfico de Revolução (Sobreposição) */}
-          <div className="bg-slate-950/40 border border-slate-800 rounded-3xl p-6 shadow-inner">
-             <div className="flex items-center justify-between mb-6">
+          <div className="glass p-6 rounded-3xl shadow-inner relative overflow-hidden group">
+             <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
-                   <h4 className="text-lg font-bold text-slate-200">Sobreposição Natal vs Revolução</h4>
-                   <p className="text-xs text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
+                   <h4 className="text-lg font-bold text-slate-200 font-serif">Sobreposição Natal vs Revolução</h4>
+                   <p className="text-[10px] text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
                 </div>
              </div>
              <TransitWheel natalChart={natalChart} transitChart={solarReturn} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ascendente do Ano</span>
-              <div className="text-xl font-black text-white mt-1">
+              <div className="text-xl font-black text-white mt-1 font-serif">
                 {solarReturn.housesPlacidus[0].sign}
               </div>
               <p className="text-[10px] text-purple-400 mt-1 font-bold">Grau {formatDegree(solarReturn.housesPlacidus[0].degree)}</p>
             </div>
 
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+            <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sol na Casa</span>
-              <div className="text-xl font-black text-white mt-1">
+              <div className="text-xl font-black text-white mt-1 font-serif">
                 Casa {solarReturn.planets.find(p => p.name === 'Sol')?.house}
               </div>
               <p className="text-[10px] text-yellow-500 mt-1 font-bold">{solarReturn.birthData.date}</p>
             </div>
 
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+            <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lua do Ano</span>
-              <div className="text-xl font-black text-white mt-1">
+              <div className="text-xl font-black text-white mt-1 font-serif">
                 {solarReturn.planets.find(p => p.name === 'Lua')?.sign}
               </div>
               <p className="text-[10px] text-indigo-400 mt-1 font-bold">Casa {solarReturn.planets.find(p => p.name === 'Lua')?.house}</p>
             </div>
 
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-lg">
+            <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tema Central</span>
-              <div className="text-sm font-bold text-purple-300 mt-2 leading-tight">
+              <div className="text-sm font-bold text-purple-300 mt-2 leading-tight font-serif">
                  {solarReturn.housesPlacidus[0].sign === natalAsc ? 'Retorno Profundo' : 'Nova Abordagem'}
               </div>
             </div>
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+             {/* Aspectos Cruzados */}
+             <div className="glass p-6 rounded-3xl">
+                <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
+                   <Zap className="w-5 h-5 text-gold-500" />
+                   Aspectos Cruzados (RS ↔ Natal)
+                </h4>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                   {crossAspects.map((aspect, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                         <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold text-white min-w-[70px]">{aspect.planet1} (RS)</span>
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border border-white/5" style={{ color: getAspectColor(aspect.type) }}>
+                               <span className="text-xl">{getAspectSymbol(aspect.type)}</span>
+                            </div>
+                            <span className="text-sm font-bold text-slate-300 min-w-[70px]">{aspect.planet2} (Natal)</span>
+                         </div>
+                         <div className="text-right">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase truncate">{aspect.type}</p>
+                            <p className="text-[9px] font-mono text-slate-600">órbita: {aspect.orb.toFixed(1)}°</p>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+
+             {/* Planetas RS nas Casas Natais */}
+             <div className="glass p-6 rounded-3xl">
+                <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
+                   <Home className="w-5 h-5 text-indigo-400" />
+                   Foco Vital (RS nas Casas Natais)
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                   {solarReturn.planets.slice(0, 10).map((p, i) => {
+                      const natalHouse = getHouseForPlanet(p.longitude, natalChart.housesPlacidus);
+                      return (
+                         <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                            <div className="flex items-center justify-between">
+                               <span className="text-lg">{p.symbol}</span>
+                               <span className="text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">CASA {natalHouse} NATAL</span>
+                            </div>
+                            <p className="text-xs font-bold text-white mt-2">{p.name}</p>
+                            <p className="text-[10px] text-slate-500 leading-tight mt-1">{HOUSE_MEANINGS[natalHouse].title}</p>
+                         </div>
+                      );
+                   })}
+                </div>
+             </div>
+          </div>
+
+          {/* Grid de Casas da RS */}
+          <div className="glass p-6 rounded-3xl">
+             <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
+                <Compass className="w-5 h-5 text-purple-400" />
+                Estrutura de Casas da Revolução Solar
+             </h4>
+             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                {solarReturn.housesPlacidus.map((house, i) => {
+                   const planetInHouse = solarReturn.planets.filter(p => p.house === house.number);
+                   return (
+                      <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all">
+                         <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-black text-slate-500 uppercase">Casa {house.number}</span>
+                            <span className="text-[10px] font-bold text-purple-400">{house.sign}</span>
+                         </div>
+                         <p className="text-sm font-bold text-white mb-1 font-serif">{HOUSE_MEANINGS[house.number].title}</p>
+                         <div className="flex flex-wrap gap-1 mt-2 min-h-[1.5rem]">
+                            {planetInHouse.map(p => (
+                               <span key={p.name} title={p.name} className="text-lg leading-none">{p.symbol}</span>
+                            ))}
+                         </div>
+                         <p className="text-[9px] text-slate-500 mt-2 leading-tight uppercase tracking-tighter">{HOUSE_MEANINGS[house.number].area}</p>
+                      </div>
+                   );
+                })}
+             </div>
+          </div>
+
           {/* AI Report Section for Solar Return */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-              <div className="p-4 bg-slate-800/40 border-b border-slate-800 flex items-center justify-between">
+          <div className="glass-gold rounded-3xl overflow-hidden shadow-2xl relative">
+              <div className="p-4 bg-slate-800/20 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h4 className="font-bold text-slate-100">Guia Anual Inteligente</h4>
+                  <h4 className="font-bold text-slate-100 font-serif">Guia Anual Inteligente</h4>
                 </div>
                 {reportText && !generatingReport && (
                   <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors">
@@ -261,7 +401,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
                     {generatingReport && (
                       <div className="flex items-center gap-2 mt-6 text-purple-400 animate-pulse">
                          <Loader2 className="w-4 h-4 animate-spin" />
-                         <span className="text-[10px] font-black uppercase tracking-widest">Consultando as Estrelas de {year}...</span>
+                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">Consultando as Estrelas de {year}...</span>
                       </div>
                     )}
                   </article>

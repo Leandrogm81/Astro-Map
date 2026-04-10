@@ -137,3 +137,30 @@ export function calculateAspectType(angle: number): { type: string; exactAngle: 
 
   return null;
 }
+
+export function calculateCrossAspects(planetsA: PlanetPosition[], planetsB: PlanetPosition[]) {
+  const aspects: any[] = [];
+  
+  planetsA.forEach(p1 => {
+    planetsB.forEach(p2 => {
+      const diff = Math.abs(p1.longitude - p2.longitude);
+      const angle = diff > 180 ? 360 - diff : diff;
+      
+      const aspectData = calculateAspectType(angle);
+      
+      if (aspectData) {
+        // Mapear nomes de volta para AspectType se necessário, ou manter string
+        aspects.push({
+          planet1: p1.name,
+          planet2: p2.name,
+          type: aspectData.type,
+          angle: angle,
+          orb: Math.abs(angle - aspectData.exactAngle),
+          applying: false // Simplificado para revolução
+        });
+      }
+    });
+  });
+  
+  return aspects;
+}
