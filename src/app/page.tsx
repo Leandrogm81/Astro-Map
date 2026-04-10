@@ -108,7 +108,21 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [initialized]);
+  }, [initialized, editingChartId]);
+
+  const handleNewChart = useCallback(() => {
+    setChart(null);
+    setSavedChartId(null);
+    setAiReport(null);
+    setSolarRevolution(null);
+    setSolarYear(undefined);
+    setSolarReportText('');
+    setActiveTab('chart');
+    setEditingChartId(null);
+    setInitialFormData(undefined);
+    setSidebarVisible(true);
+    setExpandedSections(new Set(['form']));
+  }, []);
 
   const handleSelectChart = useCallback((savedChart: SavedChart) => {
     if (isValidChart(savedChart.chart)) {
@@ -209,7 +223,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               {hasValidChart && !sidebarVisible && (
                 <button
-                  onClick={() => setSidebarVisible(true)}
+                  onClick={handleNewChart}
                   className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 border border-gold-500/30 rounded-full transition-all flex items-center gap-2"
                 >
                   <Star className="w-3 h-3" />
@@ -234,87 +248,76 @@ export default function Home() {
           {/* Sidebar */}
           {sidebarVisible && (
             <div className="lg:col-span-4 space-y-6 animate-in slide-in-from-left duration-500">
-            {/* Formulário */}
-            <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
-              <button
-                onClick={() => toggleSection('form')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Moon className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-lg font-semibold text-purple-200">
-                    Dados de Nascimento
-                  </h2>
-                </div>
-                {expandedSections.has('form') ? (
-                  <ChevronUp className="w-5 h-5 text-slate-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-slate-400" />
-                )}
-              </button>
-
-              {expandedSections.has('form') && (
-                <div className="p-6">
-                  {!initialized ? (
-                    <div className="text-center py-8">
-                      <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
-                      <p className="text-slate-400">Calculando efemérides...</p>
-                    </div>
+              {/* Formulário */}
+              <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => toggleSection('form')}
+                  className="w-full px-6 py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Moon className="w-5 h-5 text-purple-400" />
+                    <h2 className="text-lg font-semibold text-purple-200">
+                      Dados de Nascimento
+                    </h2>
+                  </div>
+                  {expandedSections.has('form') ? (
+                    <ChevronUp className="w-5 h-5 text-slate-400" />
                   ) : (
-                    <div className="space-y-4">
-                      {editingChartId && (
-                        <div className="bg-blue-500/20 text-blue-200 border border-blue-500/30 p-3 rounded-lg text-sm flex justify-between items-center">
-                          <span>Você está editando um mapa salvo. Clique em "Calcular" para atualizar.</span>
-                          <button onClick={() => { setEditingChartId(null); setInitialFormData(undefined); }} className="text-blue-400 hover:text-blue-300 underline">Cancelar</button>
-                        </div>
-                      )}
-                      <BirthForm 
-                        onSubmit={handleFormSubmit} 
-                        loading={loading} 
-                        initialData={initialFormData}
-                      />
-                    </div>
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
                   )}
-                </div>
-              )}
-            </div>
+                </button>
 
-            {/* Mapas Salvos */}
-            <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
-              <button
-                onClick={() => toggleSection('saved')}
-                className="w-full px-6 py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Save className="w-5 h-5 text-purple-400" />
-                  <h2 className="text-lg font-semibold text-purple-200">
-                    Mapas Salvos
-                  </h2>
-                </div>
-                {expandedSections.has('saved') ? (
-                  <ChevronUp className="w-5 h-5 text-slate-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-slate-400" />
+                {expandedSections.has('form') && (
+                  <div className="p-6">
+                    {!initialized ? (
+                      <div className="text-center py-8">
+                        <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
+                        <p className="text-slate-400">Calculando efemérides...</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {editingChartId && (
+                          <div className="bg-blue-500/20 text-blue-200 border border-blue-500/30 p-3 rounded-lg text-sm flex justify-between items-center">
+                            <span>Você está editando um mapa salvo. Clique em "Calcular" para atualizar.</span>
+                            <button onClick={() => { setEditingChartId(null); setInitialFormData(undefined); }} className="text-blue-400 hover:text-blue-300 underline">Cancelar</button>
+                          </div>
+                        )}
+                        <BirthForm 
+                          onSubmit={handleFormSubmit} 
+                          loading={loading} 
+                          initialData={initialFormData}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
-              </button>
+              </div>
 
-              {expandedSections.has('saved') && (
-                <div className="p-6">
-                  <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
-                </div>
-              )}
-            </div>
+              {/* Mapas Salvos */}
+              <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
+                <button
+                  onClick={() => toggleSection('saved')}
+                  className="w-full px-6 py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Save className="w-5 h-5 text-purple-400" />
+                    <h2 className="text-lg font-semibold text-purple-200">
+                      Mapas Salvos
+                    </h2>
+                  </div>
+                  {expandedSections.has('saved') ? (
+                    <ChevronUp className="w-5 h-5 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                  )}
+                </button>
 
-            {/* Exportar PDF */}
-            {hasValidChart && (
-              <ExportPDF 
-                chart={chart} 
-                solarRevolution={solarRevolution} 
-                solarYear={solarYear}
-                reportText={aiReport?.summary}
-                solarReportText={solarReportText}
-              />
-              )}
+                {expandedSections.has('saved') && (
+                  <div className="p-6">
+                    <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -417,6 +420,17 @@ export default function Home() {
                       onReportUpdated={setSolarReportText}
                     />
                   )}
+                </div>
+
+                {/* Exportar PDF */}
+                <div className="mt-8">
+                  <ExportPDF 
+                    chart={chart} 
+                    solarRevolution={solarRevolution} 
+                    solarYear={solarYear}
+                    reportText={aiReport?.summary}
+                    solarReportText={solarReportText}
+                  />
                 </div>
               </div>
             ) : (
