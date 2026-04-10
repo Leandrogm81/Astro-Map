@@ -41,7 +41,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'chart' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form', 'saved']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
   const [initialFormData, setInitialFormData] = useState<BirthData | undefined>(undefined);
   const [aiReport, setAiReport] = useState<AIReportType | null>(null);
@@ -79,6 +80,7 @@ export default function Home() {
       setSolarRevolution(null);
       setSolarYear(undefined);
       setSolarReportText('');
+      setSidebarVisible(false); // Hide sidebar after calculation
       
       try {
         if (editingChartId) {
@@ -183,11 +185,11 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       {/* Header */}
-      <header className="border-b border-purple-500/20 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <header className="border-b border-gold-500/20 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/20 border border-purple-500/30">
+              <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-gold-500/10 border border-gold-500/20">
                 <Image 
                   src="/assets/logo-premium.png" 
                   alt="AstroMap Logo" 
@@ -196,23 +198,32 @@ export default function Home() {
                 />
               </div>
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-white">
-                  Astro<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Map</span>
+                <h1 className="text-xl font-serif font-black tracking-tight text-white">
+                  Astro<span className="gradient-text-gold">Map</span>
                 </h1>
-                <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500">Premium Astrological Suite</p>
+                <p className="text-[9px] uppercase tracking-[0.3em] font-bold text-gold-500/60">Classic Mystic Suite</p>
               </div>
             </div>
 
-            <nav className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              {hasValidChart && !sidebarVisible && (
+                <button
+                  onClick={() => setSidebarVisible(true)}
+                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 border border-gold-500/30 rounded-full transition-all flex items-center gap-2"
+                >
+                  <Star className="w-3 h-3" />
+                  Novo Mapa
+                </button>
+              )}
               <a
                 href="https://openrouter.ai/keys"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-slate-400 hover:text-purple-300 transition-colors"
+                className="text-xs text-slate-400 hover:text-gold-400 transition-colors"
               >
-                Obter API Key
+                API Key
               </a>
-            </nav>
+            </div>
           </div>
         </div>
       </header>
@@ -220,7 +231,8 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Sidebar */}
-          <div className="lg:col-span-4 space-y-6">
+          {sidebarVisible && (
+            <div className="lg:col-span-4 space-y-6 animate-in slide-in-from-left duration-500">
             {/* Formulário */}
             <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
               <button
@@ -301,11 +313,12 @@ export default function Home() {
                 reportText={aiReport?.summary}
                 solarReportText={solarReportText}
               />
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Main Content */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className={`${sidebarVisible ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-8 transition-all duration-500`}>
             {/* Erro */}
             {error && (
               <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
@@ -323,28 +336,29 @@ export default function Home() {
             {hasValidChart ? (
               <div className="space-y-6">
                 {/* Info Header */}
-                <div className="p-6 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border border-purple-500/30 rounded-xl">
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                <div className="p-8 glass-gold rounded-3xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-gold-500/10 transition-colors" />
+                  <h2 className="text-4xl font-serif font-bold text-white mb-4 tracking-tight">
                     {chart.birthData.name}
                   </h2>
-                  <div className="flex flex-wrap gap-4 text-sm text-slate-300">
-                    <span className="flex items-center gap-1">
-                      <Sun className="w-4 h-4 text-yellow-400" />
-                      {chart.birthData.date}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Moon className="w-4 h-4 text-slate-300" />
-                      {chart.birthData.time}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-purple-400" />
-                      {chart.birthData.location}
-                    </span>
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                      <Sun className="w-4 h-4 text-gold-400" />
+                      <span className="text-slate-200">{chart.birthData.date}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                      <Moon className="w-4 h-4 text-indigo-400" />
+                      <span className="text-slate-200">{chart.birthData.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                      <Star className="w-4 h-4 text-gold-500" />
+                      <span className="text-slate-200">{chart.birthData.location}</span>
+                    </div>
                   </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-2 border-b border-purple-500/20">
+                <div className="flex flex-wrap gap-3 p-1 bg-slate-900/40 rounded-2xl border border-white/5">
                   {[
                     { id: 'chart', label: 'Mapa', icon: Star },
                     { id: 'houses', label: 'Casas', icon: Moon },
@@ -355,20 +369,20 @@ export default function Home() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                      className={`px-4 py-3 flex items-center gap-2 text-sm font-medium transition-colors border-b-2 ${
+                      className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
                         activeTab === tab.id
-                          ? 'border-purple-500 text-purple-300'
-                          : 'border-transparent text-slate-400 hover:text-slate-200'
+                          ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
+                          : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
                       }`}
                     >
-                      <tab.icon className="w-4 h-4" />
+                      <tab.icon className="w-3.5 h-3.5" />
                       {tab.label}
                     </button>
                   ))}
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl p-6">
+                <div className="glass rounded-3xl p-8 shadow-2xl">
                   {activeTab === 'chart' && (
                     <div className="space-y-6">
                       <AstroChart chart={chart} />

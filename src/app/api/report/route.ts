@@ -10,7 +10,6 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 export const AVAILABLE_MODELS = [
   { id: 'google/gemini-2.0-flash-001', name: 'Gemini 2.0 Flash', description: 'Alta velocidade e precisão', cost: 'Econômico' },
   { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3', description: 'Excelente em Português Brasileiro', cost: 'Muito Econômico' },
-  { id: 'google/gemini-pro-1.5', name: 'Gemini 1.5 Pro', description: 'Raciocínio profundo e analítico', cost: 'Intermediário' },
   { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', description: 'O melhor para análises psicológicas complexas', cost: 'Premium' },
   { id: 'meta-llama/llama-3.3-70b-instruct', name: 'Llama 3.3 70B', description: 'Equilibrado e versátil', cost: 'Econômico' },
 ];

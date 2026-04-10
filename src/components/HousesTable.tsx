@@ -21,62 +21,60 @@ export default function HousesTable({ chart, system = 'placidus' }: HousesTableP
   };
 
   const houseMeanings: Record<number, string> = {
-    1: 'Personalidade, aparência',
-    2: 'Finanças, valores',
-    3: 'Comunicação, irmãos',
-    4: 'Lar, família',
-    5: 'Criatividade, romance',
-    6: 'Trabalho, saúde',
-    7: 'Relacionamentos',
-    8: 'Transformação, herança',
-    9: 'Filosofia, viagens',
-    10: 'Carreira, status',
-    11: 'Amizades, causas',
-    12: 'Subconsciente, espiritualidade',
+    1: 'Ascendente, Ego',
+    2: 'Recursos, Valores',
+    3: 'Mente, Comunicação',
+    4: 'Raízes, Família',
+    5: 'Prazer, Expressão',
+    6: 'Rotina, Saúde',
+    7: 'Outros, Parceria',
+    8: 'Profundidade, Crise',
+    9: 'Expansão, Fé',
+    10: 'Zênite, Destino',
+    11: 'Coletivo, Futuro',
+    12: 'Sombra, Mistério',
   };
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-medium text-purple-200">
-          Casas Astrológicas
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-serif font-bold text-white tracking-tight">
+          Estrutura de <span className="text-gold-500">Casas</span>
         </h3>
-        <span className="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full">
-          {system === 'placidus' ? 'Sistema Placidus' : 'Signos Inteiros'}
+        <span className="text-[10px] font-black uppercase tracking-widest text-gold-500/60 bg-gold-500/5 px-4 py-1.5 rounded-full border border-gold-500/10">
+          {system === 'placidus' ? 'Placidus' : 'Signos Inteiros'}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {houses.map((house) => (
           <div
             key={house.number}
-            className="p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg hover:border-purple-500/40 transition-colors"
+            className="group p-5 glass rounded-2xl border border-white/5 hover:border-gold-500/20 transition-all duration-300"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <span className="text-lg font-bold text-purple-300">
-                    {house.number}
-                  </span>
+                <div className="w-10 h-10 rounded-xl bg-slate-950/50 border border-white/10 flex items-center justify-center text-gold-400 font-serif font-bold text-lg shadow-inner">
+                  {house.number}
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">{houseMeanings[house.number]}</p>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">
+                    Casa
+                  </h4>
+                  <p className="text-sm font-medium text-slate-200">
+                    {houseMeanings[house.number]}
+                  </p>
                 </div>
               </div>
-              <div className="text-right">
-                <span
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded text-sm font-medium"
-                  style={{
-                    backgroundColor: `${getElementColor(getElementFromSign(house.sign))}20`,
-                    color: getElementColor(getElementFromSign(house.sign)),
-                  }}
-                >
-                  {house.sign}
-                </span>
-                <p className="text-xs text-slate-500 mt-1">
-                  {formatDegree(house.degree)}
-                </p>
+            </div>
+
+            <div className={`flex items-end justify-between border-t border-white/5 pt-3 element-${getElementFromSign(house.sign)}`}>
+              <div className="text-xs font-mono text-slate-500">
+                {formatDegree(house.degree)}
               </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-element-soft text-element">
+                {house.sign}
+              </span>
             </div>
           </div>
         ))}
