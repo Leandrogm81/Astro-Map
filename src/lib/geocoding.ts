@@ -72,10 +72,14 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
   }
 }
 
+/**
+ * Detecta se uma data estava dentro do Horário de Verão brasileiro.
+ * Regra geral histórica: Inicia no 3º domingo de outubro e termina no 3º domingo de fevereiro.
+ * Otimizado para o território brasileiro.
+ */
 export function isBrazilianDST(date: Date): boolean {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
-  const day = date.getDate();
 
   // Brasil aboliu o horário de verão em 2019
   if (year >= 2019) return false;
@@ -83,35 +87,51 @@ export function isBrazilianDST(date: Date): boolean {
   // Antes de 1985, não havia horário de verão consistente
   if (year < 1985) return false;
 
-  // Verão brasileiro: de outubro a fevereiro
-  // Início: terceiro domingo de outubro do ano anterior
-  // Fim: terceiro domingo de fevereiro do ano atual (ou terceiro domingo de março em alguns anos)
-
-  // Simplificação: considerar DST ativo de outubro a fevereiro
-  // Isso cobre a grande maioria dos casos com precisão suficiente para astrologia
+  // Meses garantidos (Novembro, Dezembro, Janeiro)
   if (month === 11 || month === 12 || month === 1) return true;
-  if (month === 10 && day >= 15) return true;
-  if (month === 2 && day <= 15) return true;
+  
+  // Meses de transição (Outubro e Fevereiro)
+  if (month === 10 || month === 2) {
+    const day = date.getDate();
+    
+    // Função auxiliar para encontrar o dia do 3º domingo do mês
+    const getThirdSunday = (y: number, m: number) => {
+      let count = 0;
+      for (let d = 1; d <= 31; d++) {
+        const dObj = new Date(y, m - 1, d);
+        if (dObj.getMonth() + 1 !== m) break;
+        if (dObj.getDay() === 0) { // 0 = Domingo
+          count++;
+          if (count === 3) return d;
+        }
+      }
+      return 20; // Fallback seguro
+    };
 
-  // Alguns anos tinham março também
-  if (month === 2 && day <= 28) return true;
+    const thirdSunday = getThirdSunday(year, month);
+
+    if (month === 10) return day >= thirdSunday;
+    if (month === 2) return day < thirdSunday;
+  }
 
   return false;
 }
 
+/**
+ * Retorna o fuso horário base (UTC offset) estimado para longitudes no Brasil.
+ * @param lon Longitude em graus decimais
+ */
 export function getBrazilianTimezone(lon: number): number {
-  // Garantir longitude negativa para o hemisfério ocidental
-  const normalizedLon = lon > 0 ? -lon : lon;
-
-  if (normalizedLon >= -35) return -2;      // Fernando de Noronha
-  if (normalizedLon >= -44.5) return -3;      // Brasília (SP, RJ, MG, BA, etc.)
-  if (normalizedLon >= -52) return -3;        // Sul (PR, SC, RS)
-  if (normalizedLon >= -56) return -4;        // Mato Grosso do Sul oeste
-  if (normalizedLon >= -60) return -4;        // Mato Grosso, Amazonas leste
-  if (normalizedLon >= -66) return -4;        // Amazonas, Rondônia, Roraima
-  if (normalizedLon >= -74) return -5;        // Acre
-
-  return -3; // Default: Brasília
+  // Nota: Longitudes brasileiras são negativas (oeste de Greenwich)
+  if (lon >= -35) return -2;      // Fernando de Noronha
+  if (lon >= -44.5) return -3;    // Brasília (Leste)
+  if (lon >= -52) return -3;      // Sul/Sudeste/Nordeste
+  if (lon >= -56) return -4;      // Mato Grosso do Sul / Mato Grosso leste
+  if (lon >= -60) return -4;      // Amazonas leste
+  if (lon >= -66) return -4;      // Amazonas oeste
+  if (lon >= -74) return -5;      // Acre
+  
+  return -3; // Default: Brasília/Sudeste
 }
 
 export function getTimezoneFromCoordinates(lat: number, lon: number): string {

@@ -141,10 +141,13 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
         {/* Localização */}
         <div className="relative">
-          <label htmlFor="birthLocation" className="block text-sm font-medium text-purple-200 mb-2">
-            <MapPin className="inline w-4 h-4 mr-2" />
-            Local de Nascimento
-          </label>
+          <div className="flex justify-between items-end mb-2">
+            <label htmlFor="birthLocation" className="text-sm font-medium text-purple-200">
+              <MapPin className="inline w-4 h-4 mr-2 mb-0.5" />
+              Local de Nascimento
+            </label>
+            <span className="text-[10px] text-slate-500 italic font-medium">Otimizado para o Brasil</span>
+          </div>
           <div className="flex gap-2">
             <input
               id="birthLocation"
