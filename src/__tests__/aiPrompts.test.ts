@@ -11,6 +11,7 @@ const mockChart: NatalChart = {
     location: 'São Paulo, SP',
     latitude: -23.5505,
     longitude: -46.6333,
+    timezone: 'UTC-3:00',
   },
   planets: [
     { name: 'Sol', symbol: '☉', longitude: 54.5, latitude: 0, speed: 0.98, sign: 'Touro', degree: 24.5, house: 10, retrograde: false },
