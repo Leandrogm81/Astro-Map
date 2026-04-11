@@ -78,40 +78,62 @@ export async function POST(request: NextRequest) {
         }
 
         const reader = response.body.getReader();
-        
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let closed = false;
+
+        const safeClose = () => {
+          if (!closed) {
+            closed = true;
+            try {
+              controller.close();
+            } catch (e) {
+              // Já fechado ou erro inconsequente no encerramento
+            }
+          }
+        };
+
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            // Suporte a caracteres multi-byte e buffer incremental
+            buffer += decoder.decode(value, { stream: true });
+
+            // Processar apenas linhas completas (terminadas em \n)
+            const lines = buffer.split('\n');
+            // A última parte (provavelmente incompleta) volta para o buffer
+            buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const dataStr = line.slice(6).trim();
-                
-                if (dataStr === '[DONE]') {
-                  controller.close();
-                  return;
-                }
+              const trimmed = line.trim();
+              if (!trimmed || !trimmed.startsWith('data: ')) continue;
 
-                try {
-                  const data = JSON.parse(dataStr);
-                  const content = data.choices[0]?.delta?.content || '';
-                  if (content) {
-                    controller.enqueue(encoder.encode(content));
-                  }
-                } catch (e) {
-                  // Linha mal formatada, ignorar
+              const dataStr = trimmed.slice(6).trim();
+
+              if (dataStr === '[DONE]') {
+                safeClose();
+                return;
+              }
+
+              try {
+                const data = JSON.parse(dataStr);
+                const content = data.choices?.[0]?.delta?.content || '';
+                if (content) {
+                  controller.enqueue(encoder.encode(content));
                 }
+              } catch (e) {
+                // Linha SSE incompleta ou mal-formada neste chunk, ignorar com segurança
+                // No próximo chunk o buffer terá a linha completa
               }
             }
           }
         } catch (error) {
+          console.error('Streaming error:', error);
           controller.error(error);
         } finally {
-          controller.close();
+          safeClose();
         }
       },
     });
