@@ -190,7 +190,14 @@ export function formatSolarComparisonForAI(
   result += `\nCÚSPIDES DAS CASAS DA RS (Placidus):\n`;
   result += `-`.repeat(60) + '\n';
   
-  for (const house of srHouses) {/**
+  for (const house of srHouses) {
+    result += `Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)}\n`;
+  }
+  
+  return result;
+}
+
+/**
  * Prompt do Sistema para Relatório Natal
  * 
  * Estrutura rígida para segmentação do PDF de 15 páginas.

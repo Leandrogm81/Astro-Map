@@ -34,6 +34,14 @@ Font.register({
   src: 'https://unpkg.com/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'
 });
 
+interface ExportPDFProps {
+  chart: NatalChart;
+  solarRevolution?: NatalChart | null;
+  solarYear?: number;
+  reportText?: string;
+  solarReportText?: string;
+}
+
 const styles = StyleSheet.create({
   page: {
     padding: 50,
