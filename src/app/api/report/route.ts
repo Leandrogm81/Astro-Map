@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   formatChartForAI, 
+  formatSolarComparisonForAI,
   NATAL_PROMPT_SYSTEM, 
   SOLAR_RETURN_PROMPT_SYSTEM 
 } from '@/lib/aiPrompts';
@@ -35,8 +36,8 @@ export async function POST(request: NextRequest) {
     const systemPrompt = isSolar ? SOLAR_RETURN_PROMPT_SYSTEM : NATAL_PROMPT_SYSTEM;
     
     const userMessage = isSolar 
-      ? `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal.\n\n=== MAPA NATAL ===\n${formatChartForAI(chart)}\n\n=== REVOLUÇÃO SOLAR ${solarYear} ===\n${formatChartForAI(solarRevolution)}`
-      : `Por favor, interprete meu Mapa Natal com base nos seguintes dados:\n\n${formatChartForAI(chart)}`;
+      ? `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`
+      : `Por favor, interprete meu Mapa Natal com base nos seguintes dados técnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÇÃO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
@@ -52,8 +53,8 @@ export async function POST(request: NextRequest) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage }
         ],
-        temperature: 0.7,
-        max_tokens: 4000,
+        temperature: 0.75,
+        max_tokens: 8000,
         stream: true, // Habilitar streaming
       }),
     });
