@@ -5,14 +5,18 @@ import { NatalChart, PlanetPosition, ZODIAC_SIGNS } from '@/types';
 interface ChartSimplePDFProps {
   chart: NatalChart;
   size?: number;
+  variant?: 'cover' | 'full-page';
 }
 
-export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProps) {
-  const cx = size / 2;
-  const cy = size / 2;
+export default function ChartSimplePDF({ chart, size, variant = 'full-page' }: ChartSimplePDFProps) {
+  // Tamanhos balanceados conforme recomendação do plano
+  const defaultSize = variant === 'cover' ? 300 : 450;
+  const finalSize = size || defaultSize;
+  const cx = finalSize / 2;
+  const cy = finalSize / 2;
   
-  // Geometria (Inspirada no Astro-Seek)
-  const outerR = size / 2 - 25;
+  // Geometria Distribuída (Inspirada no Astro-Seek)
+  const outerR = finalSize / 2 - 25;
   const signsOuterR = outerR;
   const signsInnerR = outerR - 22;
   const ticksR = outerR - 2;
@@ -60,7 +64,7 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
   };
 
   return (
-    <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+    <Svg width={finalSize} height={finalSize} viewBox={`0 0 ${finalSize} ${finalSize}`}>
       {/* Círculo Principal */}
       <Circle cx={cx} cy={cy} r={outerR + 20} fill={bgColor} />
       
