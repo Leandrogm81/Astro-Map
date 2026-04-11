@@ -387,9 +387,17 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const [year, month, day] = birthData.date.split('-').map(Number);
   const [hours, minutes] = birthData.time.split(':').map(Number);
   
-  // Ensure latitude is negative for southern hemisphere and longitude is negative for western hemisphere
-  const latitude = birthData.latitude > 0 && birthData.latitude < 90 ? -birthData.latitude : birthData.latitude;
-  const longitude = birthData.longitude > 0 && birthData.longitude < 180 ? -birthData.longitude : birthData.longitude;
+  // Use coordenadas diretamente, sem inversão forçada
+  const latitude = birthData.latitude;
+  const longitude = birthData.longitude;
+
+  // Validação básica de limites geográficos
+  if (latitude < -90 || latitude > 90) {
+    throw new Error(`Latitude inválida: ${latitude}. Deve estar entre -90 e 90.`);
+  }
+  if (longitude < -180 || longitude > 180) {
+    throw new Error(`Longitude inválida: ${longitude}. Deve estar entre -180 e 180.`);
+  }
   
   // Determine timezone offset with DST detection
   const birthDateForDST = new Date(year, month - 1, day, hours, minutes);

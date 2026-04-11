@@ -217,17 +217,21 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
                 <input
                   type="number"
                   step="0.0001"
+                  min="-90"
+                  max="90"
                   value={formData.latitude}
                   onChange={(e) => setFormData(prev => ({ ...prev, latitude: parseFloat(e.target.value) || 0 }))}
-                  className="flex-1 px-2 py-1 bg-slate-900 border border-purple-500/30 rounded text-sm text-white"
+                  className="flex-1 px-2 py-1 bg-slate-900 border border-purple-500/30 rounded text-sm text-white focus:outline-none focus:border-purple-400"
                   placeholder="Lat"
                 />
                 <input
                   type="number"
                   step="0.0001"
+                  min="-180"
+                  max="180"
                   value={formData.longitude}
                   onChange={(e) => setFormData(prev => ({ ...prev, longitude: parseFloat(e.target.value) || 0 }))}
-                  className="flex-1 px-2 py-1 bg-slate-900 border border-purple-500/30 rounded text-sm text-white"
+                  className="flex-1 px-2 py-1 bg-slate-900 border border-purple-500/30 rounded text-sm text-white focus:outline-none focus:border-purple-400"
                   placeholder="Lon"
                 />
               </div>
