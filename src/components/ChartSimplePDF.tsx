@@ -35,7 +35,9 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
   const planetSymbols: Record<string, string> = {
     'Sol': '☉', 'Lua': '☽', 'Mercúrio': '☿', 'Vênus': '♀',
     'Marte': '♂', 'Júpiter': '♃', 'Saturno': '♄', 'Urano': '♅',
-    'Netuno': '♆', 'Plutão': '♇', 'North Node': '☊', 'Chiron': '⚷',
+    'Netuno': '♆', 'Plutão': '♇', 
+    'Nodo Norte': '☊', 'Quíron': '⚷', 'Lilith': '⚸', 'Roda da Fortuna': '⊗',
+    'North Node': '☊', 'Chiron': '⚷'
   };
 
   const ascendantDegree = chart.ascendant || chart.housesPlacidus.find(h => h.number === 1)?.longitude || 0;

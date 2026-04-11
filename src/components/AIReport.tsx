@@ -29,9 +29,10 @@ interface AIReportProps {
   solarRevolution?: NatalChart | null;
   solarYear?: number;
   onReportGenerated?: (report: AIReportType | null) => void;
+  onReportUpdated?: (text: string) => void;
 }
 
-export default function AIReport({ chart, solarRevolution, solarYear, onReportGenerated }: AIReportProps) {
+export default function AIReport({ chart, solarRevolution, solarYear, onReportGenerated, onReportUpdated }: AIReportProps) {
   const [reportText, setReportText] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -54,6 +55,7 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
     const savedReport = localStorage.getItem(reportKey);
     if (savedReport) {
       setReportText(savedReport);
+      if (onReportUpdated) onReportUpdated(savedReport);
     }
     
     fetch('/api/report')
@@ -112,6 +114,7 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
         const chunk = decoder.decode(value, { stream: true });
         accumulatedText += chunk;
         setReportText(accumulatedText);
+        if (onReportUpdated) onReportUpdated(accumulatedText);
       }
 
       // Salvar no localStorage ao finalizar

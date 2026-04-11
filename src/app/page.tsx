@@ -46,6 +46,7 @@ export default function Home() {
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
   const [initialFormData, setInitialFormData] = useState<BirthData | undefined>(undefined);
   const [aiReport, setAiReport] = useState<AIReportType | null>(null);
+  const [natalReportText, setNatalReportText] = useState<string>('');
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
   const [solarReportText, setSolarReportText] = useState<string>('');
@@ -410,6 +411,7 @@ export default function Home() {
                     <AIReport 
                       chart={chart} 
                       onReportGenerated={handleReportGenerated}
+                      onReportUpdated={setNatalReportText}
                     />
                   )}
 
@@ -428,7 +430,7 @@ export default function Home() {
                     chart={chart} 
                     solarRevolution={solarRevolution} 
                     solarYear={solarYear}
-                    reportText={aiReport?.summary}
+                    reportText={natalReportText}
                     solarReportText={solarReportText}
                   />
                 </div>
