@@ -33,7 +33,7 @@ export async function initSweph(): Promise<void> {
 }
 
 // Calculate Julian Day from Date
-function dateToJD(date: Date): number {
+export function dateToJD(date: Date): number {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const day = date.getUTCDate();
@@ -374,7 +374,7 @@ function calculateLilithPosition(date: Date): PlanetPosition {
 }
 
 // Parse timezone offset from string like "UTC-3:00" or "UTC+2:00"
-function parseTimezoneOffset(timezone: string): number {
+export function parseTimezoneOffset(timezone: string): number {
   if (!timezone) return 0;
   
   const match = timezone.match(/UTC([+-]?)(\d{1,2})(?::(\d{2}))?/i);
