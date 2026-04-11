@@ -295,6 +295,11 @@ async function calculatePlanetPosition(date: Date, planetId: string): Promise<Pl
   };
 }
 
+/**
+ * Calcula a posição média do Nodo Norte Lunar.
+ * Método: Aproximação linear do Nodo Médio regredindo ~19.34° por ano.
+ * Precisão: ~1 grau de erro. Suficiente para uso geral.
+ */
 function calculateNodePosition(date: Date): PlanetPosition {
   const jd = dateToJD(date);
   const jd2000 = 2451545.0;
@@ -316,6 +321,12 @@ function calculateNodePosition(date: Date): PlanetPosition {
   };
 }
 
+/**
+ * Calcula a posição média de Quíron.
+ * Método: Aproximação linear baseada no período orbital de ~50.7 anos.
+ * Precisão: Pode haver erro significativo (>5°) devido à alta excentricidade da órbita.
+ * Recomendado conferir com efemérides oficiais para uso crítico.
+ */
 function calculateChironPosition(date: Date): PlanetPosition {
   const jd = dateToJD(date);
   const jd2000 = 2451545.0;
@@ -336,6 +347,11 @@ function calculateChironPosition(date: Date): PlanetPosition {
   };
 }
 
+/**
+ * Calcula a posição da Lilith (Apogeu Lunar Médio).
+ * Método: Fórmula polinomial para o apogeu lunar médio.
+ * Precisão: ~1 a 2 graus de erro.
+ */
 function calculateLilithPosition(date: Date): PlanetPosition {
   const jd = dateToJD(date);
   const T = (jd - 2451545.0) / 36525.0;
