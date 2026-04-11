@@ -4,13 +4,13 @@ Aplicativo web completo para cálculo e interpretação de mapas astrais, com re
 
 ## Funcionalidades
 
-- **Cálculo Preciso**: Usa Swiss Ephemeris (WASM) para cálculos astronômicos profissionais
+- **Cálculo Preciso**: Usa `astronomy-engine` para cálculos astronômicos de alta precisão
 - **Mapa Visual**: Roda zodiacal SVG interativa com planetas, casas e aspectos
 - **Dois Sistemas de Casas**: Placidus e Signos Inteiros (Whole Signs)
-- **Relatório IA**: Geração de interpretações completas via OpenRouter (múltiplos modelos)
+- **Relatório IA**: Geração de interpretações completas via OpenRouter (Cloud-native)
 - **Revolução Solar**: Cálculo de trânsitos e previsões anuais
 - **Exportar PDF**: Download do relatório completo
-- **Salvar Localmente**: Mapas salvos no localStorage (sem cadastro)
+- **Salvar Localmente**: Mapas salvos no localStorage (privacidade total)
 
 ## 📋 PASSO A PASSO: Como colocar a API dentro do app
 
@@ -78,19 +78,18 @@ Acesse: http://localhost:3000
        │                     │                     │
 ```
 
-**Segurança**: A chave API fica apenas no servidor, nunca chega ao navegador!
+**Segurança**: O app suporta tanto o uso de uma chave configurada no servidor (`.env.local`) quanto chaves inseridas pelo usuário na interface (armazenadas apenas no navegador).
 
 ## 🤖 Modelos de IA Disponíveis
 
-Você pode escolher entre 5 modelos diferentes:
+Você pode escolher entre os modelos otimizados disponíveis:
 
-| Modelo | Qualidade | Custo Aproximado | Melhor Para |
-|--------|-----------|------------------|-------------|
-| **Gemini 2.5 Flash** | ⭐⭐⭐⭐ | ~R$0.80 | Uso geral, equilibrado |
-| **Gemini 2.0 Flash Lite** | ⭐⭐⭐ | ~R$0.40 | Orçamento limitado |
-| **DeepSeek V3** | ⭐⭐⭐⭐⭐ | ~R$0.50 | Textos em português |
-| **Claude 3.5 Sonnet** | ⭐⭐⭐⭐⭐ | ~R$2.00 | Máxima qualidade |
-| **Llama 3.3 70B** | ⭐⭐⭐⭐ | ~R$0.30 | Open source |
+| Modelo | Qualidade | Custo | Melhor Para |
+|--------|-----------|-------|-------------|
+| **Gemini 2.0 Flash** | ⭐⭐⭐⭐ | Econômico | Velocidade e precisão geral |
+| **DeepSeek V3** | ⭐⭐⭐⭐⭐ | Muito Econômico | Excelente em Português Brasileiro |
+| **Claude 3.5 Sonnet** | ⭐⭐⭐⭐⭐ | Premium | Análises psicológicas complexas |
+| **Llama 3.3 70B** | ⭐⭐⭐⭐ | Econômico | Versatilidade e lógica |
 
 ## 🚀 Deploy
 
@@ -143,10 +142,10 @@ CMD ["npm", "start"]
 
 ## 🛠️ Tecnologias
 
-- **Framework**: Next.js 15 + React 19 + TypeScript
+- **Framework**: Next.js 16.2.1 + React 19 + TypeScript
 - **Estilização**: Tailwind CSS 4
-- **Efemérides**: sweph-wasm (Swiss Ephemeris)
-- **IA**: OpenRouter API (múltiplos modelos)
+- **Efemérides**: astronomy-engine (MIT)
+- **IA**: OpenRouter API (Streaming)
 - **PDF**: @react-pdf/renderer
 
 ## 📝 Comandos Úteis
@@ -180,10 +179,14 @@ Alguns modelos podem ficar indisponíveis. Tente outro da lista.
 
 MIT License - Uso livre.
 
-**Nota**: Swiss Ephemeris é AGPL-3.0. Para uso comercial, verifique em astro.com.
-
 ## 🙏 Créditos
 
-- Swiss Ephemeris: https://www.astro.com/swisseph/
+- astronomy-engine: https://github.com/cosinekitty/astronomy
 - OpenRouter: https://openrouter.ai/
 - OpenStreetMap: https://nominatim.org/
+
+## ⚠️ Limitações Conhecidas
+
+- **Localização**: O buscador de cidades é otimizado e filtrado para o Brasil.
+- **Timezone**: O cálculo de fuso horário e horário de verão utiliza regras simplificadas para o território brasileiro.
+- **Aproximações**: Corpos secundários (Quíron, Lilith e Nodos) utilizam fórmulas de aproximação linear. Para uso profissional/crítico de Quíron, recomenda-se conferir com efemérides oficiais.
