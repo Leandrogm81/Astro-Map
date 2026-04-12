@@ -400,7 +400,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
                 ) : (
                   <article className="prose prose-invert prose-slate max-w-none prose-p:text-slate-400 prose-p:leading-relaxed prose-headings:text-purple-300 prose-strong:text-purple-200">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reportText.replace(/\[\[\/?.*?\]\]/g, '')}
+                      {reportText}
                     </ReactMarkdown>
                     {generatingReport && (
                       <div className="flex items-center gap-2 mt-6 text-purple-400 animate-pulse">

@@ -362,41 +362,28 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Tabs & Actions */}
-                <div className="sticky top-[56px] z-40 flex flex-col md:flex-row md:items-center justify-between gap-4 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20">
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { id: 'chart', label: 'Mapa', icon: Star },
-                      { id: 'houses', label: 'Casas', icon: Moon },
-                      { id: 'aspects', label: 'Aspectos', icon: Sun },
-                      { id: 'report', label: 'Relatório IA', icon: Sparkles },
-                      { id: 'revolution', label: 'Revolução Solar', icon: Sun },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                        className={`px-4 md:px-6 py-2.5 flex items-center gap-2 text-[10px] md:text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
-                          activeTab === tab.id
-                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
-                            : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
-                        }`}
-                      >
-                        <tab.icon className="w-3.5 h-3.5" />
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="px-2 md:px-0">
-                    <ExportPDF 
-                      chart={chart} 
-                      solarRevolution={solarRevolution} 
-                      solarYear={solarYear}
-                      reportText={natalReportText}
-                      params={{ isHeader: true }}
-                      solarReportText={solarReportText}
-                    />
-                  </div>
+                {/* Tabs */}
+                <div className="sticky top-[56px] z-40 flex flex-wrap gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20">
+                  {[
+                    { id: 'chart', label: 'Mapa', icon: Star },
+                    { id: 'houses', label: 'Casas', icon: Moon },
+                    { id: 'aspects', label: 'Aspectos', icon: Sun },
+                    { id: 'report', label: 'Relatório IA', icon: Sparkles },
+                    { id: 'revolution', label: 'Revolução Solar', icon: Sun },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                      className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
+                        activeTab === tab.id
+                          ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
+                          : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
+                      }`}
+                    >
+                      <tab.icon className="w-3.5 h-3.5" />
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Tab Content */}
@@ -435,6 +422,17 @@ export default function Home() {
                       onReportUpdated={setSolarReportText}
                     />
                   )}
+                </div>
+
+                {/* Exportar PDF */}
+                <div className="mt-8">
+                  <ExportPDF 
+                    chart={chart} 
+                    solarRevolution={solarRevolution} 
+                    solarYear={solarYear}
+                    reportText={natalReportText}
+                    solarReportText={solarReportText}
+                  />
                 </div>
               </div>
             ) : (

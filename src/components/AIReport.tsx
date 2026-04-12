@@ -271,7 +271,7 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
         {reportText && (
           <article className="prose prose-invert prose-slate max-w-none prose-p:text-slate-300 prose-p:leading-relaxed prose-headings:text-purple-300 prose-strong:text-purple-200 prose-hr:border-slate-800">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {reportText.replace(/\[\[\/?.*?\]\]/g, '')}
+              {reportText}
             </ReactMarkdown>
             
             {isStreaming && (
