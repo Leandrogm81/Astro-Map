@@ -1,3 +1,4 @@
+export * from './types';
 import { TraditionalAssessment, TraditionalScore } from './types';
 import { isAtDomicile, isAtExaltation, TRADITIONAL_DETRIMENTS, TRADITIONAL_FALLS } from './rulers';
 import { hasTriplicity, getSolarCondition } from './dignities';
@@ -62,14 +63,24 @@ export function calculateTraditionalAssessment(
     breakdown: { essential, accidental }
   };
 
+  let dignity = 'Peregrino';
+  if (essential['Domicílio']) dignity = 'Domicílio';
+  else if (essential['Exaltação']) dignity = 'Exaltação';
+  else if (essential['Triplicidade']) dignity = 'Triplicidade';
+  else if (essential['Exílio']) dignity = 'Exílio';
+  else if (essential['Queda']) dignity = 'Queda';
+
   return {
     planetId: planet.id,
     sign: planet.sign,
     degree: planet.degree,
     house: planet.house || 1,
     isRetrograde: planet.retrograde,
+    dignity,
+    totalScore: score.total,
+    sectStatus: inSect ? 'In-Sect' : 'Out-of-Sect',
     dignities: {
-      domicile: '', // Adicionar regentes reais futuramente
+      domicile: '', 
       exaltation: '',
       detriment: '',
       fall: '',

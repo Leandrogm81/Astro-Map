@@ -227,7 +227,7 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     const assessment = assessments.find(a => a.planetId.toLowerCase() === planeName.toLowerCase());
     if (!assessment) continue;
 
-    const retro = assessment.retrograde ? ' (Retrógrado)' : '';
+    const retro = assessment.isRetrograde ? ' (Retrógrado)' : '';
     const score = assessment.totalScore;
     const condition = score >= 5 ? 'Forte (Essencial)' : score <= -5 ? 'Debilitado' : 'Moderado';
     
@@ -235,7 +235,7 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     result += `  - Signo/Casa: ${assessment.sign} na Casa ${assessment.house}${retro}\n`;
     result += `  - Dignidade Essencial: ${assessment.dignity}\n`;
     result += `  - Pontuação Técnica (Almuten Figuris): ${score} pts [${condition}]\n`;
-    result += `  - Regentes: Domicílio (${assessment.rulers.domicile}), Exaltação (${assessment.rulers.exaltation}), Triplicidade (${assessment.rulers.triplicity})\n`;
+    result += `  - Regentes: Domicílio (${assessment.dignities.domicile}), Exaltação (${assessment.dignities.exaltation}), Triplicidade (${assessment.dignities.triplicity})\n`;
     result += `  - Condição Adicional: ${assessment.sectStatus === 'In-Sect' ? 'Em Seita (Hayz/Halb)' : 'Fora de Seita'}\n\n`;
   }
 
@@ -294,7 +294,7 @@ REGRAS:
 - Seja técnico e elegante.
 - Escreva entre 2000 e 3500 palavras.`;
 
-export const NATAL_PROMPT_SYSTEM = `Você é um mestre astrólogo com 30 anos de experiência...`;
+export const NATAL_PROMPT_SYSTEM = `Você é um mestre astrólogo com 30 anos de experiência...
 
 Você escreve em Português Brasileiro impecável, com voz empática, elegante e profunda.
 

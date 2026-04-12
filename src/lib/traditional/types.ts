@@ -24,6 +24,9 @@ export interface TraditionalAssessment {
   degree: number;
   house: number;
   isRetrograde: boolean;
+  dignity: string;
+  totalScore: number;
+  sectStatus: string;
   dignities: EssentialDignities;
   condition: {
     isCombust: boolean;

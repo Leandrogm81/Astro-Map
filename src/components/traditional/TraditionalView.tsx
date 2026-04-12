@@ -58,6 +58,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
           {onBack && (
             <button 
               onClick={onBack}
+              title="Voltar para Calculadora"
               className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -74,10 +75,13 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
             chart={chart} 
             reportText={reportText}
             isTraditional={true}
-            traditionalAssessments={assessments}
+            traditionalAssessments={Object.values(assessments)}
             variant="compact"
           />
-          <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
+          <button 
+            title="Configurações do Estudo"
+            className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all"
+          >
             <Settings className="w-5 h-5" />
           </button>
         </div>
@@ -142,7 +146,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
         <div className="mt-12">
           <TraditionalAIReport 
             chart={chart} 
-            assessments={assessments}
+            assessments={Object.values(assessments)}
             onReportUpdated={setReportText}
           />
         </div>
