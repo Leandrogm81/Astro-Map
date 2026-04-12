@@ -415,7 +415,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  {activeTab === 'lots' && (
+                  {activeTab === 'traditional' && (
                     <TraditionalView chart={chart} />
                   )}
 
