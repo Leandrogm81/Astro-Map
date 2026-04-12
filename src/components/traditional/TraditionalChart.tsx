@@ -18,14 +18,15 @@ export default function TraditionalChart({
   const CX = 400;
   const CY = 400;
   const R_OUTER = 380;
-  const R_ZODIAC_INNER = 320;
-  const R_HOUSES_INNER = 220;
-  const R_PLANETS = 270;
-  const R_LOTS = 240;
+  const R_ZODIAC_INNER = 330;
+  const R_HOUSES_INNER = 210;
+  const R_PLANETS = 275;
+  const R_LOTS = 245;
 
   const ascendantLongitude = chart.ascendant;
 
   const longitudeToAngle = (longitude: number): number => {
+    // Rotação para que o Ascendente fique na esquerda (9h no relógio)
     return (180 - (longitude - ascendantLongitude)) * (Math.PI / 180);
   };
 
@@ -36,7 +37,7 @@ export default function TraditionalChart({
     return classicIds.includes(pId) || classicIds.includes(p.name?.toLowerCase());
   });
 
-  // Renderizar Signos
+  // Renderizar Signos (Fatias Coloridas / Estilo Moderno)
   const zodiacElements = ZODIAC_SIGNS.map((sign) => {
     const startAngle = longitudeToAngle(sign.start);
     const endAngle = longitudeToAngle(sign.start + 30);
@@ -56,20 +57,24 @@ export default function TraditionalChart({
     const iconX = CX + rMid * Math.cos(midAngle);
     const iconY = CY + rMid * Math.sin(midAngle);
 
+    const color = getElementColor(sign.element);
+
     return (
       <g key={sign.name}>
         <path
           d={`M ${x1_out} ${y1_out} A ${R_OUTER} ${R_OUTER} 0 0 0 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${R_ZODIAC_INNER} ${R_ZODIAC_INNER} 0 0 1 ${x1_in} ${y1_in} Z`}
-          className="fill-slate-900/50 stroke-gold-500/30"
-          strokeWidth="1"
+          fill={`${color}15`}
+          stroke={color}
+          strokeWidth="1.5"
+          className="transition-opacity duration-300"
         />
         <text
           x={iconX}
           y={iconY}
           textAnchor="middle"
           dominantBaseline="central"
-          fill={getElementColor(sign.element)}
-          className="text-xl font-black select-none drop-shadow-[0_0_2px_rgba(0,0,0,0.5)]"
+          fill={color}
+          className="text-2xl font-bold select-none"
         >
           {sign.symbol}
         </text>
@@ -77,27 +82,47 @@ export default function TraditionalChart({
     );
   });
 
-  // Linhas das Casas (Whole Sign)
-  const houseLines = Array.from({ length: 12 }).map((_, i) => {
+  // Linhas das Casas e numeração (Estetica AstroChart)
+  const houseElements = Array.from({ length: 12 }).map((_, i) => {
+    const houseNum = i + 1;
     const lon = (Math.floor(ascendantLongitude / 30) * 30 + i * 30) % 360;
     const angle = longitudeToAngle(lon);
     
-    const xOut = CX + R_ZODIAC_INNER * Math.cos(angle);
-    const yOut = CY + R_ZODIAC_INNER * Math.sin(angle);
-    const xIn = CX + R_HOUSES_INNER * Math.cos(angle);
-    const yIn = CY + R_HOUSES_INNER * Math.sin(angle);
+    // Angulo central da casa para o número
+    const midAngle = longitudeToAngle(lon + 15);
+    const rText = (R_HOUSES_INNER + 50) / 2;
+    const tx = CX + rText * Math.cos(midAngle);
+    const ty = CY + rText * Math.sin(midAngle);
 
+    const isCardinal = [1, 4, 7, 10].includes(houseNum);
+    
     return (
-      <line
-        key={`house-${i}`}
-        x1={xIn} y1={yIn} x2={xOut} y2={yOut}
-        className="stroke-gold-500/10"
-        strokeWidth="1"
-      />
+      <g key={`house-${i}`}>
+        {/* Linha da Cúspide */}
+        <line
+          x1={CX + R_HOUSES_INNER * Math.cos(angle)} 
+          y1={CY + R_HOUSES_INNER * Math.sin(angle)} 
+          x2={CX + R_ZODIAC_INNER * Math.cos(angle)} 
+          y2={CY + R_ZODIAC_INNER * Math.sin(angle)}
+          stroke={isCardinal ? "#fbbf24" : "#475569"}
+          strokeWidth={isCardinal ? "2" : "1"}
+          opacity={isCardinal ? "1" : "0.6"}
+        />
+        {/* Número da Casa */}
+        <text
+          x={tx} y={ty}
+          textAnchor="middle" dominantBaseline="central"
+          fill={isCardinal ? "#e2e8f0" : "#94a3b8"}
+          fontSize="16" fontWeight={isCardinal ? "bold" : "normal"}
+          className="select-none"
+        >
+          {houseNum}
+        </text>
+      </g>
     );
   });
 
-  // Renderizar Planetas
+  // Planetas (Tokens Gold com Fundo Dark)
   const planetElements = classicPlanets.map((planet) => {
     const angle = longitudeToAngle(planet.longitude);
     const x = CX + R_PLANETS * Math.cos(angle);
@@ -110,23 +135,22 @@ export default function TraditionalChart({
         className="cursor-pointer group" 
         onClick={() => onPlanetClick?.(planet.id)}
       >
-        {/* Glow externo para planeta selecionado */}
         {isSelected && (
           <circle
-            cx={x} cy={y} r="22"
+            cx={x} cy={y} r="20"
             className="fill-gold-500/20 animate-pulse"
           />
         )}
         <circle
-          cx={x} cy={y} r="18"
-          className={`${isSelected ? 'fill-gold-500' : 'fill-slate-900/80'} transition-all duration-300 stroke-gold-500/60`}
-          strokeWidth={isSelected ? 3 : 1.5}
+          cx={x} cy={y} r="15"
+          className={`${isSelected ? 'fill-gold-500' : 'fill-[#0f172a]'} transition-all duration-300 stroke-[#fbbf24]`}
+          strokeWidth="2"
         />
         <text
           x={x} y={y}
           textAnchor="middle"
           dominantBaseline="central"
-          className={`${isSelected ? 'fill-slate-950' : 'fill-white group-hover:fill-gold-200'} font-bold transition-colors [text-shadow:0_0_5px_rgba(255,255,255,0.3)]`}
+          className={`${isSelected ? 'fill-slate-950' : 'fill-[#fbbf24]'} font-bold transition-colors`}
           fontSize="18"
         >
           {planet.symbol}
@@ -135,7 +159,7 @@ export default function TraditionalChart({
     );
   });
 
-  // Renderizar Lotes
+  // Lotes (Tokens Dourados Compactos)
   const lotElements = (chart.lots || [])
     .filter(lot => {
       if (showAllLots) return true;
@@ -147,21 +171,22 @@ export default function TraditionalChart({
       const y = CY + R_LOTS * Math.sin(angle);
 
       return (
-        <g key={lot.id}>
+        <g key={lot.id} className="group">
           <circle 
-            cx={x} cy={y} r="14" 
-            className="fill-gold-500/5 stroke-gold-500/40" 
-            strokeDasharray="3 2" 
+            cx={x} cy={y} r="12" 
+            className="fill-[#0f172a]/80 stroke-gold-400/50" 
+            strokeDasharray="2 2" 
           />
           <text
             x={x} y={y}
             textAnchor="middle"
             dominantBaseline="central"
-            className="fill-gold-400 font-black [text-shadow:0_0_8px_rgba(212,175,55,0.5)]"
+            className="fill-gold-400 font-bold"
             fontSize="14"
           >
             {lot.symbol}
           </text>
+          <title>{lot.name}</title>
         </g>
       );
     });
@@ -169,19 +194,30 @@ export default function TraditionalChart({
   return (
     <svg 
       viewBox="0 0 800 800" 
-      className="w-full h-full drop-shadow-2xl drop-shadow-[0_0_20px_rgba(180,150,50,0.1)]"
+      className="w-full h-full font-sans"
     >
       {/* Background circles */}
-      <circle cx={CX} cy={CY} r={R_OUTER} className="fill-slate-950/20 stroke-gold-500/20" strokeWidth="1" />
-      <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} className="fill-none stroke-gold-500/10" strokeWidth="1" />
+      <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" />
+      <circle cx={CX} cy={CY} r={R_OUTER} fill="none" stroke="#7c3aed" strokeWidth="2" />
+      <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} fill="none" stroke="#7c3aed" strokeWidth="1.5" />
       
+      {/* Zodiac wedges */}
       {zodiacElements}
-      {houseLines}
+
+      {/* Internal houses area */}
+      <circle cx={CX} cy={CY} r={R_HOUSES_INNER} fill="#020617" stroke="#475569" strokeWidth="2" />
+      {houseElements}
+      
+      {/* Planets and Lots */}
       {planetElements}
       {lotElements}
 
-      {/* Center point */}
-      <circle cx={CX} cy={CY} r="4" className="fill-gold-500/50" />
+      {/* Center Crosshair */}
+      <g opacity="0.8">
+        <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
+        <line x1={CX - 8} y1={CY} x2={CX + 8} y2={CY} stroke="#64748b" strokeWidth="2" />
+        <line x1={CX} y1={CY - 8} x2={CX} y2={CY + 8} stroke="#64748b" strokeWidth="2" />
+      </g>
     </svg>
   );
 }
