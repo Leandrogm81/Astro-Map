@@ -531,7 +531,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
 /**
  * Cálculos de Lotes Herméticos
  */
-function calculateLotLongitude(lotId: string, asc: number, planets: PlanetPosition[], isDay: boolean): number {
+export function calculateLotLongitude(lotId: string, asc: number, planets: PlanetPosition[], isDay: boolean): number {
   const getP = (id: string) => planets.find(p => p.id === id)?.longitude ?? 0;
   
   const sun = getP('sun');
@@ -577,7 +577,7 @@ function calculateLotLongitude(lotId: string, asc: number, planets: PlanetPositi
 /**
  * Cálculos de Pontos Tradicionais (Simplificado)
  */
-function calculateTraditionalPoints(asc: number, planets: PlanetPosition[], houses: HouseCusp[], isDay: boolean): any {
+export function calculateTraditionalPoints(asc: number, planets: PlanetPosition[], houses: HouseCusp[], isDay: boolean): any {
   const { getDomicileRuler } = require('./astrology');
   
   const ascSign = getZodiacSign(asc);

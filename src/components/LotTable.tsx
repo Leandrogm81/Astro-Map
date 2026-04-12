@@ -22,12 +22,24 @@ const LotIcon = ({ id }: { id: string }) => {
 };
 
 export default function LotTable({ chart }: LotTableProps) {
-  if (!chart.lots || chart.lots.length === 0) return null;
+  if (!chart.lots || chart.lots.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center space-y-4 glass rounded-3xl border border-white/5">
+        <div className="w-16 h-16 rounded-full bg-gold-400/10 flex items-center justify-center text-gold-400">
+          <Sparkles className="w-8 h-8" />
+        </div>
+        <h3 className="text-xl font-serif font-bold text-white">Lotes Ausentes</h3>
+        <p className="text-sm text-slate-400 max-w-xs">
+          Este mapa foi salvo em uma versão anterior. Selecione-o novamente na lista lateral para atualizar os cálculos automaticamente.
+        </p>
+      </div>
+    );
+  }
 
   const traditionalPoints = chart.traditionalPoints;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Pontos Tradicionais (Senhor da Natividade, etc.) */}
       {traditionalPoints && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

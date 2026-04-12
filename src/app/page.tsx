@@ -128,10 +128,57 @@ export default function Home() {
 
   const handleSelectChart = useCallback((savedChart: SavedChart) => {
     if (isValidChart(savedChart.chart)) {
-      setChart(savedChart.chart);
+      let currentChart = savedChart.chart;
+      
+      // Auto-hidratação para mapas antigos sem Lotes ou Pontos Tradicionais
+      if (!currentChart.lots || !currentChart.traditionalPoints) {
+        try {
+          const { ascendant, planets, housesPlacidus } = currentChart;
+          const sun = planets.find(p => p.id === 'sun');
+          const sunHouse = sun ? sun.house : 1;
+          const isDay = currentChart.isDayChart ?? (sunHouse >= 7 && sunHouse <= 12);
+
+          const lotConfigs = [
+            { id: 'fortune', name: 'Roda da Fortuna', symbol: '⊗', description: 'Prosperidade e vitalidade física.' },
+            { id: 'spirit', name: 'Lote do Espírito', symbol: '✦', description: 'Carreira e propósito espiritual.' },
+            { id: 'eros', name: 'Lote de Eros', symbol: '♥', description: 'Desejos e amizades.' },
+            { id: 'necessity', name: 'Lote da Necessidade', symbol: '⚖', description: 'Restrições e deveres.' },
+            { id: 'courage', name: 'Lote da Coragem', symbol: '⚔', description: 'Audácia e força de vontade.' },
+            { id: 'victory', name: 'Lote da Vitória', symbol: '🏆', description: 'Sucesso por mérito.' },
+            { id: 'nemesis', name: 'Lote de Nêmesis', symbol: '⚡', description: 'Karma e justiça divina.' },
+          ];
+
+          const { calculateLotLongitude, calculateTraditionalPoints } = require('@/lib/ephemeris');
+          const { getZodiacSign, getSignDegree, getHouseForPlanet } = require('@/lib/astrology');
+
+          const lots = lotConfigs.map(config => {
+            const lon = calculateLotLongitude(config.id, ascendant, planets, isDay);
+            return {
+              ...config,
+              longitude: lon,
+              sign: getZodiacSign(lon),
+              degree: getSignDegree(lon),
+              house: getHouseForPlanet(lon, housesPlacidus)
+            };
+          });
+
+          const trad = calculateTraditionalPoints(ascendant, planets, housesPlacidus, isDay);
+
+          currentChart = {
+            ...currentChart,
+            lots,
+            traditionalPoints: trad,
+            isDayChart: isDay
+          };
+        } catch (err) {
+          console.error('Erro ao hidratar mapa antigo:', err);
+        }
+      }
+
+      setChart(currentChart);
       
       // Carrega relatório natal se existir cache
-      const reportKey = `report_${savedChart.chart.birthData.name}_${savedChart.chart.birthData.date}`;
+      const reportKey = `report_${currentChart.birthData.name}_${currentChart.birthData.date}`;
       const savedReport = localStorage.getItem(reportKey);
       if (savedReport) {
         setAiReport({ sections: [], summary: savedReport, generatedAt: new Date().toISOString() });
@@ -144,7 +191,7 @@ export default function Home() {
 
       // Carrega relatório de revolução solar se existir cache
       if (savedChart.solarYear) {
-         const solarReportKey = `solar_report_${savedChart.chart.birthData.name}_${savedChart.chart.birthData.date}_${savedChart.solarYear}`;
+         const solarReportKey = `solar_report_${currentChart.birthData.name}_${currentChart.birthData.date}_${savedChart.solarYear}`;
          const savedSolarReport = localStorage.getItem(solarReportKey);
          if (savedSolarReport) setSolarReportText(savedSolarReport);
          else setSolarReportText('');
