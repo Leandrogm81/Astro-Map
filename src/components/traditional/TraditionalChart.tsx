@@ -249,6 +249,19 @@ export default function TraditionalChart({
       const x = CX + R_LOTS_INNER * Math.cos(angle);
       const y = CY + R_LOTS_INNER * Math.sin(angle);
       const isHovered = hoveredLotId === l.id;
+
+      // Cores por Lote
+      const lotColors: Record<string, string> = {
+        fortune: '#fbbf24',    // Gold
+        spirit: '#60a5fa',     // Azure/Spirit
+        eros: '#f472b6',       // Pink/Love
+        necessity: '#2dd4bf',  // Teal/Mercury
+        courage: '#ef4444',    // Red/Mars
+        victory: '#a855f7',    // Purple/Jupiter
+        nemesis: '#64748b'     // Slate/Saturn
+      };
+      
+      const color = lotColors[l.id] || '#94a3b8';
       
       return (
         <g 
@@ -258,18 +271,18 @@ export default function TraditionalChart({
           className="cursor-help transition-all duration-300"
         >
           {isHovered && (
-            <circle cx={x} cy={y} r="22" fill="#fbbf2415" stroke="#fbbf2450" strokeWidth="1" className="animate-pulse" />
+            <circle cx={x} cy={y} r="22" fill={`${color}15`} stroke={`${color}50`} strokeWidth="1" className="animate-pulse" />
           )}
           <circle 
             cx={x} cy={y} r="18" 
             fill={isHovered ? "#1e293b" : "#020617"} 
-            stroke={isHovered ? "#fbbf24" : "#94a3b8"} 
+            stroke={color} 
             strokeWidth="2" 
             strokeDasharray={isHovered ? "none" : "2,1"} 
           />
           <text 
             x={x} y={y} textAnchor="middle" dominantBaseline="central" 
-            fill={isHovered ? "#fbbf24" : "#94a3b8"} 
+            fill={color} 
             fontSize="20" fontWeight="bold"
             className="select-none"
           >
