@@ -19,6 +19,7 @@ export default function TraditionalChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
+  const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -231,20 +232,83 @@ export default function TraditionalChart({
       const angle = longitudeToAngle(l.longitude);
       const x = CX + R_LOTS_INNER * Math.cos(angle);
       const y = CY + R_LOTS_INNER * Math.sin(angle);
+      const isHovered = hoveredLotId === l.id;
       
       return (
-        <g key={l.id} className="group cursor-help">
-          <circle cx={x} cy={y} r="10" fill="#020617" stroke="#94a3b8" strokeWidth="1" strokeDasharray="2,1" />
+        <g 
+          key={l.id} 
+          onMouseEnter={() => setHoveredLotId(l.id)}
+          onMouseLeave={() => setHoveredLotId(null)}
+          className="cursor-help transition-all duration-300"
+        >
+          {isHovered && (
+            <circle cx={x} cy={y} r="22" fill="#fbbf2415" stroke="#fbbf2450" strokeWidth="1" className="animate-pulse" />
+          )}
+          <circle 
+            cx={x} cy={y} r="18" 
+            fill={isHovered ? "#1e293b" : "#020617"} 
+            stroke={isHovered ? "#fbbf24" : "#94a3b8"} 
+            strokeWidth="2" 
+            strokeDasharray={isHovered ? "none" : "2,1"} 
+          />
           <text 
             x={x} y={y} textAnchor="middle" dominantBaseline="central" 
-            fill="#94a3b8" fontSize="12" fontWeight="bold"
+            fill={isHovered ? "#fbbf24" : "#94a3b8"} 
+            fontSize="20" fontWeight="bold"
+            className="select-none"
           >
             {l.symbol}
           </text>
-          <title>{l.name}</title>
         </g>
       );
     });
+
+  // Tooltip Element (Renderizado por último para ficar em cima)
+  const renderTooltip = () => {
+    let focusX = 0, focusY = 0, title = '', subtitle = '', info = '', desc = '';
+    
+    if (hoveredPlanet) {
+      const p = positionedPlanets.find(pp => pp.id === hoveredPlanet);
+      if (p) {
+        focusX = p.x; focusY = p.y;
+        title = p.name;
+        subtitle = `${p.sign} ${Math.floor(p.degree)}°${String(Math.floor((p.degree % 1) * 60)).padStart(2, '0')}'`;
+        info = `Casa ${p.house}`;
+      }
+    } else if (hoveredLotId) {
+      const l = (chart.lots || []).find(ll => ll.id === hoveredLotId);
+      if (l) {
+        const angle = longitudeToAngle(l.longitude);
+        focusX = CX + R_LOTS_INNER * Math.cos(angle);
+        focusY = CY + R_LOTS_INNER * Math.sin(angle);
+        title = l.name;
+        subtitle = `${l.sign} ${Math.floor(l.degree)}°${String(Math.floor((l.degree % 1) * 60)).padStart(2, '0')}'`;
+        info = `Casa ${l.house}`;
+        desc = l.description || '';
+      }
+    }
+
+    if (!title) return null;
+
+    const offsetSide = focusX > CX ? -200 : 20;
+    const offsetTop = focusY > CY ? -110 : 20;
+
+    return (
+      <g transform={`translate(${focusX}, ${focusY})`} className="pointer-events-none">
+        <g transform={`translate(${offsetSide}, ${offsetTop})`}>
+          <rect width="180" height={desc ? 100 : 80} rx="12" fill="#0f172a" stroke="#fbbf24" strokeWidth="1.5" className="shadow-2xl" opacity="0.98" />
+          <text x="90" y="25" textAnchor="middle" fill="#fbbf24" fontSize="15" fontWeight="bold">{title}</text>
+          <text x="90" y="48" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="500">{subtitle}</text>
+          <text x="90" y="68" textAnchor="middle" fill="#94a3b8" fontSize="12">Casa {info.replace('Casa ', '')}</text>
+          {desc && (
+            <text x="90" y="85" textAnchor="middle" fill="#fbbf24" fontSize="10" opacity="0.8" className="italic">
+              {desc.length > 50 ? desc.substring(0, 47) + '...' : desc}
+            </text>
+          )}
+        </g>
+      </g>
+    );
+  };
 
   // Aspectos tradicionais entre o Septenário
   const septenaryAspects = chart.aspects
@@ -329,6 +393,7 @@ export default function TraditionalChart({
           {septenaryAspects}
           {lotNodes}
           {planetNodes}
+          {renderTooltip()}
 
           {/* Crosshair Central */}
           <g opacity="0.4">
