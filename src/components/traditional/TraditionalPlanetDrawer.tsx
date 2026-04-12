@@ -28,32 +28,35 @@ export default function TraditionalPlanetDrawer({
         onClick={onClose}
       />
 
-      {/* Drawer */}
-      <div className={`fixed right-0 top-0 h-full w-full sm:w-[500px] bg-slate-950 border-l border-white/10 z-[101] shadow-2xl transition-transform duration-500 ease-out transform ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-slate-900/50">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gold-500/20 text-gold-400">
-              <Star className="w-6 h-6" />
+      {/* Modal Container */}
+      <div className={`fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none`}>
+        {/* Modal Card */}
+        <div className={`w-full max-w-lg bg-slate-950/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl pointer-events-auto transition-all duration-500 ease-out transform ${
+          isOpen ? 'scale-100 opacity-100' : 'scale-90 opacity-0'
+        }`}>
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5 rounded-t-[2.5rem]">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-gold-500/20 text-gold-400">
+                <Star className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white leading-none">{getPlanetLabel(planet.id)}</h2>
+                <p className="text-sm text-slate-500 mt-1">{planet.sign} {Math.floor(planet.degree)}°</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white leading-none">{getPlanetLabel(planet.id)}</h2>
-              <p className="text-sm text-slate-500 mt-1">{planet.sign} {Math.floor(planet.degree)}°</p>
-            </div>
+            <button 
+              onClick={onClose}
+              className="p-2 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Fechar ficha do planeta"
+              title="Fechar"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 rounded-xl bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-            aria-label="Fechar ficha do planeta"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto h-[calc(100%-100px)] scrollbar-thin scrollbar-thumb-white/10">
+          {/* Content Wrapper com altura limitada para modal */}
+          <div className="max-h-[70vh] overflow-y-auto overflow-x-hidden p-6 custom-scrollbar">
           
           {/* Resumo Score */}
           <div className="grid grid-cols-2 gap-4 mb-8">
