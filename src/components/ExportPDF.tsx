@@ -654,9 +654,48 @@ interface ExportPDFProps {
   solarYear?: number;
   reportText?: string;
   solarReportText?: string;
+  variant?: 'full' | 'compact';
 }
 
-export default function ExportPDF({ chart, solarRevolution, solarYear, reportText, solarReportText }: ExportPDFProps) {
+export default function ExportPDF({ chart, solarRevolution, solarYear, reportText, solarReportText, variant = 'full' }: ExportPDFProps) {
+  const isCompact = variant === 'compact';
+
+  if (isCompact) {
+    return (
+      <PDFDownloadLink
+        document={
+          <MyPDFDocument 
+            chart={chart} 
+            solarRevolution={solarRevolution} 
+            solarYear={solarYear}
+            reportText={reportText}
+            solarReportText={solarReportText}
+          />
+        }
+        fileName={`AstroMap_Exclusivo_${chart.birthData.name}_${new Date().toISOString().split('T')[0]}.pdf`}
+      >
+        {({ loading }) => (
+          <button
+            disabled={loading}
+            title="Inclui 2 Mapas, 6 Tabelas Analíticas e Relatórios Profundos"
+            className={`px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-all ${
+              loading 
+                ? 'bg-slate-800 text-slate-500 cursor-wait' 
+                : 'bg-gold-500/10 text-gold-400 border border-gold-500/20 hover:bg-gold-500/20 shadow-lg shadow-gold-500/5 active:scale-95'
+            }`}
+          >
+            {loading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            {loading ? '...' : 'PDF'}
+          </button>
+        )}
+      </PDFDownloadLink>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <PDFDownloadLink

@@ -183,3 +183,12 @@ body::before {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Scrollbar None Utility */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

@@ -363,7 +363,7 @@ export default function Home() {
                 </div>
 
                 {/* Tabs */}
-                <div className="sticky top-[56px] z-40 flex flex-wrap gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20">
+                <div className="sticky top-[56px] z-40 flex items-center gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20 overflow-x-auto scrollbar-none">
                   {[
                     { id: 'chart', label: 'Mapa', icon: Star },
                     { id: 'houses', label: 'Casas', icon: Moon },
@@ -374,7 +374,7 @@ export default function Home() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                      className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
+                      className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
                         activeTab === tab.id
                           ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
                           : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
@@ -384,6 +384,21 @@ export default function Home() {
                       {tab.label}
                     </button>
                   ))}
+                  
+                  {/* Separador visual */}
+                  <div className="w-px bg-white/10 mx-1 self-stretch shrink-0" />
+                  
+                  {/* Botão PDF Compacto */}
+                  <div className="shrink-0">
+                    <ExportPDF
+                      variant="compact"
+                      chart={chart}
+                      solarRevolution={solarRevolution}
+                      solarYear={solarYear}
+                      reportText={natalReportText}
+                      solarReportText={solarReportText}
+                    />
+                  </div>
                 </div>
 
                 {/* Tab Content */}
@@ -424,16 +439,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Exportar PDF */}
-                <div className="mt-8">
-                  <ExportPDF 
-                    chart={chart} 
-                    solarRevolution={solarRevolution} 
-                    solarYear={solarYear}
-                    reportText={natalReportText}
-                    solarReportText={solarReportText}
-                  />
-                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20 text-center">
