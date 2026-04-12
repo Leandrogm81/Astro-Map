@@ -66,19 +66,46 @@ const CHALDEAN_FACES = [
 
 interface Props {
   chart: NatalChart;
-  options: any;
+  showAllLots?: boolean;
+  selectedPlanetId?: string | null;
+  onPlanetClick?: (id: string | null) => void;
+  options?: any;
   onOptionChange?: any;
 }
 
-export default function TraditionalChart({ chart, options, onOptionChange }: Props) {
+export default function TraditionalChart({ 
+  chart, 
+  showAllLots = false,
+  selectedPlanetId,
+  onPlanetClick,
+  options: externalOptions, 
+  onOptionChange 
+}: Props) {
+  const [internalOptions, setInternalOptions] = useState({
+    showAspects: true,
+    houseSystem: 'whole_sign' as 'whole_sign' | 'placidus',
+    showSettings: false
+  });
+
+  const options = externalOptions || internalOptions;
+  const handleOptionChange = (key: string, value: any) => {
+    if (onOptionChange) {
+      onOptionChange(key, value);
+    } else {
+      setInternalOptions(prev => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const asc = chart.ascendant;
+  const longitudeToAngle = (lon: number) => ((lon - asc + 180) % 360) * (Math.PI / 180);
+
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const asc = chart.ascendant;
-  const longitudeToAngle = (lon: number) => ((lon - asc + 180) % 360) * (Math.PI / 180);
+  const activeHoverId = hoveredId || selectedPlanetId;
 
   const getArcPath = (sL: number, eL: number, rO: number, rI: number) => {
     const a1 = longitudeToAngle(sL), a2 = longitudeToAngle(eL);
@@ -155,12 +182,36 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Pro
   const planetElements = classicPlanets.map(p => {
     const a = longitudeToAngle(p.longitude);
     const r = R_TICKS_IN - 35;
-    const isH = hoveredId === p.id;
+    const isH = activeHoverId === p.id;
     return (
-      <g key={p.id} onMouseEnter={()=>setHoveredId(p.id)} onMouseLeave={()=>setHoveredId(null)} className="cursor-pointer transition-all">
+      <g 
+        key={p.id} 
+        onMouseEnter={()=>setHoveredId(p.id)} 
+        onMouseLeave={()=>setHoveredId(null)} 
+        onClick={() => onPlanetClick?.(p.id)}
+        className="cursor-pointer transition-all"
+      >
         <line x1={CX+r*Math.cos(a)} y1={CY+r*Math.sin(a)} x2={CX+R_TERMS_IN*Math.cos(a)} y2={CY+R_TERMS_IN*Math.sin(a)} stroke="#cbd5e1" strokeWidth="1" strokeDasharray="2,2" opacity="0.4" />
         <circle cx={CX+r*Math.cos(a)} cy={CY+r*Math.sin(a)} r="15" fill="#0f172a" stroke={isH?"#fbbf24":"#94a3b8"} strokeWidth="1.5" />
         <text x={CX+r*Math.cos(a)} y={CY+r*Math.sin(a)} textAnchor="middle" dominantBaseline="central" fill={isH?"#fbbf24":"#94a3b8"} fontSize="18">{p.symbol}</text>
+      </g>
+    );
+  });
+
+  // 5.1 Lotes
+  const lotsToShow = chart.lots?.filter(l => {
+    if (showAllLots) return true;
+    return ['fortune', 'spirit'].includes(l.id.toLowerCase());
+  }) || [];
+
+  const lotElements = lotsToShow.map(l => {
+    const a = longitudeToAngle(l.longitude);
+    const r = R_TICKS_IN - 65;
+    const isH = activeHoverId === l.id;
+    return (
+      <g key={l.id} onMouseEnter={()=>setHoveredId(l.id)} onMouseLeave={()=>setHoveredId(null)} className="cursor-pointer transition-all">
+        <line x1={CX+r*Math.cos(a)} y1={CY+r*Math.sin(a)} x2={CX+R_TERMS_IN*Math.cos(a)} y2={CY+R_TERMS_IN*Math.sin(a)} stroke="#94a3b8" strokeWidth="1" strokeDasharray="1,2" opacity="0.3" />
+        <text x={CX+r*Math.cos(a)} y={CY+r*Math.sin(a)} textAnchor="middle" dominantBaseline="central" fill={isH ? "#fbbf24" : "#64748b"} fontSize="16" fontWeight="bold">{l.symbol}</text>
       </g>
     );
   });
@@ -181,10 +232,10 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Pro
 
   // 7. Aspectos (On Hover e Global)
   const aspectLines = chart.aspects.map((a, i) => {
-    const p1 = classicPlanets.find(pp=>pp.id?.toLowerCase()===a.planet1.toLowerCase()||pp.name?.toLowerCase()===a.planet1.toLowerCase());
-    const p2 = classicPlanets.find(pp=>pp.id?.toLowerCase()===a.planet2.toLowerCase()||pp.name?.toLowerCase()===a.planet2.toLowerCase());
+    const p1 = [...classicPlanets, ...(chart.lots || [])].find(pp=>pp.id?.toLowerCase()===a.planet1.toLowerCase()||pp.name?.toLowerCase()===a.planet1.toLowerCase());
+    const p2 = [...classicPlanets, ...(chart.lots || [])].find(pp=>pp.id?.toLowerCase()===a.planet2.toLowerCase()||pp.name?.toLowerCase()===a.planet2.toLowerCase());
     if(!p1 || !p2 || a.orb > 10) return null;
-    const isConn = hoveredId === p1.id || hoveredId === p2.id;
+    const isConn = activeHoverId === p1.id || activeHoverId === p2.id;
     if(!options.showAspects && !isConn) return null;
     let color = '#94a3b8';
     if(a.type==='trine') color='#10b981'; else if(a.type==='sextile') color='#3b82f6'; else if(a.type==='square') color='#ef4444'; else if(a.type==='opposition') color='#f97316'; else if(a.type==='conjunction') color='#fbbf24';
@@ -211,12 +262,44 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Pro
           {houseLines}
           {aspectLines}
           {planetElements}
+          {lotElements}
         </g>
       </svg>
       {/* Botão de Menu Simplificado */}
-      <button onClick={()=>onOptionChange('showSettings', !options.showSettings)} className="absolute right-10 top-10 p-3 bg-slate-900 border border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all shadow-xl">
+      <button onClick={()=>handleOptionChange('showSettings', !options.showSettings)} className="absolute right-10 top-10 p-3 bg-slate-900 border border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all shadow-xl">
         ⚙️
       </button>
+
+      {/* Painel de Configurações Lateral (Condicional) */}
+      {options.showSettings && (
+        <div className="absolute right-12 top-24 w-64 bg-slate-900/90 backdrop-blur-md border border-white/10 p-5 rounded-2xl shadow-2xl z-50 animate-in fade-in slide-in-from-right-4">
+          <h4 className="text-white font-bold mb-4 flex items-center gap-2">Configurações do Mapa</h4>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-2">Sistema de Casas</label>
+              <select 
+                value={options.houseSystem}
+                onChange={(e) => handleOptionChange('houseSystem', e.target.value)}
+                className="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-sm text-white"
+              >
+                <option value="whole_sign">Signos Inteiros</option>
+                <option value="placidus">Placidus</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-300">Mostrar Aspectos</span>
+              <button 
+                onClick={() => handleOptionChange('showAspects', !options.showAspects)}
+                className={`w-10 h-5 rounded-full transition-all ${options.showAspects ? 'bg-purple-600' : 'bg-slate-700'}`}
+              >
+                <div className={`w-3.5 h-3.5 bg-white rounded-full transition-all ${options.showAspects ? 'translate-x-5.5' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
