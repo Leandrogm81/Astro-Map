@@ -1,5 +1,6 @@
 import { NatalChart } from '@/types';
-import { calculateLotLongitude, calculateTraditionalPoints } from '@/lib/ephemeris';
+import { calculateLotLongitude } from '@/lib/traditional/lots';
+import { calculateTraditionalPoints } from '@/lib/traditional/points';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from '@/lib/astrology';
 
 export function hydrateNatalChart(chart: NatalChart): NatalChart {

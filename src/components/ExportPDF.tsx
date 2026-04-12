@@ -14,7 +14,7 @@ import {
   Line,
   Circle
 } from '@react-pdf/renderer';
-import { NatalChart } from '@/types';
+import { NatalChart, ZODIAC_SIGNS } from '@/types';
 import { TraditionalAssessment } from '@/lib/traditional/types';
 import ChartSimplePDF from './ChartSimplePDF';
 import { Download, Loader2 } from 'lucide-react';
@@ -348,7 +348,7 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
   };
 
   const getElement = (sign: string) => {
-    const s = ZODIAC_SIGNS.find(zs => zs.name === sign);
+    const s = ZODIAC_SIGNS.find((zs: any) => zs.name === sign);
     return s?.element || 'fire';
   };
 
