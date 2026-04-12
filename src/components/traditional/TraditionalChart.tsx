@@ -69,14 +69,14 @@ export default function TraditionalChart({
     if (pointers.current.size === 0) setIsDragging(false);
   };
 
-  // Constantes de Design
+  // Constantes de Design (Aumentadas para preencher melhor o SVG)
   const CX = 400;
   const CY = 400;
-  const R_OUTER = 380;
-  const R_ZODIAC_INNER = 330;
-  const R_PLANETS_OUTER = 300;
-  const R_LOTS_INNER = 250;
-  const R_ASPECTS = 210;
+  const R_OUTER = 395;
+  const R_ZODIAC_INNER = 345;
+  const R_PLANETS_OUTER = 315;
+  const R_LOTS_INNER = 265;
+  const R_ASPECTS = 225;
 
   const ascendantLongitude = chart.ascendant;
   const longitudeToAngle = (longitude: number): number => {

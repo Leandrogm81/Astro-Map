@@ -110,7 +110,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
             </button>
           </div>
 
-          <div className="aspect-square w-full max-w-[700px] mx-auto transition-all duration-500">
+          <div className="aspect-square w-full max-w-[850px] mx-auto transition-all duration-500">
             <TraditionalChart 
               chart={chart} 
               showAllLots={showAllLots}
