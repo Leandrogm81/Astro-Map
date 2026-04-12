@@ -6,13 +6,13 @@ import { NatalChart } from '@/types';
 const CX = 400;
 const CY = 400;
 
-// Constantes de Raio Hierárquicas
-const R_TOTAL = 398;
-const R_SIGNS_IN = 368;  // Fim dos Signos (30px)
-const R_FACES_IN = 348;  // Fim das Faces (20px)
-const R_TERMS_IN = 318;  // Fim dos Termos (30px)
-const R_TICKS_IN = 310;  // Fim da Régua (8px)
-const R_ASPECTS = 210;   // Início do Círculo Negro
+// Constantes de Raio Hierárquicas (Sincronizadas com Moderno)
+const R_TOTAL = 380;
+const R_SIGNS_IN = 345;  // Área dos Signos (35px)
+const R_FACES_IN = 325;  // Área das Faces (20px)
+const R_TERMS_IN = 295;  // Área dos Termos (30px)
+const R_TICKS_IN = 285;  // Régua de Graus
+const R_ASPECTS = 210;   // Área Central
 
 // Símbolos
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -20,9 +20,9 @@ const PLANET_SYMBOLS: Record<string, string> = {
 };
 
 const SIGN_COLORS: Record<string, string> = {
-  'Aries': '#ef4444', 'Taurus': '#10b981', 'Gemini': '#3b82f6', 'Cancer': '#06b6d4',
-  'Leo': '#f97316', 'Virgo': '#059669', 'Libra': '#60a5fa', 'Scorpio': '#0891b2',
-  'Sagittarius': '#dc2626', 'Capricorn': '#047857', 'Aquarius': '#2563eb', 'Pisces': '#0891b2'
+  'Aries': '#ef4444', 'Taurus': '#22c55e', 'Gemini': '#3b82f6', 'Cancer': '#06b6d4',
+  'Leo': '#ef4444', 'Virgo': '#22c55e', 'Libra': '#3b82f6', 'Scorpio': '#06b6d4',
+  'Sagittarius': '#ef4444', 'Capricorn': '#22c55e', 'Aquarius': '#3b82f6', 'Pisces': '#06b6d4'
 };
 
 const SIGN_NAMES = [
@@ -114,15 +114,16 @@ export default function TraditionalChart({
 
   // 1. Signos
   const zodiacRings = SIGN_NAMES.map((name, i) => {
-    const color = SIGN_COLORS[name];
     const signLon = i * 30;
     const aText = longitudeToAngle(signLon + 15);
+    const color = SIGN_COLORS[name];
     return (
       <g key={name}>
-        <path d={getArcPath(signLon, signLon+30, R_TOTAL, R_SIGNS_IN)} fill={`${color}15`} stroke={color} strokeWidth="1.5" />
+        <path d={getArcPath(signLon, signLon+30, R_TOTAL, R_SIGNS_IN)} fill={`${color}08`} stroke={color} strokeWidth="1" strokeOpacity="0.5" />
         <text 
           x={CX+(R_TOTAL+R_SIGNS_IN)/2*Math.cos(aText)} y={CY+(R_TOTAL+R_SIGNS_IN)/2*Math.sin(aText)}
-          textAnchor="middle" dominantBaseline="central" fill={color} fontSize="20" fontWeight="bold"
+          textAnchor="middle" dominantBaseline="central" fill={color} fontSize="24" fontWeight="bold"
+          className="select-none opacity-90"
         >{SIGN_SYMBOLS[i]}</text>
       </g>
     );
@@ -134,10 +135,11 @@ export default function TraditionalChart({
     const aText = longitudeToAngle(sL + 5);
     return (
       <g key={`face-${i}`}>
-        <path d={getArcPath(sL, eL, R_SIGNS_IN, R_FACES_IN)} fill="none" stroke="#475569" strokeWidth="0.5" opacity="0.3" />
+        <path d={getArcPath(sL, eL, R_SIGNS_IN, R_FACES_IN)} fill="none" stroke="#334155" strokeWidth="0.8" opacity="0.4" />
         <text 
           x={CX+(R_SIGNS_IN+R_FACES_IN)/2*Math.cos(aText)} y={CY+(R_SIGNS_IN+R_FACES_IN)/2*Math.sin(aText)}
-          textAnchor="middle" dominantBaseline="central" fill="#94a3b8" fontSize="12"
+          textAnchor="middle" dominantBaseline="central" fill="#64748b" fontSize="12"
+          className="select-none"
         >{PLANET_SYMBOLS[p]}</text>
       </g>
     );
@@ -156,10 +158,11 @@ export default function TraditionalChart({
         const aT = longitudeToAngle(sL + (t.b - lastBound)/2);
         elements.push(
           <g key={`term-${sign}-${tIdx}`}>
-            <path d={getArcPath(sL, eL, R_FACES_IN, R_TERMS_IN)} fill="none" stroke="#475569" strokeWidth="0.5" opacity="0.3" />
+            <path d={getArcPath(sL, eL, R_FACES_IN, R_TERMS_IN)} fill="none" stroke="#334155" strokeWidth="0.8" opacity="0.4" />
             <text 
               x={CX+(R_FACES_IN+R_TERMS_IN)/2*Math.cos(aT)} y={CY+(R_FACES_IN+R_TERMS_IN)/2*Math.sin(aT)}
-              textAnchor="middle" dominantBaseline="central" fill="#cbd5e1" fontSize="11"
+              textAnchor="middle" dominantBaseline="central" fill="#94a3b8" fontSize="11"
+              className="select-none font-medium"
             >{PLANET_SYMBOLS[t.p]}</text>
           </g>
         );
@@ -224,7 +227,7 @@ export default function TraditionalChart({
     const isA = [1, 4, 7, 10].includes(h.number);
     return (
       <g key={i}>
-        <line x1={CX} y1={CY} x2={CX + R_TERMS_IN * Math.cos(a)} y2={CY + R_TERMS_IN * Math.sin(a)} stroke={isA ? "#fbbf24" : "#7c3aed"} strokeWidth={isA ? 2.5 : 1} opacity={isA ? 0.8 : 0.4} />
+        <line x1={CX} y1={CY} x2={CX + R_TERMS_IN * Math.cos(a)} y2={CY + R_TERMS_IN * Math.sin(a)} stroke={isA ? "#fbbf24" : "#475569"} strokeWidth={isA ? 2 : 0.8} opacity={isA ? 0.6 : 0.25} />
         <text x={CX + (R_ASPECTS + 25) * Math.cos(aN)} y={CY + (R_ASPECTS + 25) * Math.sin(aN)} textAnchor="middle" dominantBaseline="central" fill="#64748b" fontSize="14" fontWeight="bold">{h.number}</text>
       </g>
     );
@@ -253,7 +256,9 @@ export default function TraditionalChart({
         onWheel={e=>{const d=e.deltaY>0?0.9:1.1; setZoom((z: number)=>Math.min(Math.max(z*d,0.5),4))}}
       >
         <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
-          <circle cx={CX} cy={CY} r={R_TOTAL} fill="#0f172a" stroke="#7c3aed" strokeWidth="2" />
+          {/* Círculo de Fundo Principal */}
+          <circle cx={CX} cy={CY} r={R_TOTAL} fill="#020617" stroke="#334155" strokeWidth="1" />
+          
           {zodiacRings}
           {faceRings}
           {termRings}
