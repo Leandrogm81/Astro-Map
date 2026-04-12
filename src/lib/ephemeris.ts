@@ -447,7 +447,6 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   // Calculate planets
   const planets: PlanetPosition[] = [];
   for (const planet of PLANETS) {
-    if (planet.id === 'partOfFortune') continue;
     try {
       const position = await calculatePlanetPosition(birthDate, planet.id);
       planets.push(position);
