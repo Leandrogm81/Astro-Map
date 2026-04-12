@@ -69,7 +69,8 @@ export default function TraditionalChart({
           textAnchor="middle"
           dominantBaseline="central"
           fill={getElementColor(sign.element)}
-          className="text-xl font-bold opacity-60 select-none"
+          className="text-xl font-black select-none"
+          style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))' }}
         >
           {sign.symbol}
         </text>
@@ -110,17 +111,25 @@ export default function TraditionalChart({
         className="cursor-pointer group" 
         onClick={() => onPlanetClick?.(planet.id)}
       >
+        {/* Glow externo para planeta selecionado */}
+        {isSelected && (
+          <circle
+            cx={x} cy={y} r="22"
+            className="fill-gold-500/20 animate-pulse"
+          />
+        )}
         <circle
           cx={x} cy={y} r="18"
-          className={`${isSelected ? 'fill-gold-500' : 'fill-slate-800'} transition-all duration-300 stroke-gold-500/50`}
-          strokeWidth={isSelected ? 3 : 1}
+          className={`${isSelected ? 'fill-gold-500' : 'fill-slate-900/80'} transition-all duration-300 stroke-gold-500/60`}
+          strokeWidth={isSelected ? 3 : 1.5}
         />
         <text
           x={x} y={y}
           textAnchor="middle"
           dominantBaseline="central"
-          className={`${isSelected ? 'fill-slate-950' : 'fill-gold-400 group-hover:fill-gold-300'} font-bold transition-colors`}
+          className={`${isSelected ? 'fill-slate-950' : 'fill-white group-hover:fill-gold-200'} font-bold transition-colors`}
           fontSize="18"
+          style={{ textShadow: '0 0 5px rgba(255,255,255,0.3)' }}
         >
           {planet.symbol}
         </text>
@@ -140,14 +149,19 @@ export default function TraditionalChart({
       const y = CY + R_LOTS * Math.sin(angle);
 
       return (
-        <g key={lot.id} className="opacity-80">
-          <circle cx={x} cy={y} r="12" className="fill-gold-500/10 stroke-gold-500/40" strokeDasharray="2 2" />
+        <g key={lot.id}>
+          <circle 
+            cx={x} cy={y} r="14" 
+            className="fill-gold-500/5 stroke-gold-500/40" 
+            strokeDasharray="3 2" 
+          />
           <text
             x={x} y={y}
             textAnchor="middle"
             dominantBaseline="central"
-            className="fill-gold-500 font-bold"
-            fontSize="12"
+            className="fill-gold-400 font-black"
+            fontSize="14"
+            style={{ textShadow: '0 0 8px rgba(212,175,55,0.5)' }}
           >
             {lot.symbol}
           </text>
