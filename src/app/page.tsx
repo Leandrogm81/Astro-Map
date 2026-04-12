@@ -370,7 +370,7 @@ export default function Home() {
                 <div className="sticky top-[56px] z-40 flex items-center gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20 overflow-x-auto scrollbar-none">
                   {[
                     { id: 'chart', label: 'Mapa', icon: Star },
-                    { id: 'lots', label: 'Lotes/Tradicional', icon: Sparkles },
+                    { id: 'traditional', label: 'Tradicional', icon: Sparkles },
                     { id: 'houses', label: 'Casas', icon: Moon },
                     { id: 'aspects', label: 'Aspectos', icon: Sun },
                     { id: 'report', label: 'Relatório IA', icon: Sparkles },
@@ -386,7 +386,7 @@ export default function Home() {
                       }`}
                     >
                       <tab.icon className="w-3.5 h-3.5" />
-                      {tab.id === 'lots' ? 'Tradicional' : tab.label}
+                      {tab.label}
                     </button>
                   ))}
                   
