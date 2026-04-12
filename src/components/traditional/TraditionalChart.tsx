@@ -69,8 +69,7 @@ export default function TraditionalChart({
           textAnchor="middle"
           dominantBaseline="central"
           fill={getElementColor(sign.element)}
-          className="text-xl font-black select-none"
-          style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))' }}
+          className="text-xl font-black select-none drop-shadow-[0_0_2px_rgba(0,0,0,0.5)]"
         >
           {sign.symbol}
         </text>
@@ -127,9 +126,8 @@ export default function TraditionalChart({
           x={x} y={y}
           textAnchor="middle"
           dominantBaseline="central"
-          className={`${isSelected ? 'fill-slate-950' : 'fill-white group-hover:fill-gold-200'} font-bold transition-colors`}
+          className={`${isSelected ? 'fill-slate-950' : 'fill-white group-hover:fill-gold-200'} font-bold transition-colors [text-shadow:0_0_5px_rgba(255,255,255,0.3)]`}
           fontSize="18"
-          style={{ textShadow: '0 0 5px rgba(255,255,255,0.3)' }}
         >
           {planet.symbol}
         </text>
@@ -159,9 +157,8 @@ export default function TraditionalChart({
             x={x} y={y}
             textAnchor="middle"
             dominantBaseline="central"
-            className="fill-gold-400 font-black"
+            className="fill-gold-400 font-black [text-shadow:0_0_8px_rgba(212,175,55,0.5)]"
             fontSize="14"
-            style={{ textShadow: '0 0 8px rgba(212,175,55,0.5)' }}
           >
             {lot.symbol}
           </text>
