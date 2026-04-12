@@ -292,15 +292,10 @@ export default function TraditionalChart({
       );
     });
 
-  // Aspectos tradicionais condicionais (Reforçados para visibilidade máxima)
+  // Aspectos tradicionais dinâmicos (Busca baseada nos planetas presentes na tela)
   const septenaryAspects = options.showAspects ? chart.aspects
-    .filter(a => {
-      const p1Id = a.planet1.toLowerCase();
-      const p2Id = a.planet2.toLowerCase();
-      return classicIds.includes(p1Id) && classicIds.includes(p2Id) && a.orb <= 10;
-    })
-    .map((a, i) => {
-      // Busca robusta por ID ou Nome (ignore case)
+    .map(a => {
+      // Tenta encontrar o planeta 1 e 2 no nosso array de planetas já posicionados
       const p1 = positionedPlanets.find(pp => 
         pp.id?.toLowerCase() === a.planet1.toLowerCase() || 
         pp.name?.toLowerCase() === a.planet1.toLowerCase()
@@ -309,28 +304,32 @@ export default function TraditionalChart({
         pp.id?.toLowerCase() === a.planet2.toLowerCase() || 
         pp.name?.toLowerCase() === a.planet2.toLowerCase()
       );
-      
-      if (!p1 || !p2) return null;
 
-      let color = '#94a3b8';
-      if (a.type === 'trine') color = '#10b981';
-      if (a.type === 'sextile') color = '#3b82f6';
-      if (a.type === 'square') color = '#ef4444';
-      if (a.type === 'opposition') color = '#f97316';
-      if (a.type === 'conjunction') color = '#fbbf24';
+      // Se ambos os planetas do aspecto estão na mandala tradicional
+      if (p1 && p2 && a.orb <= 10) {
+        let color = '#94a3b8';
+        if (a.type === 'trine') color = '#10b981';
+        if (a.type === 'sextile') color = '#3b82f6';
+        if (a.type === 'square') color = '#ef4444';
+        if (a.type === 'opposition') color = '#f97316';
+        if (a.type === 'conjunction') color = '#fbbf24';
 
-      return (
-        <line 
-          key={`asp-${i}`}
-          x1={CX + R_ASPECTS * Math.cos(p1.angle)} y1={CY + R_ASPECTS * Math.sin(p1.angle)}
-          x2={CX + R_ASPECTS * Math.cos(p2.angle)} y2={CY + R_ASPECTS * Math.sin(p2.angle)}
-          stroke={color} 
-          strokeWidth={2.5} 
-          opacity={1}
-          strokeDasharray={a.orb > 6 ? "5,3" : "none"}
-        />
-      );
-    }) : [];
+        return { ...a, p1, p2, color };
+      }
+      return null;
+    })
+    .filter((a): a is any => a !== null)
+    .map((a, i) => (
+      <line 
+        key={`asp-${i}`}
+        x1={CX + R_ASPECTS * Math.cos(a.p1.angle)} y1={CY + R_ASPECTS * Math.sin(a.p1.angle)}
+        x2={CX + R_ASPECTS * Math.cos(a.p2.angle)} y2={CY + R_ASPECTS * Math.sin(a.p2.angle)}
+        stroke={a.color} 
+        strokeWidth={2.5} 
+        opacity={1}
+        strokeDasharray={a.orb > 6 ? "5,3" : "none"}
+      />
+    )) : [];
 
   // Tooltip Element
   const renderTooltip = () => {
@@ -504,19 +503,11 @@ export default function TraditionalChart({
           <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
           
           {houseLines}
-
-          {/* Linha de Teste (Deve aparecer cruzando o centro) */}
-          <line x1={CX-100} y1={CY-100} x2={CX+100} y2={CY+100} stroke="white" strokeWidth="2" strokeDasharray="5,5" opacity="0.5" />
           
           {septenaryAspects}
           {lotNodes}
           {planetNodes}
           {renderTooltip()}
-
-          {/* Diagnóstico de Aspectos */}
-          <text x={CX} y={CY+30} textAnchor="middle" fill="#475569" fontSize="10" opacity="0.5">
-            Aspectos: {septenaryAspects.length}
-          </text>
 
           {/* Crosshair Central */}
           <g opacity="0.4">
