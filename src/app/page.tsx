@@ -13,6 +13,7 @@ import AIReport from '@/components/AIReport';
 import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
 import ExportPDF from '@/components/ExportPDF';
+import LotTable from '@/components/LotTable';
 import Image from 'next/image';
 import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save, Loader2 } from 'lucide-react';
 
@@ -40,7 +41,7 @@ export default function Home() {
   const [savedChartId, setSavedChartId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chart' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'lots' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
@@ -366,6 +367,7 @@ export default function Home() {
                 <div className="sticky top-[56px] z-40 flex items-center gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20 overflow-x-auto scrollbar-none">
                   {[
                     { id: 'chart', label: 'Mapa', icon: Star },
+                    { id: 'lots', label: 'Lotes/Tradicional', icon: Sparkles },
                     { id: 'houses', label: 'Casas', icon: Moon },
                     { id: 'aspects', label: 'Aspectos', icon: Sun },
                     { id: 'report', label: 'Relatório IA', icon: Sparkles },
@@ -407,6 +409,12 @@ export default function Home() {
                     <div className="space-y-6">
                       <AstroChart chart={chart} />
                       <PlanetTable chart={chart} />
+                    </div>
+                  )}
+
+                  {activeTab === 'lots' && (
+                    <div className="space-y-6">
+                      <LotTable chart={chart} />
                     </div>
                   )}
 

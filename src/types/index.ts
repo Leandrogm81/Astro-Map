@@ -10,6 +10,24 @@ export interface BirthData {
   timezone: string;
 }
 
+export interface LotPosition {
+  id: string;
+  name: string;
+  symbol: string;
+  longitude: number;
+  sign: ZodiacSign;
+  degree: number;
+  house: number;
+  description: string;
+}
+
+export interface TraditionalPoints {
+  lordOfNativity: string; // Nome do planeta
+  almutenFiguris: string;
+  hyleg: string;
+  alcocoden: string;
+}
+
 export interface PlanetPosition {
   name: string;
   symbol: string;
@@ -51,6 +69,9 @@ export interface NatalChart {
   aspects: Aspect[];
   ascendant: number;
   mc: number; // Medium Coeli
+  lots?: LotPosition[];
+  traditionalPoints?: TraditionalPoints;
+  isDayChart?: boolean;
 }
 
 export interface SavedChart {
@@ -144,7 +165,16 @@ export const PLANETS = [
   { id: 'node', name: 'Nodo Norte', symbol: '☊', sweId: 10 }, // Mean node
   { id: 'chiron', name: 'Quíron', symbol: '⚷', sweId: 15 },
   { id: 'lilith', name: 'Lilith', symbol: '⚸', sweId: 12 },
-  { id: 'partOfFortune', name: 'Roda da Fortuna', symbol: '⊗', sweId: 11 },
+] as const;
+
+export const HERMETIC_LOTS = [
+  { id: 'fortune', name: 'Roda da Fortuna', symbol: '⊗', description: 'Prosperidade, vitalidade física e sucesso no mundo material.' },
+  { id: 'spirit', name: 'Lote do Espírito', symbol: '✦', description: 'Carreira, ação intelectual e propósito espiritual.' },
+  { id: 'eros', name: 'Lote de Eros', symbol: '♥', description: 'Desejos, amizades e inclinações afetivas.' },
+  { id: 'necessity', name: 'Lote da Necessidade', symbol: '⚖', description: 'Restrições, deveres e lutas inevitáveis.' },
+  { id: 'courage', name: 'Lote da Coragem', symbol: '⚔', description: 'Audácia, risco e força de vontade.' },
+  { id: 'victory', name: 'Lote da Vitória', symbol: '🏆', description: 'Favores, recompensas e sucesso por mérito.' },
+  { id: 'nemesis', name: 'Lote de Nêmesis', symbol: '⚡', description: 'Karma, pontos cegos e justiça divina.' },
 ] as const;
 
 export const ASPECT_ORBS: Record<AspectType, { angle: number; orb: number }> = {

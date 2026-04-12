@@ -465,35 +465,42 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const ascendant = housesPlacidus[0].longitude;
   const housesWhole = calculateWholeSignsHouses(ascendant);
 
-  // Calculate Part of Fortune
-  const sun = planets.find(p => p.name === 'Sol');
-  const moon = planets.find(p => p.name === 'Lua');
-  
-  if (sun && moon) {
-    const sunHouse = getHouseForPlanet(sun.longitude, housesPlacidus);
-    const isDayBirth = sunHouse >= 7 && sunHouse <= 12;
+  // Sect Calculation (Day vs Night)
+  const sun = planets.find(p => p.id === 'sun');
+  const moon = planets.find(p => p.id === 'moon');
+  const sunHouse = sun ? getHouseForPlanet(sun.longitude, housesPlacidus) : 1;
+  const isDayChart = sunHouse >= 7 && sunHouse <= 12;
 
-    let pofLongitude = 0;
-    if (isDayBirth) {
-      pofLongitude = (ascendant + moon.longitude - sun.longitude) % 360;
-    } else {
-      pofLongitude = (ascendant + sun.longitude - moon.longitude) % 360;
+  // Calculate Hermetic Lots
+  const lots: LotPosition[] = [];
+  try {
+    const lotConfigs = [
+      { id: 'fortune', name: 'Roda da Fortuna', symbol: '⊗', description: 'Prosperidade e vitalidade física.' },
+      { id: 'spirit', name: 'Lote do Espírito', symbol: '✦', description: 'Carreira e propósito espiritual.' },
+      { id: 'eros', name: 'Lote de Eros', symbol: '♥', description: 'Desejos e amizades.' },
+      { id: 'necessity', name: 'Lote da Necessidade', symbol: '⚖', description: 'Restrições e deveres.' },
+      { id: 'courage', name: 'Lote da Coragem', symbol: '⚔', description: 'Audácia e força de vontade.' },
+      { id: 'victory', name: 'Lote da Vitória', symbol: '🏆', description: 'Sucesso por mérito.' },
+      { id: 'nemesis', name: 'Lote de Nêmesis', symbol: '⚡', description: 'Karma e justiça divina.' },
+    ];
+
+    for (const config of lotConfigs) {
+      const lotLon = calculateLotLongitude(config.id, ascendant, planets, isDayChart);
+      lots.push({
+        ...config,
+        longitude: lotLon,
+        sign: getZodiacSign(lotLon),
+        degree: getSignDegree(lotLon),
+        house: getHouseForPlanet(lotLon, housesPlacidus)
+      });
     }
-    pofLongitude = (pofLongitude + 360) % 360;
-
-    planets.push({
-      name: 'Roda da Fortuna',
-      symbol: '⊗',
-      longitude: pofLongitude,
-      latitude: 0,
-      speed: 0,
-      sign: getZodiacSign(pofLongitude),
-      degree: getSignDegree(pofLongitude),
-      house: 1,
-      retrograde: false,
-    });
+  } catch (err) {
+    console.warn('Failed to calculate some lots', err);
   }
-  
+
+  // Calculate Traditional Points
+  const traditionalPoints = calculateTraditionalPoints(ascendant, planets, housesPlacidus, isDayChart);
+
   // Assign houses to planets
   for (const planet of planets) {
     planet.house = getHouseForPlanet(planet.longitude, housesPlacidus);
@@ -510,6 +517,94 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
     aspects,
     ascendant,
     mc: housesPlacidus[9].longitude,
+    lots,
+    traditionalPoints,
+    isDayChart,
+  };
+}
+
+/**
+ * Cálculos de Lotes Herméticos
+ */
+function calculateLotLongitude(lotId: string, asc: number, planets: PlanetPosition[], isDay: boolean): number {
+  const getP = (id: string) => planets.find(p => p.id === id)?.longitude ?? 0;
+  
+  const sun = getP('sun');
+  const moon = getP('moon');
+  const merc = getP('mercury');
+  const venus = getP('venus');
+  const mars = getP('mars');
+  const jupiter = getP('jupiter');
+  const saturn = getP('saturn');
+
+  const fortune = isDay ? (asc + moon - sun) : (asc + sun - moon);
+  const spirit = isDay ? (asc + sun - moon) : (asc + moon - sun);
+
+  let lon = 0;
+
+  switch (lotId) {
+    case 'fortune':
+      lon = fortune;
+      break;
+    case 'spirit':
+      lon = spirit;
+      break;
+    case 'eros':
+      lon = isDay ? (asc + venus - spirit) : (asc + spirit - venus);
+      break;
+    case 'necessity':
+      lon = isDay ? (asc + fortune - merc) : (asc + merc - fortune);
+      break;
+    case 'courage':
+      lon = isDay ? (asc + mars - fortune) : (asc + fortune - mars);
+      break;
+    case 'victory':
+      lon = isDay ? (asc + jupiter - spirit) : (asc + spirit - jupiter);
+      break;
+    case 'nemesis':
+      lon = isDay ? (asc + saturn - fortune) : (asc + fortune - saturn);
+      break;
+  }
+
+  return (lon + 7200) % 360; // Extra cycles for safety
+}
+
+/**
+ * Cálculos de Pontos Tradicionais (Simplificado)
+ */
+function calculateTraditionalPoints(asc: number, planets: PlanetPosition[], houses: HouseCusp[], isDay: boolean): any {
+  const { getDomicileRuler } = require('./astrology');
+  
+  const ascSign = getZodiacSign(asc);
+  const lordOfNativity = getDomicileRuler(ascSign);
+  
+  // Hyleg (Simplified rules)
+  let hyleg = 'Sol';
+  const sun = planets.find(p => p.id === 'sun');
+  const moon = planets.find(p => p.id === 'moon');
+  
+  if (isDay) {
+    if (sun && [1, 10, 11, 7, 9].includes(sun.house)) hyleg = 'Sol';
+    else if (moon && [1, 10, 11, 7, 9].includes(moon.house)) hyleg = 'Lua';
+    else hyleg = 'Ascendente';
+  } else {
+    if (moon && [1, 10, 11, 7, 9].includes(moon.house)) hyleg = 'Lua';
+    else if (sun && [1, 10, 11, 7, 9].includes(sun.house)) hyleg = 'Sol';
+    else hyleg = 'Ascendente';
+  }
+
+  // Alcocoden (Ruler of Hyleg)
+  let hylegPos = asc;
+  if (hyleg === 'Sol') hylegPos = sun?.longitude ?? 0;
+  if (hyleg === 'Lua') hylegPos = moon?.longitude ?? 0;
+  
+  const alcocoden = getDomicileRuler(getZodiacSign(hylegPos));
+
+  return {
+    lordOfNativity,
+    almutenFiguris: lordOfNativity, // Simplified as same for now or logic can be complex
+    hyleg,
+    alcocoden
   };
 }
 

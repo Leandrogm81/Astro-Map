@@ -555,93 +555,227 @@ const MyPDFDocument = ({ chart, solarRevolution, solarYear, reportText, solarRep
 
   return (
     <Document title={`AstroMap - Dossier Astrológico - ${data.name}`}>
-      {/* CAPA E GRÁFICO NATAL */}
+      {/* PÁGINA 1: CAPA PREMIUM */}
+      <Page size="A4" style={[styles.page, { backgroundColor: '#111827', color: '#fff', justifyContent: 'center', alignItems: 'center' }]}>
+        <View style={{ alignItems: 'center' }}>
+          <PDFImage src="/assets/logo-premium.png" style={{ width: 120, height: 120, marginBottom: 20 }} />
+          <Text style={{ fontSize: 42, fontFamily: 'Helvetica-Bold', color: '#fbbf24', letterSpacing: 4 }}>ASTROMAP</Text>
+          <Text style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 8, marginTop: 10, color: '#94a3b8' }}>O Livro da Vida</Text>
+          <View style={{ height: 2, width: 200, backgroundColor: '#fbbf24', marginVertical: 30 }} />
+          <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold' }}>{data.name}</Text>
+          <Text style={{ fontSize: 10, marginTop: 100, color: '#64748b' }}>Gerado em {new Date().toLocaleDateString('pt-BR')}</Text>
+        </View>
+      </Page>
+
+      {/* PÁGINA 2: IDENTIDADE E RADIX */}
       <Page size="A4" style={styles.page}>
         <Header />
-        
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Identidade Astrológica</Text>
+          <Text style={styles.sectionTitle}>Radix: O Mapa do Nascimento</Text>
           <View style={styles.grid}>
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Nome Completo</Text>
+              <Text style={styles.infoLabel}>Nome</Text>
               <Text style={styles.infoValue}>{data.name}</Text>
             </View>
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Encarnação Terrestre</Text>
+              <Text style={styles.infoLabel}>Encarnação</Text>
               <Text style={styles.infoValue}>{data.date} às {data.time}</Text>
             </View>
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Origem Geográfica</Text>
+              <Text style={styles.infoLabel}>Local</Text>
               <Text style={styles.infoValue}>{data.location}</Text>
             </View>
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Coordenadas Celestes</Text>
-              <Text style={styles.infoValue}>{data.latitude.toFixed(4)}N, {data.longitude.toFixed(4)}E ({data.timezone})</Text>
+              <Text style={styles.infoLabel}>Coordenadas</Text>
+              <Text style={styles.infoValue}>{data.latitude.toFixed(4)}, {data.longitude.toFixed(4)}</Text>
             </View>
           </View>
         </View>
-
         <View style={styles.chartWrapper}>
-          <ChartSimplePDF chart={chart} size={380} />
-          <Text style={{ fontSize: 9, marginTop: 10, color: '#666666', fontStyle: 'italic' }}>
-            Roda de Radix - Domificação Placidus
-          </Text>
+          <ChartSimplePDF chart={chart} size={420} />
+          <Text style={{ fontSize: 8, marginTop: 10, color: '#94a3b8' }}>Mandala de Radix - Sistema Placidus</Text>
         </View>
         <Footer />
       </Page>
 
-      {/* TABELAS E ANÁLISE TÉCNICA NATAL */}
+      {/* PÁGINA 3: PLANETAS E DIGNIDADES */}
       <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={styles.sectionTitle}>Geometria Planetária e Dignidades</Text>
+        <View style={styles.table}>
+          <View style={[styles.tableHeader, { backgroundColor: '#f97316' }]}>
+            <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Corpo Celeste</Text>
+            <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Signo</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Grau</Text>
+            <Text style={[styles.tableCellBold, { flex: 0.5, color: '#fff' }]}>Casa</Text>
+            <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Dignidade</Text>
+          </View>
+          {chart.planets.map((p, i) => (
+            <View key={i} style={styles.tableRow} wrap={false}>
+              <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>{p.name}{p.retrograde ? ' ℞' : ''}</Text>
+              <Text style={[styles.tableCell, { flex: 1.5 }]}>{p.sign}</Text>
+              <Text style={styles.tableCell}>{formatDeg(p.degree)}</Text>
+              <Text style={[styles.tableCell, { flex: 0.5 }]}>{p.house}</Text>
+              <Text style={[styles.tableCell, { flex: 1.5, color: getDignity(p.name, p.sign).includes('Exílio') ? '#ef4444' : (getDignity(p.name, p.sign).includes('Domicílio') ? '#10b981' : '#1a1a1a') }]}>
+                {getDignity(p.name, p.sign)}
+              </Text>
+            </View>
+          ))}
+        </View>
         <Footer />
-        <ChartTables chart={chart} title="Mapa Natal" />
-        <AnalyticsSummary chart={chart} />
       </Page>
 
-      {/* RELATÓRIO IA NATAL (Múltiplas páginas) */}
+      {/* PÁGINA 4: LOTES HERMÉTICOS E PONTOS TRADICIONAIS */}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={styles.sectionTitle}>Lotes Herméticos e Pontos de Poder</Text>
+        
+        {chart.traditionalPoints && (
+          <View style={[styles.grid, { marginBottom: 20 }]}>
+            <View style={[styles.infoCard, { borderColor: '#fbbf24' }]}>
+              <Text style={styles.infoLabel}>Senhor da Natividade</Text>
+              <Text style={[styles.infoValue, { color: '#d97706' }]}>{chart.traditionalPoints.lordOfNativity}</Text>
+            </View>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Hyleg (Portador da Vida)</Text>
+              <Text style={styles.infoValue}>{chart.traditionalPoints.hyleg}</Text>
+            </View>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Almuten Figuris</Text>
+              <Text style={styles.infoValue}>{chart.traditionalPoints.almutenFiguris}</Text>
+            </View>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Alcocoden</Text>
+              <Text style={styles.infoValue}>{chart.traditionalPoints.alcocoden}</Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.table}>
+          <View style={[styles.tableHeader, { backgroundColor: '#8b5cf6' }]}>
+            <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Lote Hermético</Text>
+            <Text style={[styles.tableCellBold, { flex: 1.2, color: '#fff' }]}>Signo</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Grau</Text>
+            <Text style={[styles.tableCellBold, { flex: 0.5, color: '#fff' }]}>Casa</Text>
+            <Text style={[styles.tableCellBold, { flex: 2, color: '#fff' }]}>Essência</Text>
+          </View>
+          {chart.lots?.map((lot, i) => (
+            <View key={i} style={styles.tableRow} wrap={false}>
+              <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>{lot.name}</Text>
+              <Text style={[styles.tableCell, { flex: 1.2 }]}>{lot.sign}</Text>
+              <Text style={styles.tableCell}>{formatDeg(lot.degree)}</Text>
+              <Text style={[styles.tableCell, { flex: 0.5 }]}>{lot.house}</Text>
+              <Text style={[styles.tableCell, { flex: 2, fontSize: 7, color: '#64748b' }]}>{lot.description}</Text>
+            </View>
+          ))}
+        </View>
+        <Footer />
+      </Page>
+
+      {/* PÁGINA 5: CASAS ASTROLÓGICAS (SISTEMAS) */}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={styles.sectionTitle}>Domificação: Arquitetura do Destino</Text>
+        <View style={{ flexDirection: 'row', gap: 20 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Placidus (Arco de Tempo)</Text>
+            <View style={styles.table}>
+              {chart.housesPlacidus.map((h, i) => (
+                <View key={i} style={styles.tableRow}>
+                  <Text style={{ fontSize: 8, flex: 0.5 }}>{h.number}</Text>
+                  <Text style={{ fontSize: 8, flex: 1.5 }}>{h.sign}</Text>
+                  <Text style={{ fontSize: 8, flex: 1 }}>{formatDeg(h.degree)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Whole Signs (Signos Inteiros)</Text>
+            <View style={styles.table}>
+              {chart.housesWhole.map((h, i) => (
+                <View key={i} style={styles.tableRow}>
+                  <Text style={{ fontSize: 8, flex: 0.5 }}>{h.number}</Text>
+                  <Text style={{ fontSize: 8, flex: 1.5 }}>{h.sign}</Text>
+                  <Text style={{ fontSize: 8, flex: 1 }}>{formatDeg(h.degree)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+        <AnalyticsSummary chart={chart} />
+        <Footer />
+      </Page>
+
+      {/* PÁGINA 6: ASPECTOS NATAL */}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={styles.sectionTitle}>Dinâmica de Aspectos: Conversas do Céu</Text>
+        <View style={styles.table}>
+          <View style={[styles.tableHeader, { backgroundColor: '#3b82f6' }]}>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Corpo 1</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Relacionamento</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Corpo 2</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Orbe</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Fase</Text>
+          </View>
+          {chart.aspects.slice(0, 25).map((a, i) => (
+            <View key={i} style={styles.tableRow} wrap={false}>
+              <Text style={styles.tableCell}>{a.planet1}</Text>
+              <Text style={[styles.tableCell, { fontWeight: 'bold', textTransform: 'uppercase' }]}>{a.type}</Text>
+              <Text style={styles.tableCell}>{a.planet2}</Text>
+              <Text style={styles.tableCell}>{a.orb.toFixed(2)}°</Text>
+              <Text style={[styles.tableCell, { color: a.applying ? '#10b981' : '#94a3b8' }]}>{a.applying ? 'Aplicativo' : 'Separativo'}</Text>
+            </View>
+          ))}
+        </View>
+        <Footer />
+      </Page>
+
+      {/* PÁGINAS 7-10: TRATADO NATAL (IA) */}
       {reportText && (
         <Page size="A4" style={styles.page}>
+          <Header />
+          <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#1e1b4b', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
+            Tratado de Interpretação Natal Integral
+          </Text>
+          <MarkdownParagraphs text={reportText} />
           <Footer />
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: 16, backgroundColor: '#4f46e5', color: '#fff', padding: 10, borderRadius: 4 }]}>
-              Tratado de Interpretação Natal Integral
-            </Text>
-            <MarkdownParagraphs text={reportText} />
-          </View>
         </Page>
       )}
 
-      {/* REVOLUÇÃO SOLAR (Se Houver) */}
+      {/* PÁGINA 11-13: REVOLUÇÃO SOLAR (Se Houver) */}
       {solarRevolution && solarYear && (
         <>
           <Page size="A4" style={styles.page}>
-            <Footer />
+            <Header />
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { fontSize: 16, backgroundColor: '#f59e0b', color: '#fff', padding: 10, borderRadius: 4 }]}>
+              <Text style={[styles.sectionTitle, { fontSize: 16, backgroundColor: '#f59e0b', color: '#fff', padding: 10, borderRadius: 8, textAlign: 'center' }]}>
                 Retorno Solar: Ciclo de {solarYear} a {solarYear + 1}
               </Text>
               <View style={styles.chartWrapper}>
-                <ChartSimplePDF chart={solarRevolution} size={380} />
+                <ChartSimplePDF chart={solarRevolution} size={420} />
               </View>
             </View>
-            <SolarAnalysisTables natal={chart} solar={solarRevolution} year={solarYear} />
+            <Footer />
           </Page>
           <Page size="A4" style={styles.page}>
+            <Header />
+            <SolarAnalysisTables natal={chart} solar={solarRevolution} year={solarYear} />
+            <ChartTables chart={solarRevolution} title={`Dados Técnicos: RS ${solarYear}`} />
             <Footer />
-            <ChartTables chart={solarRevolution} title={`Revolução Solar ${solarYear}`} />
           </Page>
         </>
       )}
 
-      {/* RELATÓRIO IA DA REVOLUÇÃO SOLAR */}
+      {/* PÁGINA 14-16: RELATÓRIO PREDITIVO (IA) */}
       {solarReportText && (
         <Page size="A4" style={styles.page}>
+          <Header />
+          <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#d97706', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
+            Arquétipos e Tendências do Ano ({solarYear})
+          </Text>
+          <MarkdownParagraphs text={solarReportText} />
           <Footer />
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { fontSize: 16, backgroundColor: '#f59e0b', color: '#fff', padding: 10, borderRadius: 4 }]}>
-              Guia Preditivo e Arquétipos do Ano
-            </Text>
-            <MarkdownParagraphs text={solarReportText} />
-          </View>
         </Page>
       )}
     </Document>
