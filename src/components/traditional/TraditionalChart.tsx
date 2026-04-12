@@ -158,7 +158,12 @@ export default function TraditionalChart({
   });
 
   // Gestão de Sobreposição de Planetas
-  const positionedPlanets: any[] = [];
+  interface PositionedPlanet extends PlanetPosition {
+    x: number;
+    y: number;
+    angle: number;
+  }
+  const positionedPlanets: PositionedPlanet[] = [];
   classicPlanets.forEach(p => {
     const angle = longitudeToAngle(p.longitude);
     let r = R_PLANETS_OUTER;
@@ -275,9 +280,30 @@ export default function TraditionalChart({
       {/* Zoom Controls Overlay */}
       {!isTouchDevice && (
         <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-1.5 rounded-xl border border-white/10 backdrop-blur-md">
-          <button onClick={() => setZoom(z => Math.min(5, z + 0.4))} className="p-2 text-slate-400 hover:text-white transition-colors"><ZoomIn className="w-5 h-5" /></button>
-          <button onClick={() => setZoom(z => Math.max(0.5, z - 0.4))} className="p-2 text-slate-400 hover:text-white transition-colors"><ZoomOut className="w-5 h-5" /></button>
-          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="p-2 text-slate-400 hover:text-white transition-colors border-t border-white/5 pt-2"><Maximize className="w-5 h-5" /></button>
+          <button 
+            onClick={() => setZoom(z => Math.min(5, z + 0.4))} 
+            title="Aumentar Zoom"
+            aria-label="Aumentar Zoom"
+            className="p-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <ZoomIn className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setZoom(z => Math.max(0.5, z - 0.4))} 
+            title="Diminuir Zoom"
+            aria-label="Diminuir Zoom"
+            className="p-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <ZoomOut className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
+            title="Resetar Visualização"
+            aria-label="Resetar Visualização"
+            className="p-2 text-slate-400 hover:text-white transition-colors border-t border-white/5 pt-2"
+          >
+            <Maximize className="w-5 h-5" />
+          </button>
         </div>
       )}
 
