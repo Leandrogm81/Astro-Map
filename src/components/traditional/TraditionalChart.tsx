@@ -360,12 +360,12 @@ export default function TraditionalChart({
     return (
       <g transform={`translate(${focusX}, ${focusY})`} className="pointer-events-none">
         <g transform={`translate(${offsetSide}, ${offsetTop})`}>
-          <rect width="180" height={desc ? 100 : 80} rx="12" fill="#0f172a" stroke="#fbbf24" strokeWidth="1.5" className="shadow-2xl" opacity="0.98" />
-          <text x="90" y="25" textAnchor="middle" fill="#fbbf24" fontSize="15" fontWeight="bold">{title}</text>
-          <text x="90" y="48" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="500">{subtitle}</text>
-          <text x="90" y="68" textAnchor="middle" fill="#94a3b8" fontSize="12">Casa {info.replace('Casa ', '')}</text>
+          <rect width="200" height={desc ? 120 : 90} rx="14" fill="#0f172a" stroke="#fbbf24" strokeWidth="2" className="shadow-2xl" opacity="0.98" />
+          <text x="100" y="30" textAnchor="middle" fill="#fbbf24" fontSize="16" fontWeight="bold">{title}</text>
+          <text x="100" y="55" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="600">{subtitle}</text>
+          <text x="100" y="78" textAnchor="middle" fill="#94a3b8" fontSize="13">Casa {info.replace('Casa ', '')}</text>
           {desc && (
-            <text x="90" y="85" textAnchor="middle" fill="#fbbf24" fontSize="10" opacity="0.8" className="italic">
+            <text x="100" y="100" textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="normal">
               {desc.length > 50 ? desc.substring(0, 47) + '...' : desc}
             </text>
           )}
