@@ -1,39 +1,44 @@
-export * from './types';
 import { TraditionalAssessment, TraditionalScore } from './types';
-import { isAtDomicile, isAtExaltation, TRADITIONAL_DETRIMENTS, TRADITIONAL_FALLS } from './rulers';
-import { hasTriplicity, getSolarCondition } from './dignities';
-import { isInSect, calculateHayz } from './sect';
+import { getTraditionalDomicileRuler, getTraditionalExaltationRuler, getTraditionalTriplicityRulers } from './rulers';
+import { calculateEssentialDignity, getSolarCondition } from './dignities';
+import { calculateHayz, getSectStatus, isPlanetDiurnal } from './sect';
 import { PlanetPosition, ZodiacSign } from '@/types';
 
-const PLANET_NAME_MAP: Record<string, string> = {
-  'sun': 'Sol',
-  'moon': 'Lua',
-  'mercury': 'Mercúrio',
-  'venus': 'Vênus',
-  'mars': 'Marte',
-  'jupiter': 'Júpiter',
-  'saturn': 'Saturno',
+const PLANET_NAME_PT: Record<string, string> = {
+  sun: 'Sol', moon: 'Lua', mercury: 'Mercúrio', venus: 'Vênus', mars: 'Marte', jupiter: 'Júpiter', saturn: 'Saturno'
 };
 
 export function calculateTraditionalAssessment(
   planet: PlanetPosition,
-  sun: PlanetPosition,
+  allPlanets: PlanetPosition[],
   isDayChart: boolean
 ): TraditionalAssessment {
-  const name = PLANET_NAME_MAP[planet.id] || planet.name;
   const sign = planet.sign as ZodiacSign;
+  const sun = allPlanets.find(p => p.id === 'sun')!;
   
-  const essential: { [key: string]: number } = {};
-  const accidental: { [key: string]: number } = {};
+  const essential: Record<string, number> = {};
+  const accidental: Record<string, number> = {};
 
-  // 1. Dignidades Essenciais
-  if (isAtDomicile(name, sign)) essential['Domicílio'] = 5;
-  if (isAtExaltation(name, sign)) essential['Exaltação'] = 4;
-  if (hasTriplicity(name, sign, isDayChart)) essential['Triplicidade'] = 3;
+  // 1. Dignidades Essenciais (Ptolomeu/Lilly)
+  const dignities = calculateEssentialDignity(planet.id, sign, planet.degree, isDayChart);
   
+  if (dignities.isAtDomicile) essential['Domicílio'] = 5;
+  if (dignities.isAtExaltation) essential['Exaltação'] = 4;
+  if (dignities.isAtTriplicity) essential['Triplicidade'] = 3;
+  if (dignities.isAtTerm) essential['Termo'] = 2;
+  if (dignities.isAtFace) essential['Face'] = 1;
+
   // Debilidades Essenciais
-  if (TRADITIONAL_DETRIMENTS[name]?.includes(sign)) essential['Exílio'] = -5;
-  if (TRADITIONAL_FALLS[name] === sign) essential['Queda'] = -4;
+  const domRuler = getTraditionalDomicileRuler(sign);
+  const exRuler = getTraditionalExaltationRuler(sign);
+  // Se o regente do signo é o próprio planeta, ele não está em exílio
+  if (domRuler !== planet.id && getTraditionalDomicileRuler(getOppositeSign(sign)) === planet.id) {
+    essential['Exílio'] = -5;
+  }
+  // Queda (Oposto da exaltação) - Simplificado para os 7
+  if (isAtFall(planet.id, sign)) {
+    essential['Queda'] = -4;
+  }
 
   // 2. Dignidades Acidentais
   const solarCond = planet.id !== 'sun' 
@@ -46,11 +51,33 @@ export function calculateTraditionalAssessment(
   if (planet.retrograde) accidental['Retrógrado'] = -5;
   
   // Sect & Hayz
-  const inSect = isInSect(planet.id, isDayChart);
-  const hayz = calculateHayz(planet.id, planet.house || 1, isDayChart);
+  const hayz = calculateHayz(planet.id, planet.house || 1, sign, isDayChart);
+  const sectStatus = getSectStatus(planet.id, isDayChart);
   
-  if (inSect) accidental['Na Seita'] = 2;
+  if (sectStatus === 'In-Sect') accidental['Na Seita'] = 2;
   if (hayz) accidental['Hayz'] = 3;
+
+  // Casas Angulares (Força Acidental)
+  const angularHouses = [1, 4, 7, 10];
+  const succedentHouses = [2, 5, 8, 11];
+  if (angularHouses.includes(planet.house || 0)) accidental['House Angular'] = 5;
+  else if (succedentHouses.includes(planet.house || 0)) accidental['House Sucedente'] = 3;
+
+  // Recepção Mútua (Domicílio)
+  const mutualReceptions: string[] = [];
+  allPlanets.forEach(other => {
+    if (other.id === planet.id) return;
+    const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+    if (!classicIds.includes(other.id)) return;
+
+    const mySignRuler = getTraditionalDomicileRuler(sign);
+    const otherSignRuler = getTraditionalDomicileRuler(other.sign as ZodiacSign);
+
+    if (mySignRuler === other.id && otherSignRuler === planet.id) {
+      accidental['Recepção Mútua'] = 2;
+      mutualReceptions.push(PLANET_NAME_PT[other.id] || other.id);
+    }
+  });
 
   // Calcular Totais
   const totalEssential = Object.values(essential).reduce((a, b) => a + b, 0);
@@ -63,41 +90,49 @@ export function calculateTraditionalAssessment(
     breakdown: { essential, accidental }
   };
 
-  let dignity = 'Peregrino';
-  if (essential['Domicílio']) dignity = 'Domicílio';
-  else if (essential['Exaltação']) dignity = 'Exaltação';
-  else if (essential['Triplicidade']) dignity = 'Triplicidade';
-  else if (essential['Exílio']) dignity = 'Exílio';
-  else if (essential['Queda']) dignity = 'Queda';
-
   return {
     planetId: planet.id,
     sign: planet.sign,
     degree: planet.degree,
     house: planet.house || 1,
     isRetrograde: planet.retrograde,
-    dignity,
+    dignity: dignities.isPeregrine ? 'Peregrino' : (dignities.isAtDomicile ? 'Domicílio' : 'Afligido'),
     totalScore: score.total,
-    sectStatus: inSect ? 'In-Sect' : 'Out-of-Sect',
+    sectStatus: sectStatus.toUpperCase(),
     dignities: {
-      domicile: '', 
-      exaltation: '',
-      detriment: '',
+      domicile: PLANET_NAME_PT[domRuler] || '',
+      exaltation: PLANET_NAME_PT[exRuler || ''] || '',
+      detriment: '', // TODO
       fall: '',
     },
     condition: {
       ...solarCond,
-      isInMutualReception: [],
-      sectStatus: inSect ? 'benefic' : 'neutral',
+      isInMutualReception: mutualReceptions,
+      sectStatus: sectStatus as any,
       isHayz: hayz
     },
     score,
-    technicalSummary: generateTechnicalSummary(name, score)
+    technicalSummary: generateTechnicalSummary(PLANET_NAME_PT[planet.id] || planet.id, score)
   };
 }
 
+function getOppositeSign(sign: ZodiacSign): ZodiacSign {
+  const signs: ZodiacSign[] = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'];
+  const idx = signs.indexOf(sign);
+  return signs[(idx + 6) % 12];
+}
+
+function isAtFall(planet: string, sign: ZodiacSign): boolean {
+  const falls: Record<string, ZodiacSign> = {
+    sun: 'Libra', moon: 'Escorpião', jupiter: 'Capricórnio', venus: 'Virgem', mars: 'Câncer', saturn: 'Áries', mercury: 'Peixes'
+  };
+  return falls[planet] === sign;
+}
+
 function generateTechnicalSummary(name: string, score: TraditionalScore): string {
+  if (score.total >= 10) return `${name} está em condição soberana e excepcional.`;
   if (score.total >= 5) return `${name} está em condição forte e benéfica.`;
+  if (score.total <= -10) return `${name} está em estado crítico de debilidade.`;
   if (score.total <= -5) return `${name} está severamente debilitado.`;
   return `${name} possui condição moderada.`;
 }

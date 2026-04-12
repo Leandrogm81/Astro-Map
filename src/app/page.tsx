@@ -13,10 +13,10 @@ import AIReport from '@/components/AIReport';
 import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
 import ExportPDF from '@/components/ExportPDF';
-import LotTable from '@/components/LotTable';
 import TraditionalView from '@/components/traditional/TraditionalView';
 import Image from 'next/image';
 import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save, Loader2 } from 'lucide-react';
+import { hydrateNatalChart } from '@/lib/chartHydration';
 
 function isValidChart(chart: unknown): chart is NatalChart {
   if (!chart || typeof chart !== 'object') return false;
@@ -42,7 +42,7 @@ export default function Home() {
   const [savedChartId, setSavedChartId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chart' | 'lots' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
@@ -78,7 +78,8 @@ export default function Home() {
         throw new Error('Dados do mapa astral inválidos');
       }
       
-      setChart(calculatedChart);
+      const hydrated = hydrateNatalChart(calculatedChart); 
+      setChart(hydrated);
       setAiReport(null);
       setSolarRevolution(null);
       setSolarYear(undefined);
@@ -88,7 +89,7 @@ export default function Home() {
       try {
         if (editingChartId) {
           updateChart(editingChartId, { 
-            chart: calculatedChart, 
+            chart: hydrated, 
             name: `${birthData.name} - ${birthData.date}`,
             aiReport: undefined,
             solarRevolution: undefined,
@@ -99,7 +100,7 @@ export default function Home() {
           setEditingChartId(null);
           setInitialFormData(undefined);
         } else {
-          const saved = saveChart(`${birthData.name} - ${birthData.date}`, calculatedChart);
+          const saved = saveChart(`${birthData.name} - ${birthData.date}`, hydrated);
           setSavedChartId(saved.id);
         }
       } catch (saveErr) {
@@ -128,54 +129,8 @@ export default function Home() {
   }, []);
 
   const handleSelectChart = useCallback((savedChart: SavedChart) => {
-    if (isValidChart(savedChart.chart)) {
-      let currentChart = savedChart.chart;
-      
-      // Auto-hidratação para mapas antigos sem Lotes ou Pontos Tradicionais
-      if (!currentChart.lots || !currentChart.traditionalPoints) {
-        try {
-          const { ascendant, planets, housesPlacidus } = currentChart;
-          const sun = planets.find(p => p.id === 'sun');
-          const sunHouse = sun ? sun.house : 1;
-          const isDay = currentChart.isDayChart ?? (sunHouse >= 7 && sunHouse <= 12);
-
-          const lotConfigs = [
-            { id: 'fortune', name: 'Roda da Fortuna', symbol: '⊗', description: 'Prosperidade e vitalidade física.' },
-            { id: 'spirit', name: 'Lote do Espírito', symbol: '✦', description: 'Carreira e propósito espiritual.' },
-            { id: 'eros', name: 'Lote de Eros', symbol: '♥', description: 'Desejos e amizades.' },
-            { id: 'necessity', name: 'Lote da Necessidade', symbol: '⚖', description: 'Restrições e deveres.' },
-            { id: 'courage', name: 'Lote da Coragem', symbol: '⚔', description: 'Audácia e força de vontade.' },
-            { id: 'victory', name: 'Lote da Vitória', symbol: '🏆', description: 'Sucesso por mérito.' },
-            { id: 'nemesis', name: 'Lote de Nêmesis', symbol: '⚡', description: 'Karma e justiça divina.' },
-          ];
-
-          const { calculateLotLongitude, calculateTraditionalPoints } = require('@/lib/ephemeris');
-          const { getZodiacSign, getSignDegree, getHouseForPlanet } = require('@/lib/astrology');
-
-          const lots = lotConfigs.map(config => {
-            const lon = calculateLotLongitude(config.id, ascendant, planets, isDay);
-            return {
-              ...config,
-              longitude: lon,
-              sign: getZodiacSign(lon),
-              degree: getSignDegree(lon),
-              house: getHouseForPlanet(lon, housesPlacidus)
-            };
-          });
-
-          const trad = calculateTraditionalPoints(ascendant, planets, housesPlacidus, isDay);
-
-          currentChart = {
-            ...currentChart,
-            lots,
-            traditionalPoints: trad,
-            isDayChart: isDay
-          };
-        } catch (err) {
-          console.error('Erro ao hidratar mapa antigo:', err);
-        }
-      }
-
+    if (savedChart.chart) {
+      const currentChart = hydrateNatalChart(savedChart.chart);
       setChart(currentChart);
       
       // Carrega relatório natal se existir cache

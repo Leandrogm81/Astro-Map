@@ -119,27 +119,43 @@ export default function TraditionalPlanetDrawer({
             </section>
 
             {/* Detalhes Técnicos */}
-            <section className="bg-gold-500/5 p-5 rounded-3xl border border-gold-500/10">
+            <section className="bg-gold-500/5 p-5 rounded-3xl border border-gold-500/10 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <Shield className="w-12 h-12 text-gold-500" />
+              </div>
               <h3 className="text-xs font-bold uppercase tracking-widest text-gold-500 flex items-center gap-2 mb-4">
                 <Info className="w-3.5 h-3.5" />
                 Análise de Tradição
               </h3>
-              <ul className="space-y-3">
-                <li className="flex justify-between text-xs">
-                  <span className="text-slate-400 font-medium">Condição do Sol:</span>
-                  <span className="text-slate-200">
+              <ul className="space-y-3 relative z-10">
+                <li className="flex justify-between text-xs items-center">
+                  <span className="text-slate-400 font-medium tracking-tight">Condição do Sol:</span>
+                  <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${
+                    assessment.condition.isCazimi ? 'bg-gold-500/20 text-gold-400 border border-gold-500/20' : 
+                    assessment.condition.isCombust ? 'bg-red-500/20 text-red-400 border border-red-500/20' : 
+                    assessment.condition.isUnderRays ? 'bg-orange-500/20 text-orange-400 border border-orange-500/20' : 
+                    'text-slate-200'
+                  }`}>
                     {assessment.condition.isCazimi ? 'Cazimi' : 
                      assessment.condition.isCombust ? 'Combusto' : 
                      assessment.condition.isUnderRays ? 'Sob os Raios' : 'Livre'}
                   </span>
                 </li>
                 <li className="flex justify-between text-xs">
-                  <span className="text-slate-400 font-medium">Seita (Sect):</span>
-                  <span className="text-slate-200">{assessment.condition.sectStatus === 'benefic' ? 'Em Seita (Benefic)' : 'Fora da Seita'}</span>
+                  <span className="text-slate-400 font-medium font-medium tracking-tight">Seita (Sect):</span>
+                  <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${
+                    assessment.condition.sectStatus === 'benefic' ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'
+                  }`}>
+                    {assessment.condition.sectStatus === 'benefic' ? 'Em Seita (Benefic)' : 'Fora da Seita'}
+                  </span>
                 </li>
                 <li className="flex justify-between text-xs">
-                  <span className="text-slate-400 font-medium">Hayz:</span>
-                  <span className="text-slate-200">{assessment.condition.isHayz ? 'Sim' : 'Não'}</span>
+                  <span className="text-slate-400 font-medium tracking-tight">Hayz:</span>
+                  <span className={`px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${
+                    assessment.condition.isHayz ? 'bg-gold-500/20 text-gold-400 border border-gold-500/20' : 'text-slate-400'
+                  }`}>
+                    {assessment.condition.isHayz ? 'Dignidade Hayz' : 'Não'}
+                  </span>
                 </li>
               </ul>
             </section>

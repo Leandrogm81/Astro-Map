@@ -6,6 +6,8 @@ import { BirthData, GeocodingResult } from '@/types';
 import { geocodeLocation, getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { Search, MapPin, Clock, Calendar, User } from 'lucide-react';
 
+import { useGeocoding } from '@/hooks/useGeocoding';
+
 interface BirthFormProps {
   onSubmit: (data: BirthData) => void;
   initialData?: BirthData;
@@ -13,6 +15,7 @@ interface BirthFormProps {
 }
 
 export default function BirthForm({ onSubmit, initialData, loading }: BirthFormProps) {
+  // 1. Estados de Dados do Formulário
   const [formData, setFormData] = useState<BirthData>({
     name: initialData?.name || '',
     date: initialData?.date || '',
@@ -23,6 +26,25 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
     timezone: initialData?.timezone || '',
   });
 
+  const [isEditingCoords, setIsEditingCoords] = useState(false);
+
+  // 2. Hook Customizado de Geolocalização
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    setSearchResults,
+    showResults,
+    setShowResults,
+    isSearching,
+    handleSearch
+  } = useGeocoding();
+
+  // 3. Refs
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 4. Efeitos de Sincronização
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -36,16 +58,9 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
       });
       setSearchQuery(initialData.location || '');
     }
-  }, [initialData]);
+  }, [initialData, setSearchQuery]);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isEditingCoords, setIsEditingCoords] = useState(false); // Novo estado
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
+  // Efeito para posicionamento do portal de resultados
   useEffect(() => {
     if (showResults && searchInputRef.current && dropdownRef.current) {
       const rect = searchInputRef.current.getBoundingClientRect();
@@ -58,15 +73,10 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
     }
   }, [showResults, searchResults]);
 
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery || searchQuery.length < 3) return;
-
-    setIsSearching(true);
-    const results = await geocodeLocation(searchQuery);
-    setSearchResults(results);
-    setShowResults(true);
-    setIsSearching(false);
-  }, [searchQuery]);
+  // 5. Handlers
+  const onSearchClick = useCallback(async () => {
+    await handleSearch(searchQuery);
+  }, [handleSearch, searchQuery]);
 
   const handleSelectLocation = (result: GeocodingResult) => {
     setFormData(prev => ({
@@ -155,13 +165,13 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
               ref={searchInputRef}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onSearchClick())}
               className="flex-1 px-4 py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
               placeholder="Cidade, Estado, País"
             />
             <button
               type="button"
-              onClick={handleSearch}
+              onClick={onSearchClick}
               disabled={isSearching || searchQuery.length < 3}
               title="Pesquisar local"
               aria-label="Pesquisar local"

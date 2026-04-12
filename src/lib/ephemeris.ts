@@ -379,6 +379,9 @@ function calculateLilithPosition(date: Date): PlanetPosition {
   };
 }
 
+import { calculateLotLongitude } from './traditional/lots';
+import { calculateTraditionalPoints } from './traditional/points';
+
 // Parse timezone offset from string like "UTC-3:00" or "UTC+2:00"
 export function parseTimezoneOffset(timezone: string): number {
   if (!timezone) return 0;
@@ -427,14 +430,8 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   const dstOffset = parseTimezoneOffset(dstTimezone);
   
   // Always use DST-aware timezone
-  // In astrology, the birth time on the certificate is the local clock time
-  // which includes DST if it was in effect at the time of birth
   const timezoneOffset = dstOffset;
   
-  // Convert local time to UTC
-  // UTC = local_time - timezone_offset
-  // For UTC-2 (DST, timezoneOffset = -2): UTC = local - (-2) = local + 2
-  // For UTC-3 (standard, timezoneOffset = -3): UTC = local - (-3) = local + 3
   const utcHours = hours - timezoneOffset;
   
   console.log('Debug:', {
@@ -472,7 +469,6 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
 
   // Sect Calculation (Day vs Night)
   const sun = planets.find(p => p.id === 'sun');
-  const moon = planets.find(p => p.id === 'moon');
   const sunHouse = sun ? getHouseForPlanet(sun.longitude, housesPlacidus) : 1;
   const isDayChart = sunHouse >= 7 && sunHouse <= 12;
 
@@ -503,7 +499,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
     console.warn('Failed to calculate some lots', err);
   }
 
-  // Calculate Traditional Points
+  // Calculate Traditional Points using the new specialized library
   const traditionalPoints = calculateTraditionalPoints(ascendant, planets, housesPlacidus, isDayChart);
 
   // Assign houses to planets
@@ -525,91 +521,6 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
     lots,
     traditionalPoints,
     isDayChart,
-  };
-}
-
-/**
- * Cálculos de Lotes Herméticos
- */
-export function calculateLotLongitude(lotId: string, asc: number, planets: PlanetPosition[], isDay: boolean): number {
-  const getP = (id: string) => planets.find(p => p.id === id)?.longitude ?? 0;
-  
-  const sun = getP('sun');
-  const moon = getP('moon');
-  const merc = getP('mercury');
-  const venus = getP('venus');
-  const mars = getP('mars');
-  const jupiter = getP('jupiter');
-  const saturn = getP('saturn');
-
-  const fortune = isDay ? (asc + moon - sun) : (asc + sun - moon);
-  const spirit = isDay ? (asc + sun - moon) : (asc + moon - sun);
-
-  let lon = 0;
-
-  switch (lotId) {
-    case 'fortune':
-      lon = fortune;
-      break;
-    case 'spirit':
-      lon = spirit;
-      break;
-    case 'eros':
-      lon = isDay ? (asc + venus - spirit) : (asc + spirit - venus);
-      break;
-    case 'necessity':
-      lon = isDay ? (asc + fortune - merc) : (asc + merc - fortune);
-      break;
-    case 'courage':
-      lon = isDay ? (asc + mars - fortune) : (asc + fortune - mars);
-      break;
-    case 'victory':
-      lon = isDay ? (asc + jupiter - spirit) : (asc + spirit - jupiter);
-      break;
-    case 'nemesis':
-      lon = isDay ? (asc + saturn - fortune) : (asc + fortune - saturn);
-      break;
-  }
-
-  return (lon + 7200) % 360; // Extra cycles for safety
-}
-
-/**
- * Cálculos de Pontos Tradicionais (Simplificado)
- */
-export function calculateTraditionalPoints(asc: number, planets: PlanetPosition[], houses: HouseCusp[], isDay: boolean): any {
-  const { getDomicileRuler } = require('./astrology');
-  
-  const ascSign = getZodiacSign(asc);
-  const lordOfNativity = getDomicileRuler(ascSign);
-  
-  // Hyleg (Simplified rules)
-  let hyleg = 'Sol';
-  const sun = planets.find(p => p.id === 'sun');
-  const moon = planets.find(p => p.id === 'moon');
-  
-  if (isDay) {
-    if (sun && [1, 10, 11, 7, 9].includes(sun.house)) hyleg = 'Sol';
-    else if (moon && [1, 10, 11, 7, 9].includes(moon.house)) hyleg = 'Lua';
-    else hyleg = 'Ascendente';
-  } else {
-    if (moon && [1, 10, 11, 7, 9].includes(moon.house)) hyleg = 'Lua';
-    else if (sun && [1, 10, 11, 7, 9].includes(sun.house)) hyleg = 'Sol';
-    else hyleg = 'Ascendente';
-  }
-
-  // Alcocoden (Ruler of Hyleg)
-  let hylegPos = asc;
-  if (hyleg === 'Sol') hylegPos = sun?.longitude ?? 0;
-  if (hyleg === 'Lua') hylegPos = moon?.longitude ?? 0;
-  
-  const alcocoden = getDomicileRuler(getZodiacSign(hylegPos));
-
-  return {
-    lordOfNativity,
-    almutenFiguris: lordOfNativity, // Simplified as same for now or logic can be complex
-    hyleg,
-    alcocoden
   };
 }
 

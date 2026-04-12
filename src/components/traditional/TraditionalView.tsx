@@ -42,7 +42,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
     if (!sun || classicPlanets.length === 0) return {} as Record<string, TraditionalAssessment>;
 
     return classicPlanets.reduce((acc, planet) => {
-      acc[planet.id] = calculateTraditionalAssessment(planet, sun, chart.isDayChart ?? false);
+      acc[planet.id] = calculateTraditionalAssessment(planet, chart.planets, chart.isDayChart ?? false);
       return acc;
     }, {} as Record<string, TraditionalAssessment>);
   }, [chart]);

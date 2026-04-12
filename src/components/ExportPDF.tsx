@@ -251,6 +251,22 @@ const getPlanetSymbol = (name: string) => {
   return symbols[name] || name[0];
 };
 
+const getPlanetLabel = (id: string): string => {
+  const map: Record<string, string> = {
+    sun: 'Sol', moon: 'Lua', mercury: 'Mercúrio',
+    venus: 'Vênus', mars: 'Marte', jupiter: 'Júpiter', saturn: 'Saturno'
+  };
+  return map[id] || id;
+};
+
+const getPlanetSymbolTrad = (id: string): string => {
+  const map: Record<string, string> = {
+    sun: '☉', moon: '☽', mercury: '☿',
+    venus: '♀', mars: '♂', jupiter: '♃', saturn: '♄'
+  };
+  return map[id] || '';
+};
+
 // Componente utilitário para renderizar as tabelas de um mapa
 const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => (
   <View style={{ marginBottom: 20 }}>
@@ -825,26 +841,65 @@ const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessments }: P
       <Page size="A4" style={styles.page}>
         <Header />
         <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Dignidade Essencial e Força Operacional</Text>
+        
+        {/* Bloco de Destaque para Pontos de Poder */}
+        {chart.traditionalPoints && (
+          <View style={[styles.grid, { marginBottom: 20 }]}>
+            <View style={[styles.infoCard, { borderTopWidth: 3, borderTopColor: '#b45309', backgroundColor: '#fffcf5' }]}>
+              <Text style={[styles.infoLabel, { color: '#b45309' }]}>Senhor da Natividade</Text>
+              <Text style={[styles.infoValue, { fontSize: 13, color: '#1e293b' }]}>
+                {getPlanetLabel(chart.traditionalPoints.lordOfNativity)}
+              </Text>
+            </View>
+            <View style={[styles.infoCard, { borderTopWidth: 3, borderTopColor: '#b45309', backgroundColor: '#fffcf5' }]}>
+              <Text style={[styles.infoLabel, { color: '#b45309' }]}>Almuten Figuris</Text>
+              <Text style={[styles.infoValue, { fontSize: 13, color: '#1e293b' }]}>
+                {getPlanetLabel(chart.traditionalPoints.almutenFiguris)}
+              </Text>
+            </View>
+            <View style={[styles.infoCard, { borderTopWidth: 3, borderTopColor: '#b45309', backgroundColor: '#fffcf5' }]}>
+              <Text style={[styles.infoLabel, { color: '#b45309' }]}>Hyleg</Text>
+              <Text style={[styles.infoValue, { fontSize: 13, color: '#1e293b', textTransform: 'capitalize' }]}>
+                {getPlanetLabel(chart.traditionalPoints.hyleg)}
+              </Text>
+            </View>
+          </View>
+        )}
+
         <View style={styles.table}>
           <View style={[styles.tableHeader, { backgroundColor: '#1e293b' }]}>
             <Text style={[styles.tableCellBold, { flex: 1.2, color: '#fff' }]}>Governador</Text>
-            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Signo/Casa</Text>
-            <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Dignidade Essencial</Text>
-            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Seita</Text>
-            <Text style={[styles.tableCellBold, { color: '#fff', textAlign: 'center' }]}>Score</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Signo/Grau</Text>
+            <Text style={[styles.tableCellBold, { flex: 1.8, color: '#fff' }]}>Dignidades Essenciais</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff', textAlign: 'center' }]}>Seita</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff', textAlign: 'right' }]}>Score</Text>
           </View>
           {traditionalAssessments?.map((a, i) => (
             <View key={i} style={styles.tableRow} wrap={false}>
-              <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold' }]}>{a.planetId}</Text>
-              <Text style={styles.tableCell}>{a.sign} (C{a.house})</Text>
-              <Text style={[styles.tableCell, { flex: 1.5, fontSize: 7 }]}>{a.dignity}</Text>
-              <Text style={[styles.tableCell, { color: a.sectStatus === 'In-Sect' ? '#10b981' : '#ef4444' }]}>{a.sectStatus}</Text>
-              <Text style={[styles.tableCellBold, { textAlign: 'center', color: a.totalScore > 0 ? '#10b981' : '#ef4444' }]}>{a.totalScore}</Text>
+              <View style={[styles.tableCell, { flex: 1.2, flexDirection: 'row', alignItems: 'center' }]}>
+                <Text style={[styles.symbol, { marginRight: 4 }]}>{getPlanetSymbolTrad(a.planetId)}</Text>
+                <Text style={{ fontWeight: 'bold' }}>{getPlanetLabel(a.planetId)}</Text>
+              </View>
+              <Text style={styles.tableCell}>{a.sign} {formatDeg(a.degree)}</Text>
+              <View style={[styles.tableCell, { flex: 1.8 }]}>
+                 <Text style={{ fontSize: 7, color: '#1e293b', fontWeight: 'bold' }}>{a.dignity}</Text>
+                 <Text style={{ fontSize: 6, color: '#64748b' }}>
+                   {a.score.breakdown.essential['Termo'] ? 'Termo ' : ''}
+                   {a.score.breakdown.essential['Face'] ? 'Face ' : ''}
+                   {a.score.breakdown.essential['Triplicidade'] ? 'Triplicidade ' : ''}
+                 </Text>
+              </View>
+              <Text style={[styles.tableCell, { textAlign: 'center', color: a.condition.sectStatus === 'benefic' ? '#10b981' : (a.condition.sectStatus === 'malefic' ? '#ef4444' : '#1e293b') }]}>
+                {a.sectStatus}
+              </Text>
+              <Text style={[styles.tableCellBold, { textAlign: 'right', color: a.totalScore > 0 ? '#10b981' : (a.totalScore < 0 ? '#ef4444' : '#1e1b4b'), fontSize: 10 }]}>
+                {a.totalScore > 0 ? `+${a.totalScore}` : a.totalScore}
+              </Text>
             </View>
           ))}
         </View>
 
-        <Text style={[styles.sectionTitle, { color: '#b45309', marginTop: 30 }]}>Lotes Herméticos (Pontos Sensíveis)</Text>
+        <Text style={[styles.sectionTitle, { color: '#b45309', marginTop: 25 }]}>Lotes Herméticos (Pontos de Destino)</Text>
         <View style={styles.table}>
           <View style={[styles.tableHeader, { backgroundColor: '#1e293b' }]}>
             <Text style={[styles.tableCellBold, { color: '#fff' }]}>Lote</Text>
