@@ -54,7 +54,7 @@ export function calculateTraditionalAssessment(
   const hayz = calculateHayz(planet.id, planet.house || 1, sign, isDayChart);
   const sectStatus = getSectStatus(planet.id, isDayChart);
   
-  if (sectStatus === 'In-Sect') accidental['Na Seita'] = 2;
+  if (sectStatus === 'in_sect' || sectStatus === 'benefic') accidental['Na Seita'] = 2;
   if (hayz) accidental['Hayz'] = 3;
 
   // Casas Angulares (Força Acidental)

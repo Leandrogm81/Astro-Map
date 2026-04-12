@@ -14,8 +14,8 @@ import {
   Line,
   Circle
 } from '@react-pdf/renderer';
-import { NatalChart, PlanetPosition, ZodiacSign, ZODIAC_SIGNS } from '@/types';
-import { TraditionalAssessment } from '@/lib/traditional/scoring';
+import { NatalChart } from '@/types';
+import { TraditionalAssessment } from '@/lib/traditional/types';
 import ChartSimplePDF from './ChartSimplePDF';
 import { Download, Loader2 } from 'lucide-react';
 import { 

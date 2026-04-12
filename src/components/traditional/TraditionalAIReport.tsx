@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart } from '@/types';
-import { TraditionalAssessment } from '@/lib/traditional/scoring';
+import { TraditionalAssessment } from '@/lib/traditional/types';
 import { 
   Sparkles, 
   AlertCircle, 
