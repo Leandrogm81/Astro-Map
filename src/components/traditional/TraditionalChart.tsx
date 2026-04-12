@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize, Settings, Eye, EyeOff } from 'lucide-react';
 import { NatalChart, PlanetPosition, ZODIAC_SIGNS, PLANETS } from '@/types';
 import { getElementColor } from '@/lib/astrology';
 
@@ -12,7 +12,7 @@ interface TraditionalChartProps {
 
 export default function TraditionalChart({ 
   chart, 
-  showAllLots, 
+  showAllLots: showAllLotsProp, 
   onPlanetClick,
   selectedPlanetId 
 }: TraditionalChartProps) {
@@ -25,6 +25,18 @@ export default function TraditionalChart({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  
+  // Opções de Visualização
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [options, setOptions] = useState({
+    showAspects: true,
+    houseSystem: 'whole_sign' as 'whole_sign' | 'equal',
+    showAllLots: showAllLotsProp ?? false
+  });
+
+  useEffect(() => {
+    setOptions(prev => ({ ...prev, showAllLots: showAllLotsProp ?? false }));
+  }, [showAllLotsProp]);
 
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -51,7 +63,7 @@ export default function TraditionalChart({
 
     if (pointers.current.size === 1) {
       setIsDragging(true);
-      setDragStart({ x: localPos.x - pan.x, y: localPos.y - pan.y });
+      setDragStart({ x: (localPos.x * zoom) - pan.x, y: (localPos.y * zoom) - pan.y });
     }
   };
 
@@ -60,7 +72,7 @@ export default function TraditionalChart({
     const localPos = getLocalCoords(e.clientX, e.clientY);
 
     if (pointers.current.size === 1 && isDragging) {
-      setPan({ x: localPos.x - dragStart.x, y: localPos.y - dragStart.y });
+      setPan({ x: (localPos.x * zoom) - dragStart.x, y: (localPos.y * zoom) - dragStart.y });
     }
   };
 
@@ -126,15 +138,19 @@ export default function TraditionalChart({
     );
   });
 
-  // Linhas das Casas (Signos Inteiros para Tradicional, mas mostramos limites seletivamente)
+  // Linhas das Casas dinâmica
   const houseLines = Array.from({ length: 12 }).map((_, i) => {
-    const lon = (Math.floor(ascendantLongitude / 30) * 30 + i * 30) % 360;
-    const angle = longitudeToAngle(lon);
+    let lon = 0;
+    if (options.houseSystem === 'whole_sign') {
+      lon = (Math.floor(ascendantLongitude / 30) * 30 + i * 30) % 360;
+    } else {
+      // Equal Houses: Start at exactly Ascendant degree
+      lon = (ascendantLongitude + i * 30) % 360;
+    }
     
-    // Números das casas (Centro da casa)
+    const angle = longitudeToAngle(lon);
     const midAngle = longitudeToAngle(lon + 15);
     const rNum = R_ASPECTS + 20;
-    
     const isCardinal = [1, 4, 7, 10].includes(i + 1);
 
     return (
@@ -225,9 +241,9 @@ export default function TraditionalChart({
     );
   });
 
-  // Lotes (Fortuna, Espírito, etc) - Camada interna
+  // Lotes (Fortuna, Espírito, etc) dinâmicos
   const lotNodes = (chart.lots || [])
-    .filter(l => showAllLots || l.id === 'fortune' || l.id === 'spirit')
+    .filter(l => options.showAllLots || l.id === 'fortune' || l.id === 'spirit')
     .map(l => {
       const angle = longitudeToAngle(l.longitude);
       const x = CX + R_LOTS_INNER * Math.cos(angle);
@@ -263,7 +279,36 @@ export default function TraditionalChart({
       );
     });
 
-  // Tooltip Element (Renderizado por último para ficar em cima)
+  // Aspectos tradicionais condicionais
+  const septenaryAspects = options.showAspects ? chart.aspects
+    .filter(a => {
+      const p1 = classicIds.includes(a.planet1.toLowerCase());
+      const p2 = classicIds.includes(a.planet2.toLowerCase());
+      return p1 && p2 && a.orb <= 8;
+    })
+    .map((a, i) => {
+      const p1 = positionedPlanets.find(pp => pp.id === a.planet1.toLowerCase() || pp.name.toLowerCase() === a.planet1.toLowerCase());
+      const p2 = positionedPlanets.find(pp => pp.id === a.planet2.toLowerCase() || pp.name.toLowerCase() === a.planet2.toLowerCase());
+      if (!p1 || !p2) return null;
+
+      let color = '#475569';
+      if (a.type === 'trine') color = '#22c55e';
+      if (a.type === 'sextile') color = '#3b82f6';
+      if (a.type === 'square') color = '#ef4444';
+      if (a.type === 'opposition') color = '#f97316';
+      if (a.type === 'conjunction') color = '#fbbf24';
+
+      return (
+        <line 
+          key={`asp-${i}`}
+          x1={CX + R_ASPECTS * Math.cos(p1.angle)} y1={CY + R_ASPECTS * Math.sin(p1.angle)}
+          x2={CX + R_ASPECTS * Math.cos(p2.angle)} y2={CY + R_ASPECTS * Math.sin(p2.angle)}
+          stroke={color} strokeWidth={1.5} opacity={0.2}
+        />
+      );
+    }) : [];
+
+  // Tooltip Element
   const renderTooltip = () => {
     let focusX = 0, focusY = 0, title = '', subtitle = '', info = '', desc = '';
     
@@ -310,37 +355,74 @@ export default function TraditionalChart({
     );
   };
 
-  // Aspectos tradicionais entre o Septenário
-  const septenaryAspects = chart.aspects
-    .filter(a => {
-      const p1 = classicIds.includes(a.planet1.toLowerCase());
-      const p2 = classicIds.includes(a.planet2.toLowerCase());
-      return p1 && p2 && a.orb <= 8;
-    })
-    .map((a, i) => {
-      const p1 = positionedPlanets.find(pp => pp.id === a.planet1.toLowerCase() || pp.name.toLowerCase() === a.planet1.toLowerCase());
-      const p2 = positionedPlanets.find(pp => pp.id === a.planet2.toLowerCase() || pp.name.toLowerCase() === a.planet2.toLowerCase());
-      if (!p1 || !p2) return null;
+  // Painel de Configurações Lateral
+  const renderSettingsPanel = () => {
+    if (!isSettingsOpen) return null;
 
-      let color = '#475569';
-      if (a.type === 'trine') color = '#22c55e';
-      if (a.type === 'sextile') color = '#3b82f6';
-      if (a.type === 'square') color = '#ef4444';
-      if (a.type === 'opposition') color = '#f97316';
-      if (a.type === 'conjunction') color = '#fbbf24';
+    return (
+      <div className="absolute top-4 left-4 z-20 w-64 bg-slate-900/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-300">
+        <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+          <Settings className="w-4 h-4 text-gold-400" />
+          Ajustes de Visualização
+        </h4>
 
-      return (
-        <line 
-          key={`asp-${i}`}
-          x1={CX + R_ASPECTS * Math.cos(p1.angle)} y1={CY + R_ASPECTS * Math.sin(p1.angle)}
-          x2={CX + R_ASPECTS * Math.cos(p2.angle)} y2={CY + R_ASPECTS * Math.sin(p2.angle)}
-          stroke={color} strokeWidth={1.5} opacity={0.2}
-        />
-      );
-    });
+        <div className="space-y-4">
+          {/* Toggle Aspectos */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-300">Linhas de Aspecto</span>
+            <button 
+              onClick={() => setOptions(prev => ({ ...prev, showAspects: !prev.showAspects }))}
+              className={`p-1.5 rounded-lg transition-all ${options.showAspects ? 'bg-gold-500/20 text-gold-400' : 'bg-white/5 text-slate-500'}`}
+            >
+              {options.showAspects ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Toggle Lotes */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-300">Todos os Lotes</span>
+            <button 
+              onClick={() => setOptions(prev => ({ ...prev, showAllLots: !prev.showAllLots }))}
+              className={`p-1.5 rounded-lg transition-all ${options.showAllLots ? 'bg-gold-500/20 text-gold-400' : 'bg-white/5 text-slate-500'}`}
+            >
+              {options.showAllLots ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Seletor de Casas */}
+          <div className="space-y-2">
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Sistema de Casas</span>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => setOptions(prev => ({ ...prev, houseSystem: 'whole_sign' }))}
+                className={`text-[10px] py-2 rounded-lg border transition-all ${options.houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500/30 text-gold-400' : 'bg-white/5 border-white/5 text-slate-500'}`}
+              >
+                Signos Inteiros
+              </button>
+              <button 
+                onClick={() => setOptions(prev => ({ ...prev, houseSystem: 'equal' }))}
+                className={`text-[10px] py-2 rounded-lg border transition-all ${options.houseSystem === 'equal' ? 'bg-gold-500/20 border-gold-500/30 text-gold-400' : 'bg-white/5 border-white/5 text-slate-500'}`}
+              >
+                Casas Iguais
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/5">
+            <p className="text-[9px] text-slate-500 leading-tight">
+              A análise Dorotheana recomenda Signos Inteiros para regências clássicas.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div ref={containerRef} className="w-full aspect-square relative bg-[#020617] rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
+      {/* Settings Panel */}
+      {renderSettingsPanel()}
+
       {/* Zoom Controls Overlay */}
       {!isTouchDevice && (
         <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-1.5 rounded-xl border border-white/10 backdrop-blur-md">
@@ -364,9 +446,17 @@ export default function TraditionalChart({
             onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
             title="Resetar Visualização"
             aria-label="Resetar Visualização"
-            className="p-2 text-slate-400 hover:text-white transition-colors border-t border-white/5 pt-2"
+            className="p-2 text-slate-400 hover:text-white transition-colors border-b border-white/5 pb-2"
           >
             <Maximize className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
+            title="Configurações Visuais"
+            aria-label="Configurações Visuais"
+            className={`p-2 transition-colors ${isSettingsOpen ? 'text-gold-400' : 'text-slate-400 hover:text-white'}`}
+          >
+            <Settings className="w-5 h-5" />
           </button>
         </div>
       )}

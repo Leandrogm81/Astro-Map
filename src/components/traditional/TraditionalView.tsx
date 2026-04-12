@@ -78,12 +78,6 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
             traditionalAssessments={Object.values(assessments)}
             variant="compact"
           />
-          <button 
-            title="Configurações do Estudo"
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
         </div>
       </div>
 
