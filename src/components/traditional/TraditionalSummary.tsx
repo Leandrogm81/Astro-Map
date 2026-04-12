@@ -16,8 +16,8 @@ export default function TraditionalSummary({ chart, assessments }: TraditionalSu
   const strongest = [...assessmentList].sort((a, b) => b.score.total - a.score.total)[0];
   const weakest = [...assessmentList].sort((a, b) => a.score.total - b.score.total)[0];
 
-  const strongestName = strongest ? getPlanetLabel(strongest.planetId) : 'N/A';
-  const weakestName = weakest ? getPlanetLabel(weakest.planetId) : 'N/A';
+  const strongestName = strongest ? getPlanetLabel(strongest.planetId) : 'Calculando...';
+  const weakestName = weakest ? getPlanetLabel(weakest.planetId) : 'Calculando...';
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

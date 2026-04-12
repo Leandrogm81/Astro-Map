@@ -19,10 +19,16 @@ export default function TraditionalView({ chart }: TraditionalViewProps) {
   // Cálculos técnicos tradicionais para os 7 clássicos
   const assessments = useMemo(() => {
     const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-    const classicPlanets = chart.planets.filter(p => classicIds.includes(p.id));
-    const sun = chart.planets.find(p => p.id === 'sun');
+    
+    // Busca flexível por ID (ignore case) ou nome
+    const classicPlanets = chart.planets.filter(p => {
+      const pId = p.id?.toLowerCase();
+      return classicIds.includes(pId) || classicIds.includes(p.name?.toLowerCase());
+    });
 
-    if (!sun) return {} as Record<string, TraditionalAssessment>;
+    const sun = chart.planets.find(p => p.id?.toLowerCase() === 'sun' || p.name?.toLowerCase() === 'sun');
+
+    if (!sun || classicPlanets.length === 0) return {} as Record<string, TraditionalAssessment>;
 
     return classicPlanets.reduce((acc, planet) => {
       acc[planet.id] = calculateTraditionalAssessment(planet, sun, chart.isDayChart ?? false);

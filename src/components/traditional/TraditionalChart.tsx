@@ -29,9 +29,12 @@ export default function TraditionalChart({
     return (180 - (longitude - ascendantLongitude)) * (Math.PI / 180);
   };
 
-  // Filtrar apenas os 7 planetas clássicos
+  // Filtrar apenas os 7 planetas clássicos com busca flexível
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-  const classicPlanets = chart.planets.filter(p => classicIds.includes(p.id));
+  const classicPlanets = chart.planets.filter(p => {
+    const pId = p.id?.toLowerCase();
+    return classicIds.includes(pId) || classicIds.includes(p.name?.toLowerCase());
+  });
 
   // Renderizar Signos
   const zodiacElements = ZODIAC_SIGNS.map((sign) => {
