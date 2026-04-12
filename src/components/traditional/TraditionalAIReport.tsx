@@ -176,10 +176,10 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
               <button
                 onClick={handleGenerateReport}
                 disabled={loading}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg ${
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)] ${
                   loading 
                     ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-gold-600 to-gold-400 text-slate-950 hover:scale-105 active:scale-95'
+                    : 'bg-gradient-to-r from-gold-500 to-gold-400 text-slate-950 hover:from-gold-400 hover:to-gold-300 hover:scale-105 active:scale-95'
                 }`}
               >
                 {loading ? (
