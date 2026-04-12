@@ -14,6 +14,7 @@ import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
 import ExportPDF from '@/components/ExportPDF';
 import LotTable from '@/components/LotTable';
+import TraditionalView from '@/components/traditional/TraditionalView';
 import Image from 'next/image';
 import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save, Loader2 } from 'lucide-react';
 
@@ -430,7 +431,7 @@ export default function Home() {
                       }`}
                     >
                       <tab.icon className="w-3.5 h-3.5" />
-                      {tab.label}
+                      {tab.id === 'lots' ? 'Tradicional' : tab.label}
                     </button>
                   ))}
                   
@@ -460,9 +461,7 @@ export default function Home() {
                   )}
 
                   {activeTab === 'lots' && (
-                    <div className="space-y-6">
-                      <LotTable chart={chart} />
-                    </div>
+                    <TraditionalView chart={chart} />
                   )}
 
                   {activeTab === 'houses' && (
