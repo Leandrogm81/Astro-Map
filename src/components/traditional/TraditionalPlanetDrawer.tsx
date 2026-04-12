@@ -146,8 +146,9 @@ export default function TraditionalPlanetDrawer({
           </div>
         </div>
       </div>
-    </>
-  );
+    </div>
+  </>
+);
 }
 
 function getPlanetLabel(id: string): string {
