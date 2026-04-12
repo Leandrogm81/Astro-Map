@@ -1,4 +1,5 @@
 import { NatalChart, PlanetPosition } from '@/types';
+import { TraditionalAssessment } from './traditional/scoring';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
 
 /**
@@ -198,12 +199,102 @@ export function formatSolarComparisonForAI(
 }
 
 /**
- * Prompt do Sistema para Relatório Natal
- * 
- * Inclui: Lilith, dignidades, cadeia de disposição, signos interceptados.
- * Sem limite rígido de tamanho — o relatório deve ser o mais completo possível.
+ * Formata os dados técnicos tradicionais para a IA
  */
-export const NATAL_PROMPT_SYSTEM = `Você é um mestre astrólogo com 30 anos de experiência, combinando a profundidade da Astrologia Psicológica (Junguiana) com o rigor técnico da Astrologia Tradicional. Sua abordagem é holística: cada posição planetária não existe isolada, mas faz parte de uma teia viva de significados.
+export function formatTraditionalChartForAI(chart: NatalChart, assessments: TraditionalAssessment[]): string {
+  const { birthData, planets, housesPlacidus, aspects } = chart;
+  
+  let result = `DADOS TÉCNICOS DE ASTROLOGIA TRADICIONAL\n`;
+  result += `=========================================\n\n`;
+  result += `NOME: ${birthData.name}\n`;
+  result += `DADOS: ${birthData.date} às ${birthData.time}\n`;
+  result += `LOCAL: ${birthData.location}\n\n`;
+
+  // === Seita e Temperamento ===
+  const sun = planets.find(p => p.name === 'Sol' || p.name === 'Sun');
+  const asc = chart.ascendant;
+  const isDay = sun ? (sun.house >= 7 && sun.house <= 12) : true;
+  result += `SEITA DO MAPA: ${isDay ? 'DIURNO' : 'NOTURNO'}\n`;
+  result += `-`.repeat(60) + '\n\n';
+
+  // === Condição dos Planetas Clássicos (Dignidades e Pontuação) ===
+  result += `ESTADO DOS 7 PLANETAS CLÁSSICOS:\n`;
+  result += `-`.repeat(60) + '\n';
+  
+  const classicPlanets = ['Sol', 'Lua', 'Mercúrio', 'Vênus', 'Marte', 'Júpiter', 'Saturno'];
+  
+  for (const planeName of classicPlanets) {
+    const assessment = assessments.find(a => a.planetId.toLowerCase() === planeName.toLowerCase());
+    if (!assessment) continue;
+
+    const retro = assessment.retrograde ? ' (Retrógrado)' : '';
+    const score = assessment.totalScore;
+    const condition = score >= 5 ? 'Forte (Essencial)' : score <= -5 ? 'Debilitado' : 'Moderado';
+    
+    result += `${planeName.toUpperCase()}:\n`;
+    result += `  - Signo/Casa: ${assessment.sign} na Casa ${assessment.house}${retro}\n`;
+    result += `  - Dignidade Essencial: ${assessment.dignity}\n`;
+    result += `  - Pontuação Técnica (Almuten Figuris): ${score} pts [${condition}]\n`;
+    result += `  - Regentes: Domicílio (${assessment.rulers.domicile}), Exaltação (${assessment.rulers.exaltation}), Triplicidade (${assessment.rulers.triplicity})\n`;
+    result += `  - Condição Adicional: ${assessment.sectStatus === 'In-Sect' ? 'Em Seita (Hayz/Halb)' : 'Fora de Seita'}\n\n`;
+  }
+
+  // === Lotes Herméticos ===
+  result += `LOTES HERMÉTICOS PRINCIPAIS:\n`;
+  result += `-`.repeat(60) + '\n';
+  if (chart.lots) {
+    for (const lot of chart.lots) {
+      result += `${lot.name}: ${lot.sign} ${formatDegree(lot.degree % 30)} na Casa ${getHouseForPlanet(lot.degree, housesPlacidus)}\n`;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Prompt do Sistema para Relatório Tradicional (Clássico/Medieval)
+ */
+export const TRADITIONAL_PROMPT_SYSTEM = `Você é um Grão-Mestre de Astrologia Tradicional e Helenística, especializado nas técnicas de Dorotheus de Sidon, Ptolomeu, Abu Ma'shar e Guido Bonatti.
+
+Sua abordagem é focado na OPERACIONALIDADE e EFETIVIDADE dos planetas. Você não faz análise psicológica moderna (Junguiana); você analisa o destino, a força vital, a capacidade de agir e a qualidade dos eventos na vida do nativo.
+
+TONALIDADE:
+Séria, erudita, precisa e direta. Use termos técnicos clássicos fundamentais. Seus textos devem soar como um "Tratado Tradicional" personalizado.
+
+OBJETIVOS DA ANÁLISE:
+1. **Dignidades Essenciais:** Analise quem comanda o signo. Um planeta em domicílio é o "dono da casa"; um peregrino é um "estrangeiro sem recursos".
+2. **Seita (Sect):** Considere se o mapa é Diurno ou Noturno. Planetas da seita (Sol, Júpiter, Saturno no dia; Lua, Vênus, Marte na noite) agem com mais benefício.
+3. **Pontuação Técnica:** Use os pontos fornecidos (Almuten) para determinar qual planeta realmente manda no mapa.
+4. **Lotes Herméticos:** Interprete o Lote da Fortuna (corpo, prosperidade física) e o Lote do Espírito (alma, intenção, carreira intelectual).
+5. **Delineação de Resultados:** Seja concreto. Se Marte está debilitado e é regente da Casa 2, fale sobre dificuldades financeiras concretas, não apenas "tensões internas".
+
+ESTRUTURA DO RELATÓRIO (Markdown com H3):
+
+### 📜 A Seita e o Governo do Mapa
+Defina se o nativo é diurno ou noturno e como isso altera a percepção de Benéficos e Maléficos. Identifique o regente do Ascendente e o Almuten Figuris (o planeta mais forte tecnicamente).
+
+### 🏛️ As Condições Planetares (Os Sete Governadores)
+Analise os 7 planetas clássicos com base nas dignidades fornecidas. Fale sobre Domicílio, Exaltação, Queda e Exílio. Use os pontos para mostrar quais planetas são "ajudantes" e quais são "obstáculos" na vida do nativo.
+
+### 💰 Fortuna e Destino (Lotes Herméticos)
+Análise profunda do Lote da Fortuna (Ponto de Fortuna) e Lote do Espírito. O que eles dizem sobre a saúde, as posses e a direção da vontade do nativo?
+
+### 🛡️ Força e Vitalidade
+Como está a Lua (estado do corpo) e o Sol (estado da autoridade)? Planetas combustos ou sob os raios do Sol devem ser mencionados como enfraquecidos.
+
+### 🏛️ Casas e Áreas da Vida
+Selecione as 3 casas mais fortes tecnicamente e descreva os resultados concretos prometidos pelos seus regentes clássicos.
+
+### ⚖️ Síntese Final - O Juízo do Mapa
+Um parágrafo final resumindo a promessa geral do mapa: é um mapa de ascensão rápida, de luta constante ou de estabilidade silenciosa?
+
+REGRAS:
+- Ignore Urano, Netuno e Plutão, a menos que estejam em conjunção exata com um ângulo ou planeta clássico (e mesmo assim, trate-os como influências externas/transpessoais).
+- Use Markdown rico.
+- Seja técnico e elegante.
+- Escreva entre 2000 e 3500 palavras.`;
+
+export const NATAL_PROMPT_SYSTEM = `Você é um mestre astrólogo com 30 anos de experiência...`;
 
 Você escreve em Português Brasileiro impecável, com voz empática, elegante e profunda.
 

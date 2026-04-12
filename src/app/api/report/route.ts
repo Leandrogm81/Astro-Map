@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   formatChartForAI, 
   formatSolarComparisonForAI,
+  formatTraditionalChartForAI,
   NATAL_PROMPT_SYSTEM, 
-  SOLAR_RETURN_PROMPT_SYSTEM 
+  SOLAR_RETURN_PROMPT_SYSTEM,
+  TRADITIONAL_PROMPT_SYSTEM
 } from '@/lib/aiPrompts';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -17,7 +19,15 @@ export const AVAILABLE_MODELS = [
 
 export async function POST(request: NextRequest) {
   try {
-    const { chart, model = 'google/gemini-2.0-flash-001', apiKey: clientApiKey, solarRevolution, solarYear } = await request.json();
+    const { 
+      chart, 
+      model = 'google/gemini-2.0-flash-001', 
+      apiKey: clientApiKey, 
+      solarRevolution, 
+      solarYear,
+      isTraditional = false,
+      assessments = []
+    } = await request.json();
 
     if (!chart) {
       return NextResponse.json({ error: 'Dados do mapa astral não fornecidos' }, { status: 400 });
@@ -33,11 +43,24 @@ export async function POST(request: NextRequest) {
     }
 
     const isSolar = !!(solarRevolution && solarYear);
-    const systemPrompt = isSolar ? SOLAR_RETURN_PROMPT_SYSTEM : NATAL_PROMPT_SYSTEM;
     
-    const userMessage = isSolar 
-      ? `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`
-      : `Por favor, interprete meu Mapa Natal com base nos seguintes dados técnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÇÃO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
+    // Seleção de Prompt do Sistema
+    let systemPrompt = NATAL_PROMPT_SYSTEM;
+    if (isTraditional) {
+      systemPrompt = TRADITIONAL_PROMPT_SYSTEM;
+    } else if (isSolar) {
+      systemPrompt = SOLAR_RETURN_PROMPT_SYSTEM;
+    }
+    
+    // Construção da Mensagem do Usuário
+    let userMessage = '';
+    if (isTraditional) {
+      userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval). Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo. Foque na funcionalidade dos planetas e nos Lotes Herméticos.\n\n${formatTraditionalChartForAI(chart, assessments)}`;
+    } else if (isSolar) {
+      userMessage = `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
+    } else {
+      userMessage = `Por favor, interprete meu Mapa Natal com base nos seguintes dados técnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÇÃO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
+    }
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',

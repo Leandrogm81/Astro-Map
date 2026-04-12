@@ -6,6 +6,7 @@ import TraditionalChart from '@/components/traditional/TraditionalChart';
 import TraditionalPlanetTable from '@/components/traditional/TraditionalPlanetTable';
 import TraditionalSummary from '@/components/traditional/TraditionalSummary';
 import TraditionalPlanetDrawer from '@/components/traditional/TraditionalPlanetDrawer';
+import TraditionalAIReport from '@/components/traditional/TraditionalAIReport';
 import { Sparkles, Info } from 'lucide-react';
 
 interface TraditionalViewProps {
@@ -94,6 +95,14 @@ export default function TraditionalView({ chart }: TraditionalViewProps) {
               Esta análise utiliza regências tradicionais (7 planetas clássicos), triplicidades dorotheanas e dignidades essenciais por signo e seita. A pontuação reflete a força operacional do planeta no mapa, integrando dignidades essenciais e acidentais.
             </p>
           </div>
+        </div>
+
+        {/* Relatório de IA Tradicional */}
+        <div className="mt-12">
+          <TraditionalAIReport 
+            chart={chart} 
+            assessments={assessments}
+          />
         </div>
       </div>
 
