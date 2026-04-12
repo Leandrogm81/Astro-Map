@@ -24,15 +24,17 @@ const SIGN_NAMES = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libr
 
 interface TraditionalChartProps {
   chart: NatalChart;
-  options: {
-    houseSystem: 'whole_sign' | 'equal_house';
-    showAspects: boolean;
-    showAllLots: boolean;
-  };
-  onOptionChange?: (key: string, value: any) => void;
+  showAllLots?: boolean;
+  selectedPlanetId?: string | null;
+  onPlanetClick?: (id: string | null) => void;
 }
 
-export default function TraditionalChart({ chart, options, onOptionChange }: TraditionalChartProps) {
+export default function TraditionalChart({ 
+  chart, 
+  showAllLots: externalShowAllLots = false,
+  selectedPlanetId: externalSelectedPlanetId = null,
+  onPlanetClick 
+}: TraditionalChartProps) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -40,6 +42,16 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
   const [hoveredPlanetId, setHoveredPlanetId] = useState<string | null>(null);
   const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Estados internos para configurações (podem ser movidos para props no futuro se necessário)
+  const [houseSystem, setHouseSystem] = useState<'whole_sign' | 'equal_house'>('whole_sign');
+  const [showAspects, setShowAspects] = useState(true);
+  const [showAllLots, setShowAllLots] = useState(externalShowAllLots);
+
+  // Sincronizar showAllLots se mudar externamente
+  React.useEffect(() => {
+    setShowAllLots(externalShowAllLots);
+  }, [externalShowAllLots]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -115,7 +127,7 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
     const houses = [];
     for (let i = 0; i < 12; i++) {
         let hStartLon;
-        if (options.houseSystem === 'whole_sign') {
+        if (houseSystem === 'whole_sign') {
             const ascSign = Math.floor(asc / 30);
             hStartLon = ((ascSign + i) * 30) % 360;
         } else {
@@ -148,7 +160,7 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
         );
     }
     return houses;
-  }, [asc, options.houseSystem]);
+  }, [asc, houseSystem]);
 
   // 4. Planetas Classic (7)
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
@@ -163,12 +175,15 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
     const x = CX + r * Math.cos(angle);
     const y = CY + r * Math.sin(angle);
     const isHovered = hoveredPlanetId === p.id;
+    const isSelected = externalSelectedPlanetId === p.id;
+    const isHighlighted = isHovered || isSelected;
 
     return (
       <g 
         key={p.id} 
         onMouseEnter={() => setHoveredPlanetId(p.id)}
         onMouseLeave={() => setHoveredPlanetId(null)}
+        onClick={() => onPlanetClick?.(p.id)}
         className="cursor-pointer transition-all duration-300"
       >
         <line 
@@ -181,10 +196,10 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
           x2={CX + (r + 10) * Math.cos(angle)} y2={CY + (r + 10) * Math.sin(angle)} 
           stroke="#cbd5e1" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" 
         />
-        <circle cx={x} cy={y} r="16" fill="#0f172a" stroke={isHovered ? "#fbbf24" : "#94a3b8"} strokeWidth="2" />
+        <circle cx={x} cy={y} r="16" fill="#0f172a" stroke={isHighlighted ? "#fbbf24" : "#94a3b8"} strokeWidth="2" />
         <text 
           x={x} y={y} textAnchor="middle" dominantBaseline="central" 
-          fill={isHovered ? "#fbbf24" : "#94a3b8"} fontSize="20" fontWeight="bold"
+          fill={isHighlighted ? "#fbbf24" : "#94a3b8"} fontSize="20" fontWeight="bold"
         >
           {p.symbol}
         </text>
@@ -199,7 +214,7 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
   };
 
   const lotNodes = (chart.lots || [])
-    .filter(l => options.showAllLots || l.id === 'fortune' || l.id === 'spirit')
+    .filter(l => showAllLots || l.id === 'fortune' || l.id === 'spirit')
     .map(l => {
       const angle = longitudeToAngle(l.longitude);
       const r = R_ASPECTS + 40;
@@ -246,7 +261,9 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
       if (!p1 || !p2 || a.orb > 10) return null;
 
       const isConnectedToHover = hoveredPlanetId === p1.id || hoveredPlanetId === p2.id;
-      const shouldShow = options.showAspects || isConnectedToHover;
+      const isConnectedToSelect = externalSelectedPlanetId === p1.id || externalSelectedPlanetId === p2.id;
+      const isHighlighted = isConnectedToHover || isConnectedToSelect;
+      const shouldShow = showAspects || isHighlighted;
       
       if (!shouldShow) return null;
 
@@ -266,8 +283,8 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
           x1={CX + R_ASPECTS * Math.cos(a1)} y1={CY + R_ASPECTS * Math.sin(a1)}
           x2={CX + R_ASPECTS * Math.cos(a2)} y2={CY + R_ASPECTS * Math.sin(a2)}
           stroke={color} 
-          strokeWidth={isConnectedToHover ? 3 : 2} 
-          opacity={isConnectedToHover ? 1 : 0.6}
+          strokeWidth={isHighlighted ? 3 : 2} 
+          opacity={isHighlighted ? 1 : 0.6}
           strokeDasharray={a.orb > 6 ? "5,3" : "none"}
           className="transition-all duration-300"
         />
@@ -415,21 +432,21 @@ export default function TraditionalChart({ chart, options, onOptionChange }: Tra
             <h3 className="text-white font-bold mb-4 flex items-center gap-2"><svg className="w-4 h-4 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>Ajustes de Visualização</h3>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between group cursor-pointer" onClick={() => onOptionChange?.('showAspects', !options.showAspects)}>
+              <div className="flex items-center justify-between group cursor-pointer" onClick={() => setShowAspects(!showAspects)}>
                 <span className="text-slate-300 text-sm">Linhas de Aspecto</span>
-                <div className={`text-xl transition-colors ${options.showAspects ? 'text-red-500' : 'text-slate-600'}`}>{options.showAspects ? '👁️' : '🔒'}</div>
+                <div className={`text-xl transition-colors ${showAspects ? 'text-red-500' : 'text-slate-600'}`}>{showAspects ? '👁️' : '🔒'}</div>
               </div>
 
-              <div className="flex items-center justify-between group cursor-pointer" onClick={() => onOptionChange?.('showAllLots', !options.showAllLots)}>
+              <div className="flex items-center justify-between group cursor-pointer" onClick={() => setShowAllLots(!showAllLots)}>
                 <span className="text-slate-300 text-sm">Todos os Lotes</span>
-                <div className={`text-xl transition-colors ${options.showAllLots ? 'text-red-500' : 'text-slate-600'}`}>{options.showAllLots ? '👁️' : '🔒'}</div>
+                <div className={`text-xl transition-colors ${showAllLots ? 'text-red-500' : 'text-slate-600'}`}>{showAllLots ? '👁️' : '🔒'}</div>
               </div>
 
               <div className="pt-2 border-t border-slate-800">
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Sistema de Casas</span>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => onOptionChange?.('houseSystem', 'whole_sign')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${options.houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Signos Inteiros</button>
-                  <button onClick={() => onOptionChange?.('houseSystem', 'equal_house')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${options.houseSystem === 'equal_house' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Casas Iguais</button>
+                  <button onClick={() => setHouseSystem('whole_sign')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Signos Inteiros</button>
+                  <button onClick={() => setHouseSystem('equal_house')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${houseSystem === 'equal_house' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Casas Iguais</button>
                 </div>
               </div>
             </div>
