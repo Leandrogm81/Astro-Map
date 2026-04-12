@@ -32,7 +32,6 @@ export const CHALDEAN_FACES: Record<ZodiacSign, string[]> = {
   'Virgem': ['sun', 'venus', 'mercury'],
   'Libra': ['moon', 'saturn', 'jupiter'],
   'Escorpião': ['mars', 'sun', 'venus'],
-  'Câncer': ['venus', 'mercury', 'moon'], // Espera, Câncer repetido? Corrigindo abaixo...
   'Sagitário': ['mercury', 'moon', 'saturn'],
   'Capricórnio': ['jupiter', 'mars', 'sun'],
   'Aquário': ['venus', 'mercury', 'moon'],
