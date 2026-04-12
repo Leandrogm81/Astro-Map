@@ -67,8 +67,8 @@ export function calculateLotLongitude(
       lon = isDay ? (ascendant + fortune - mars) : (ascendant + mars - fortune);
       break;
     case 'victory':
-      // Asc + Jupiter - Fortune (Day) | Asc + Fortune - Jupiter (Night)
-      lon = isDay ? (ascendant + jup - fortune) : (ascendant + fortune - jup);
+      // Asc + Jupiter - Spirit (Day) | Asc + Spirit - Jupiter (Night)
+      lon = isDay ? (ascendant + jup - spirit) : (ascendant + spirit - jup);
       break;
     case 'nemesis':
       // Asc + Fortune - Saturn (Day) | Asc + Saturn - Fortune (Night)
