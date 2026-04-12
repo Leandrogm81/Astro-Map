@@ -136,10 +136,6 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
     <div className="flex flex-col gap-6">
       {/* Header do Relatório */}
       <div className="bg-slate-900/80 backdrop-blur-md rounded-3xl border border-gold-500/20 p-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-          <ScrollText className="w-24 h-24 text-gold-500" />
-        </div>
-
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
