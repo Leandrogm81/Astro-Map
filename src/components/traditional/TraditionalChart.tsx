@@ -1,268 +1,213 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ZoomIn, ZoomOut, Maximize, Settings, Eye, EyeOff } from 'lucide-react';
-import { NatalChart, PlanetPosition, ZODIAC_SIGNS, PLANETS } from '@/types';
-import { getElementColor } from '@/lib/astrology';
+"use client";
+
+import React, { useMemo, useState, useRef } from 'react';
+import { NatalChart, PlanetPosition } from '@/types';
+
+const CX = 400;
+const CY = 400;
+
+// Constantes de Raio baseadas na geometria moderna premium
+const R_OUTER = 380;
+const R_ZODIAC_INNER = 330;
+const R_TICKS_INNER = 320;
+const R_ASPECTS = 210;
+
+// Cores dos Signos (Padrão AstroMap)
+const SIGN_COLORS: Record<string, string> = {
+  'Aries': '#ef4444', 'Taurus': '#22c55e', 'Gemini': '#3b82f6', 'Cancer': '#06b6d4',
+  'Leo': '#ef4444', 'Virgo': '#22c55e', 'Libra': '#3b82f6', 'Scorpio': '#06b6d4',
+  'Sagittarius': '#ef4444', 'Capricorn': '#22c55e', 'Aquarius': '#3b82f6', 'Pisces': '#06b6d4'
+};
+
+const SIGN_SYMBOLS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+const SIGN_NAMES = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 
 interface TraditionalChartProps {
   chart: NatalChart;
-  showAllLots?: boolean;
-  onPlanetClick?: (id: string) => void;
-  selectedPlanetId?: string | null;
+  options: {
+    houseSystem: 'whole_sign' | 'equal_house';
+    showAspects: boolean;
+    showAllLots: boolean;
+  };
+  onOptionChange?: (key: string, value: any) => void;
 }
 
-export default function TraditionalChart({ 
-  chart, 
-  showAllLots: showAllLotsProp, 
-  onPlanetClick,
-  selectedPlanetId 
-}: TraditionalChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
-  const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
+export default function TraditionalChart({ chart, options, onOptionChange }: TraditionalChartProps) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-  
-  // Opções de Visualização
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [options, setOptions] = useState({
-    showAspects: true,
-    houseSystem: 'whole_sign' as 'whole_sign' | 'equal',
-    showAllLots: showAllLotsProp ?? false
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [hoveredPlanetId, setHoveredPlanetId] = useState<string | null>(null);
+  const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Auxiliares de Cálculo
+  const asc = chart.houses[0].longitude;
+  const longitudeToAngle = (lon: number) => {
+    // Inverter direção para anti-horário e rotacionar para o ASC na esquerda (180°)
+    let deg = (lon - asc + 180) % 360;
+    return (deg * Math.PI) / 180;
+  };
+
+  const getArcPath = (startLon: number, endLon: number, rOut: number, rIn: number) => {
+    const startAngle = longitudeToAngle(startLon);
+    const endAngle = longitudeToAngle(endLon);
+    
+    // Coordenadas
+    const x1 = CX + rOut * Math.cos(startAngle);
+    const y1 = CY + rOut * Math.sin(startAngle);
+    const x2 = CX + rOut * Math.cos(endAngle);
+    const y2 = CY + rOut * Math.sin(endAngle);
+    const x3 = CX + rIn * Math.cos(endAngle);
+    const y3 = CY + rIn * Math.sin(endAngle);
+    const x4 = CX + rIn * Math.cos(startAngle);
+    const y4 = CY + rIn * Math.sin(startAngle);
+
+    return `M ${x1} ${y1} A ${rOut} ${rOut} 0 0 0 ${x2} ${y2} L ${x3} ${y3} A ${rIn} ${rIn} 0 0 1 ${x4} ${y4} Z`;
+  };
+
+  // 1. Zodíaco Colorido (Fatias)
+  const zodiacElements = SIGN_NAMES.map((name, i) => {
+    const color = SIGN_COLORS[name];
+    const signLon = i * 30;
+    const path = getArcPath(signLon, signLon + 30, R_OUTER, R_ZODIAC_INNER);
+    const textAngle = longitudeToAngle(signLon + 15);
+    const tx = CX + (R_OUTER + R_ZODIAC_INNER) / 2 * Math.cos(textAngle);
+    const ty = CY + (R_OUTER + R_ZODIAC_INNER) / 2 * Math.sin(textAngle);
+
+    return (
+      <g key={name}>
+        <path d={path} fill={`${color}15`} stroke={color} strokeWidth="1.5" />
+        <text 
+          x={tx} y={ty} textAnchor="middle" dominantBaseline="central" 
+          fill={color} fontSize="24" fontWeight="bold" className="select-none"
+        >
+          {SIGN_SYMBOLS[i]}
+        </text>
+      </g>
+    );
   });
 
-  useEffect(() => {
-    setOptions(prev => ({ ...prev, showAllLots: showAllLotsProp ?? false }));
-  }, [showAllLotsProp]);
+  // 2. Ticks de Graus
+  const degreeTicks = useMemo(() => {
+    return Array.from({ length: 360 }).map((_, i) => {
+      const angle = longitudeToAngle(i);
+      const isMain = i % 30 === 0;
+      const isFive = i % 5 === 0;
+      const r2 = isMain ? R_TICKS_INNER - 15 : (isFive ? R_TICKS_INNER - 8 : R_TICKS_INNER - 4);
+      return (
+        <line
+          key={`tick-${i}`}
+          x1={CX + R_ZODIAC_INNER * Math.cos(angle)} y1={CY + R_ZODIAC_INNER * Math.sin(angle)}
+          x2={CX + r2 * Math.cos(angle)} y2={CY + r2 * Math.sin(angle)}
+          stroke={isMain ? "#cbd5e1" : "#475569"}
+          strokeWidth={isMain ? 1.5 : 1}
+          opacity={isMain ? 0.8 : 0.4}
+        />
+      );
+    });
+  }, [asc]);
 
-  useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
+  // 3. Casas Tradicionais
+  const houseElements = useMemo(() => {
+    const houses = [];
+    for (let i = 0; i < 12; i++) {
+        let hStartLon;
+        if (options.houseSystem === 'whole_sign') {
+            const ascSign = Math.floor(asc / 30);
+            hStartLon = ((ascSign + i) * 30) % 360;
+        } else {
+            hStartLon = (asc + i * 30) % 360;
+        }
+        
+        const angle = longitudeToAngle(hStartLon);
+        const nextAngle = longitudeToAngle(hStartLon + 15);
+        const isAngular = [0, 3, 6, 9].includes(i); // 1, 4, 7, 10
 
-  const getLocalCoords = (clientX: number, clientY: number) => {
-    if (!svgRef.current) return { x: clientX, y: clientY };
-    const pt = svgRef.current.createSVGPoint();
-    pt.x = clientX;
-    pt.y = clientY;
-    const transformed = pt.matrixTransform(svgRef.current.getScreenCTM()?.inverse());
-    return { x: transformed.x, y: transformed.y };
-  };
-
-  const pointers = useRef<Map<number, { x: number, y: number }>>(new Map());
-
-  const handlePointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (e.target instanceof Element) {
-      e.target.setPointerCapture(e.pointerId);
+        houses.push(
+            <g key={`h-${i}`}>
+                <line 
+                   x1={CX} y1={CY} 
+                   x2={CX + R_ZODIAC_INNER * Math.cos(angle)} y2={CY + R_ZODIAC_INNER * Math.sin(angle)}
+                   stroke={isAngular ? "#fbbf24" : "#7c3aed"} 
+                   strokeWidth={isAngular ? 3 : 1.5} 
+                   opacity={isAngular ? 1 : 0.6}
+                />
+                <text 
+                  x={CX + (R_ASPECTS + 20) * Math.cos(nextAngle)} 
+                  y={CY + (R_ASPECTS + 20) * Math.sin(nextAngle)}
+                  textAnchor="middle" dominantBaseline="central"
+                  fill={isAngular ? "#e2e8f0" : "#94a3b8"}
+                  fontSize="16" fontWeight={isAngular ? "bold" : "normal"}
+                >
+                  {i + 1}
+                </text>
+            </g>
+        );
     }
-    const clientPos = { x: e.clientX, y: e.clientY };
-    const localPos = getLocalCoords(e.clientX, e.clientY);
-    pointers.current.set(e.pointerId, clientPos);
+    return houses;
+  }, [asc, options.houseSystem]);
 
-    if (pointers.current.size === 1) {
-      setIsDragging(true);
-      setDragStart({ x: (localPos.x * zoom) - pan.x, y: (localPos.y * zoom) - pan.y });
-    }
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!pointers.current.has(e.pointerId)) return;
-    const localPos = getLocalCoords(e.clientX, e.clientY);
-
-    if (pointers.current.size === 1 && isDragging) {
-      setPan({ x: (localPos.x * zoom) - dragStart.x, y: (localPos.y * zoom) - dragStart.y });
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
-    pointers.current.delete(e.pointerId);
-    if (pointers.current.size === 0) setIsDragging(false);
-  };
-
-  // Constantes de Design (Aumentadas para preencher melhor o SVG)
-  const CX = 400;
-  const CY = 400;
-  const R_OUTER = 395;
-  const R_ZODIAC_INNER = 345;
-  const R_PLANETS_OUTER = 315;
-  const R_LOTS_INNER = 265;
-  const R_ASPECTS = 225;
-
-  const ascendantLongitude = chart.ascendant;
-  const longitudeToAngle = (longitude: number): number => {
-    return (180 - (longitude - ascendantLongitude)) * (Math.PI / 180);
-  };
-
-  // Filtrar 7 clássicos
+  // 4. Planetas Classic (7)
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
   const classicPlanets = chart.planets.filter(p => {
-    const pId = p.id?.toLowerCase();
-    return classicIds.includes(pId) || classicIds.includes(p.name?.toLowerCase());
+      const pId = p.id?.toLowerCase();
+      return classicIds.includes(pId);
   });
 
-  // Renderizar Signos
-  const zodiacElements = ZODIAC_SIGNS.map((sign) => {
-    const startAngle = longitudeToAngle(sign.start);
-    const endAngle = longitudeToAngle(sign.start + 30);
-    const midAngle = (startAngle + endAngle) / 2;
-    const color = getElementColor(sign.element);
-
-    const x1_out = CX + R_OUTER * Math.cos(startAngle);
-    const y1_out = CY + R_OUTER * Math.sin(startAngle);
-    const x2_out = CX + R_OUTER * Math.cos(endAngle);
-    const y2_out = CY + R_OUTER * Math.sin(endAngle);
-    const x1_in = CX + R_ZODIAC_INNER * Math.cos(startAngle);
-    const y1_in = CY + R_ZODIAC_INNER * Math.sin(startAngle);
-    const x2_in = CX + R_ZODIAC_INNER * Math.cos(endAngle);
-    const y2_in = CY + R_ZODIAC_INNER * Math.sin(endAngle);
-
-    return (
-      <g key={sign.name}>
-        <path
-          d={`M ${x1_out} ${y1_out} A ${R_OUTER} ${R_OUTER} 0 0 0 ${x2_out} ${y2_out} L ${x2_in} ${y2_in} A ${R_ZODIAC_INNER} ${R_ZODIAC_INNER} 0 0 1 ${x1_in} ${y1_in} Z`}
-          fill={`${color}15`}
-          stroke={color}
-          strokeWidth="1.5"
-        />
-        <text
-          x={CX + ((R_OUTER + R_ZODIAC_INNER) / 2) * Math.cos(midAngle)}
-          y={CY + ((R_OUTER + R_ZODIAC_INNER) / 2) * Math.sin(midAngle)}
-          textAnchor="middle" dominantBaseline="central"
-          fill={color} fontSize="20" fontWeight="bold" className="select-none"
-        >
-          {sign.symbol}
-        </text>
-      </g>
-    );
-  });
-
-  // Linhas das Casas dinâmica
-  const houseLines = Array.from({ length: 12 }).map((_, i) => {
-    let lon = 0;
-    if (options.houseSystem === 'whole_sign') {
-      lon = (Math.floor(ascendantLongitude / 30) * 30 + i * 30) % 360;
-    } else {
-      // Equal Houses: Start at exactly Ascendant degree
-      lon = (ascendantLongitude + i * 30) % 360;
-    }
-    
-    const angle = longitudeToAngle(lon);
-    const midAngle = longitudeToAngle(lon + 15);
-    const rNum = R_ASPECTS + 20;
-    const isCardinal = [1, 4, 7, 10].includes(i + 1);
-
-    return (
-      <g key={`house-${i}`}>
-        <line
-          x1={CX + R_ASPECTS * Math.cos(angle)} y1={CY + R_ASPECTS * Math.sin(angle)}
-          x2={CX + R_ZODIAC_INNER * Math.cos(angle)} y2={CY + R_ZODIAC_INNER * Math.sin(angle)}
-          stroke={isCardinal ? "#fbbf24" : "#334155"}
-          strokeWidth={isCardinal ? 2 : 1}
-          opacity={isCardinal ? 1 : 0.5}
-        />
-        <text
-          x={CX + rNum * Math.cos(midAngle)} y={CY + rNum * Math.sin(midAngle)}
-          textAnchor="middle" dominantBaseline="central"
-          fill={isCardinal ? "#e2e8f0" : "#64748b"}
-          fontSize="14" fontWeight={isCardinal ? "bold" : "normal"}
-        >
-          {i + 1}
-        </text>
-      </g>
-    );
-  });
-
-  // Gestão de Sobreposição de Planetas
-  interface PositionedPlanet extends PlanetPosition {
-    x: number;
-    y: number;
-    angle: number;
-  }
-  const positionedPlanets: PositionedPlanet[] = [];
-  classicPlanets.forEach(p => {
+  const planetNodes = classicPlanets.map(p => {
     const angle = longitudeToAngle(p.longitude);
-    let r = R_PLANETS_OUTER;
-    let overlap = true;
-    while (overlap) {
-      overlap = false;
-      const x = CX + r * Math.cos(angle);
-      const y = CY + r * Math.sin(angle);
-      for (const pos of positionedPlanets) {
-        const dist = Math.hypot(pos.x - x, pos.y - y);
-        if (dist < 28) {
-          overlap = true;
-          r -= 20;
-          break;
-        }
-      }
-    }
-    positionedPlanets.push({ ...p, x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle), angle });
-  });
+    const r = R_ZODIAC_INNER - 40;
+    const x = CX + r * Math.cos(angle);
+    const y = CY + r * Math.sin(angle);
+    const isHovered = hoveredPlanetId === p.id;
 
-  const planetNodes = positionedPlanets.map(p => {
-    const isFocused = selectedPlanetId === p.id || hoveredPlanet === p.id;
-    const planetInfo = PLANETS.find(pi => pi.name.toLowerCase() === p.name.toLowerCase() || pi.id === p.id);
-    
     return (
       <g 
-        key={p.id}
-        onClick={() => onPlanetClick?.(p.id)}
-        onMouseEnter={() => setHoveredPlanet(p.id)}
-        onMouseLeave={() => setHoveredPlanet(null)}
+        key={p.id} 
+        onMouseEnter={() => setHoveredPlanetId(p.id)}
+        onMouseLeave={() => setHoveredPlanetId(null)}
         className="cursor-pointer transition-all duration-300"
       >
         <line 
-          x1={p.x} y1={p.y} 
-          x2={CX + R_ZODIAC_INNER * Math.cos(p.angle)} y2={CY + R_ZODIAC_INNER * Math.sin(p.angle)} 
-          stroke="#475569" strokeWidth="1" strokeDasharray="2,2" opacity="0.4" 
+          x1={x} y1={y} 
+          x2={CX + R_ZODIAC_INNER * Math.cos(angle)} y2={CY + R_ZODIAC_INNER * Math.sin(angle)} 
+          stroke="#475569" strokeWidth="0.5" opacity="0.3" 
         />
-        <g transform={`translate(${p.x}, ${p.y})`}>
-          {isFocused && (
-            <circle r="22" fill="none" stroke="#fbbf24" strokeWidth="2" className="animate-pulse" />
-          )}
-          <circle 
-            r={isFocused ? 18 : 16} 
-            fill={isFocused ? "#1e293b" : "#0f172a"} 
-            stroke="#fbbf24" 
-            strokeWidth="2" 
-            className="shadow-xl"
-          />
-          <text 
-            textAnchor="middle" dominantBaseline="central" 
-            fill="#fbbf24" fontSize="18" fontWeight="bold"
-            className="select-none"
-          >
-            {planetInfo?.symbol || p.symbol}
-          </text>
-        </g>
+        <line 
+          x1={x} y1={y} 
+          x2={CX + (r + 10) * Math.cos(angle)} y2={CY + (r + 10) * Math.sin(angle)} 
+          stroke="#cbd5e1" strokeWidth="1" strokeDasharray="2,2" opacity="0.5" 
+        />
+        <circle cx={x} cy={y} r="16" fill="#0f172a" stroke={isHovered ? "#fbbf24" : "#94a3b8"} strokeWidth="2" />
+        <text 
+          x={x} y={y} textAnchor="middle" dominantBaseline="central" 
+          fill={isHovered ? "#fbbf24" : "#94a3b8"} fontSize="20" fontWeight="bold"
+        >
+          {p.symbol}
+        </text>
       </g>
     );
   });
 
-  // Lotes (Fortuna, Espírito, etc) dinâmicos
+  // 5. Lotes Herméticos
+  const lotColors: Record<string, string> = {
+    fortune: '#fbbf24', spirit: '#60a5fa', eros: '#f472b6', 
+    necessity: '#2dd4bf', courage: '#ef4444', victory: '#a855f7', nemesis: '#64748b'
+  };
+
   const lotNodes = (chart.lots || [])
     .filter(l => options.showAllLots || l.id === 'fortune' || l.id === 'spirit')
     .map(l => {
       const angle = longitudeToAngle(l.longitude);
-      const x = CX + R_LOTS_INNER * Math.cos(angle);
-      const y = CY + R_LOTS_INNER * Math.sin(angle);
+      const r = R_ASPECTS + 40;
+      const x = CX + r * Math.cos(angle);
+      const y = CY + r * Math.sin(angle);
+      const color = lotColors[l.id] || '#94a3b8';
       const isHovered = hoveredLotId === l.id;
 
-      // Cores por Lote
-      const lotColors: Record<string, string> = {
-        fortune: '#fbbf24',    // Gold
-        spirit: '#60a5fa',     // Azure/Spirit
-        eros: '#f472b6',       // Pink/Love
-        necessity: '#2dd4bf',  // Teal/Mercury
-        courage: '#ef4444',    // Red/Mars
-        victory: '#a855f7',    // Purple/Jupiter
-        nemesis: '#64748b'     // Slate/Saturn
-      };
-      
-      const color = lotColors[l.id] || '#94a3b8';
-      
       return (
         <g 
           key={l.id} 
@@ -270,9 +215,11 @@ export default function TraditionalChart({
           onMouseLeave={() => setHoveredLotId(null)}
           className="cursor-help transition-all duration-300"
         >
-          {isHovered && (
-            <circle cx={x} cy={y} r="22" fill={`${color}15`} stroke={`${color}50`} strokeWidth="1" className="animate-pulse" />
-          )}
+          <line 
+             x1={x} y1={y} 
+             x2={CX + R_ZODIAC_INNER * Math.cos(angle)} y2={CY + R_ZODIAC_INNER * Math.sin(angle)} 
+             stroke={color} strokeWidth="0.5" strokeDasharray="1,2" opacity="0.3" 
+          />
           <circle 
             cx={x} cy={y} r="18" 
             fill={isHovered ? "#1e293b" : "#020617"} 
@@ -282,9 +229,7 @@ export default function TraditionalChart({
           />
           <text 
             x={x} y={y} textAnchor="middle" dominantBaseline="central" 
-            fill={color} 
-            fontSize="20" fontWeight="bold"
-            className="select-none"
+            fill={color} fontSize="20" fontWeight="bold"
           >
             {l.symbol}
           </text>
@@ -292,74 +237,61 @@ export default function TraditionalChart({
       );
     });
 
-  // Aspectos tradicionais dinâmicos (Busca baseada nos planetas presentes na tela)
-  const septenaryAspects = options.showAspects ? chart.aspects
+  // 6. Aspectos Dinâmicos e de Hover
+  const aspectLines = chart.aspects
     .map(a => {
-      // Tenta encontrar o planeta 1 e 2 no nosso array de planetas já posicionados
-      const p1 = positionedPlanets.find(pp => 
-        pp.id?.toLowerCase() === a.planet1.toLowerCase() || 
-        pp.name?.toLowerCase() === a.planet1.toLowerCase()
+      const p1 = classicPlanets.find(pp => pp.id?.toLowerCase() === a.planet1.toLowerCase() || pp.name?.toLowerCase() === a.planet1.toLowerCase());
+      const p2 = classicPlanets.find(pp => pp.id?.toLowerCase() === a.planet2.toLowerCase() || pp.name?.toLowerCase() === a.planet2.toLowerCase());
+      
+      if (!p1 || !p2 || a.orb > 10) return null;
+
+      const isConnectedToHover = hoveredPlanetId === p1.id || hoveredPlanetId === p2.id;
+      const shouldShow = options.showAspects || isConnectedToHover;
+      
+      if (!shouldShow) return null;
+
+      let color = '#94a3b8';
+      if (a.type === 'trine') color = '#10b981';
+      if (a.type === 'sextile') color = '#3b82f6';
+      if (a.type === 'square') color = '#ef4444';
+      if (a.type === 'opposition') color = '#f97316';
+      if (a.type === 'conjunction') color = '#fbbf24';
+
+      const a1 = longitudeToAngle(p1.longitude);
+      const a2 = longitudeToAngle(p2.longitude);
+
+      return (
+        <line 
+          key={`${a.planet1}-${a.planet2}-${a.type}`}
+          x1={CX + R_ASPECTS * Math.cos(a1)} y1={CY + R_ASPECTS * Math.sin(a1)}
+          x2={CX + R_ASPECTS * Math.cos(a2)} y2={CY + R_ASPECTS * Math.sin(a2)}
+          stroke={color} 
+          strokeWidth={isConnectedToHover ? 3 : 2} 
+          opacity={isConnectedToHover ? 1 : 0.6}
+          strokeDasharray={a.orb > 6 ? "5,3" : "none"}
+          className="transition-all duration-300"
+        />
       );
-      const p2 = positionedPlanets.find(pp => 
-        pp.id?.toLowerCase() === a.planet2.toLowerCase() || 
-        pp.name?.toLowerCase() === a.planet2.toLowerCase()
-      );
+    });
 
-      // Se ambos os planetas do aspecto estão na mandala tradicional
-      if (p1 && p2 && a.orb <= 10) {
-        let color = '#94a3b8';
-        if (a.type === 'trine') color = '#10b981';
-        if (a.type === 'sextile') color = '#3b82f6';
-        if (a.type === 'square') color = '#ef4444';
-        if (a.type === 'opposition') color = '#f97316';
-        if (a.type === 'conjunction') color = '#fbbf24';
-
-        return { ...a, p1, p2, color };
-      }
-      return null;
-    })
-    .filter((a): a is any => a !== null)
-    .map((a, i) => (
-      <line 
-        key={`asp-${i}`}
-        x1={CX + R_ASPECTS * Math.cos(a.p1.angle)} y1={CY + R_ASPECTS * Math.sin(a.p1.angle)}
-        x2={CX + R_ASPECTS * Math.cos(a.p2.angle)} y2={CY + R_ASPECTS * Math.sin(a.p2.angle)}
-        stroke={a.color} 
-        strokeWidth={2.5} 
-        opacity={1}
-        strokeDasharray={a.orb > 6 ? "5,3" : "none"}
-      />
-    )) : [];
-
-  // Tooltip Element
   const renderTooltip = () => {
-    let focusX = 0, focusY = 0, title = '', subtitle = '', info = '', desc = '';
+    const target = hoveredPlanetId 
+       ? classicPlanets.find(p => p.id === hoveredPlanetId)
+       : (hoveredLotId ? chart.lots?.find(l => l.id === hoveredLotId) : null);
+
+    if (!target) return null;
+
+    const angle = longitudeToAngle(target.longitude);
+    const r = hoveredPlanetId ? R_ZODIAC_INNER - 40 : R_ASPECTS + 40;
+    const focusX = CX + r * Math.cos(angle);
+    const focusY = CY + r * Math.sin(angle);
+
+    const title = (target as any).name || (target as any).label || "Lote";
+    const subtitle = `${SIGN_NAMES[Math.floor(target.longitude / 30)]} ${Math.floor(target.longitude % 30)}°${Math.floor((target.longitude % 1) * 60)}'`;
+    const desc = (target as any).description;
     
-    if (hoveredPlanet) {
-      const p = positionedPlanets.find(pp => pp.id === hoveredPlanet);
-      if (p) {
-        focusX = p.x; focusY = p.y;
-        title = p.name;
-        subtitle = `${p.sign} ${Math.floor(p.degree)}°${String(Math.floor((p.degree % 1) * 60)).padStart(2, '0')}'`;
-        info = `Casa ${p.house}`;
-      }
-    } else if (hoveredLotId) {
-      const l = (chart.lots || []).find(ll => ll.id === hoveredLotId);
-      if (l) {
-        const angle = longitudeToAngle(l.longitude);
-        focusX = CX + R_LOTS_INNER * Math.cos(angle);
-        focusY = CY + R_LOTS_INNER * Math.sin(angle);
-        title = l.name;
-        subtitle = `${l.sign} ${Math.floor(l.degree)}°${String(Math.floor((l.degree % 1) * 60)).padStart(2, '0')}'`;
-        info = `Casa ${l.house}`;
-        desc = l.description || '';
-      }
-    }
-
-    if (!title) return null;
-
-    const offsetSide = focusX > CX ? -200 : 20;
-    const offsetTop = focusY > CY ? -110 : 20;
+    const offsetSide = focusX > CX ? 40 : -240;
+    const offsetTop = focusY > CY ? -120 : 40;
 
     return (
       <g transform={`translate(${focusX}, ${focusY})`} className="pointer-events-none">
@@ -367,7 +299,7 @@ export default function TraditionalChart({
           <rect width="200" height={desc ? 120 : 90} rx="14" fill="#0f172a" stroke="#fbbf24" strokeWidth="2" className="shadow-2xl" opacity="0.98" />
           <text x="100" y="30" textAnchor="middle" fill="#fbbf24" fontSize="16" fontWeight="bold">{title}</text>
           <text x="100" y="55" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="600">{subtitle}</text>
-          <text x="100" y="78" textAnchor="middle" fill="#94a3b8" fontSize="13">Casa {info.replace('Casa ', '')}</text>
+          <text x="100" y="78" textAnchor="middle" fill="#94a3b8" fontSize="13">Posição Clássica</text>
           {desc && (
             <text x="100" y="100" textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="normal">
               {desc.length > 50 ? desc.substring(0, 47) + '...' : desc}
@@ -378,145 +310,105 @@ export default function TraditionalChart({
     );
   };
 
-  // Painel de Configurações Lateral
-  const renderSettingsPanel = () => {
-    if (!isSettingsOpen) return null;
+  // Handlers de Mouse/Touch para Arraste
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsDragging(true);
+    setLastMousePos({ x: e.clientX, y: e.clientY });
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
 
-    return (
-      <div className="absolute top-4 left-4 z-20 w-64 bg-slate-900/90 border border-white/10 backdrop-blur-xl rounded-2xl p-4 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-300">
-        <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
-          <Settings className="w-4 h-4 text-gold-400" />
-          Ajustes de Visualização
-        </h4>
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastMousePos.x;
+    const dy = e.clientY - lastMousePos.y;
+    setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+    setLastMousePos({ x: e.clientX, y: e.clientY });
+  };
 
-        <div className="space-y-4">
-          {/* Toggle Aspectos */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-300">Linhas de Aspecto</span>
-            <button 
-              onClick={() => setOptions(prev => ({ ...prev, showAspects: !prev.showAspects }))}
-              className={`p-1.5 rounded-lg transition-all ${options.showAspects ? 'bg-gold-500/20 text-gold-400' : 'bg-white/5 text-slate-500'}`}
-            >
-              {options.showAspects ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </button>
-          </div>
-
-          {/* Toggle Lotes */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-300">Todos os Lotes</span>
-            <button 
-              onClick={() => setOptions(prev => ({ ...prev, showAllLots: !prev.showAllLots }))}
-              className={`p-1.5 rounded-lg transition-all ${options.showAllLots ? 'bg-gold-500/20 text-gold-400' : 'bg-white/5 text-slate-500'}`}
-            >
-              {options.showAllLots ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </button>
-          </div>
-
-          {/* Seletor de Casas */}
-          <div className="space-y-2">
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Sistema de Casas</span>
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={() => setOptions(prev => ({ ...prev, houseSystem: 'whole_sign' }))}
-                className={`text-[10px] py-2 rounded-lg border transition-all ${options.houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500/30 text-gold-400' : 'bg-white/5 border-white/5 text-slate-500'}`}
-              >
-                Signos Inteiros
-              </button>
-              <button 
-                onClick={() => setOptions(prev => ({ ...prev, houseSystem: 'equal' }))}
-                className={`text-[10px] py-2 rounded-lg border transition-all ${options.houseSystem === 'equal' ? 'bg-gold-500/20 border-gold-500/30 text-gold-400' : 'bg-white/5 border-white/5 text-slate-500'}`}
-              >
-                Casas Iguais
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-white/5">
-            <p className="text-[9px] text-slate-500 leading-tight">
-              A análise Dorotheana recomenda Signos Inteiros para regências clássicas.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsDragging(false);
   };
 
   return (
-    <div ref={containerRef} className="w-full aspect-square relative bg-[#020617] rounded-3xl overflow-hidden border border-white/5 shadow-2xl">
-      {/* Settings Panel */}
-      {renderSettingsPanel()}
+    <div className="relative w-full h-[850px] flex items-center justify-center p-8">
+      <div ref={containerRef} className="w-full h-full relative group">
+        <svg 
+          viewBox="0 0 800 800" 
+          className="w-full h-full touch-none cursor-grab active:cursor-grabbing shadow-inner"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onWheel={(e) => {
+            if (Math.abs(e.deltaY) < 1) return;
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            setZoom(z => Math.min(Math.max(z * delta, 0.5), 4));
+          }}
+        >
+          <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
+            {/* Círculo Principal */}
+            <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" stroke="#7c3aed" strokeWidth="2" />
+            <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} fill="none" stroke="#7c3aed" strokeWidth="1.5" />
+            
+            {/* Zodíaco Colorido */}
+            {zodiacElements}
+            
+            {/* Ticks de Graus */}
+            {degreeTicks}
 
-      {/* Zoom Controls Overlay */}
-      {!isTouchDevice && (
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-1.5 rounded-xl border border-white/10 backdrop-blur-md">
-          <button 
-            onClick={() => setZoom(z => Math.min(5, z + 0.4))} 
-            title="Aumentar Zoom"
-            aria-label="Aumentar Zoom"
-            className="p-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <ZoomIn className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setZoom(z => Math.max(0.5, z - 0.4))} 
-            title="Diminuir Zoom"
-            aria-label="Diminuir Zoom"
-            className="p-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <ZoomOut className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
-            title="Resetar Visualização"
-            aria-label="Resetar Visualização"
-            className="p-2 text-slate-400 hover:text-white transition-colors border-b border-white/5 pb-2"
-          >
-            <Maximize className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)} 
-            title="Configurações Visuais"
-            aria-label="Configurações Visuais"
-            className={`p-2 transition-colors ${isSettingsOpen ? 'text-gold-400' : 'text-slate-400 hover:text-white'}`}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+            {/* Fundo Central */}
+            <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
 
-      <svg
-        ref={svgRef}
-        viewBox="0 0 800 800"
-        className="w-full h-full touch-none cursor-grab active:cursor-grabbing"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-      >
-        <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
-          {/* Anéis de Fundo */}
-          <circle cx={CX} cy={CY} r={R_OUTER} fill="#0f172a" stroke="#7c3aed" strokeWidth="2" opacity="0.6" />
-          <circle cx={CX} cy={CY} r={R_ZODIAC_INNER} fill="none" stroke="#475569" strokeWidth="1" opacity="0.3" />
-          
-          {zodiacElements}
-          
-          <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
-          
-          {houseLines}
-          
-          {septenaryAspects}
-          {lotNodes}
-          {planetNodes}
-          {renderTooltip()}
+            {/* Casas, Aspectos, Planetas e Lotes */}
+            {houseElements}
+            {aspectLines}
+            {lotNodes}
+            {planetNodes}
+            {renderTooltip()}
 
-          {/* Crosshair Central */}
-          <g opacity="0.4">
-            <circle cx={CX} cy={CY} r="10" fill="none" stroke="#64748b" strokeWidth="1.5" />
-            <line x1={CX-6} y1={CY} x2={CX+6} y2={CY} stroke="#64748b" />
-            <line x1={CX} y1={CY-6} x2={CX} y2={CY+6} stroke="#64748b" />
+            {/* Alvo Central */}
+            <circle cx={CX} cy={CY} r="12" fill="none" stroke="#64748b" strokeWidth="2" />
+            <line x1={CX-8} y1={CY} x2={CX+8} y2={CY} stroke="#64748b" strokeWidth="2" />
+            <line x1={CX} y1={CY-8} x2={CX} y2={CY+8} stroke="#64748b" strokeWidth="2" />
           </g>
-        </g>
-      </svg>
+        </svg>
+
+        {/* Controles Dinâmicos */}
+        <div className="absolute right-6 top-6 flex flex-col gap-3">
+          <button onClick={() => setZoom(z => Math.min(z + 0.2, 3))} className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg></button>
+          <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg></button>
+          <button onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg></button>
+          <div className="w-px h-6 bg-slate-800 self-center" />
+          <button onClick={() => setShowSettings(!showSettings)} className={`p-3 backdrop-blur border rounded-xl transition-all shadow-lg ${showSettings ? 'bg-gold-500/20 border-gold-500/50 text-gold-400' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-white'}`}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button>
+        </div>
+
+        {/* Menu de Configuração Glassmorphism */}
+        {showSettings && (
+          <div className="absolute right-20 top-6 w-64 bg-slate-900/90 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-5 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-300 z-50">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2"><svg className="w-4 h-4 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>Ajustes de Visualização</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between group cursor-pointer" onClick={() => onOptionChange?.('showAspects', !options.showAspects)}>
+                <span className="text-slate-300 text-sm">Linhas de Aspecto</span>
+                <div className={`text-xl transition-colors ${options.showAspects ? 'text-red-500' : 'text-slate-600'}`}>{options.showAspects ? '👁️' : '🔒'}</div>
+              </div>
+
+              <div className="flex items-center justify-between group cursor-pointer" onClick={() => onOptionChange?.('showAllLots', !options.showAllLots)}>
+                <span className="text-slate-300 text-sm">Todos os Lotes</span>
+                <div className={`text-xl transition-colors ${options.showAllLots ? 'text-red-500' : 'text-slate-600'}`}>{options.showAllLots ? '👁️' : '🔒'}</div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800">
+                <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Sistema de Casas</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => onOptionChange?.('houseSystem', 'whole_sign')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${options.houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Signos Inteiros</button>
+                  <button onClick={() => onOptionChange?.('houseSystem', 'equal_house')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${options.houseSystem === 'equal_house' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Casas Iguais</button>
+                </div>
+              </div>
+            </div>
+            <p className="mt-4 text-[9px] text-slate-500 leading-tight italic">A análise Dorotheana recomenda Signos Inteiros para regências clássicas.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
