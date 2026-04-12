@@ -5,9 +5,10 @@ import { NatalChart, PlanetPosition, ZODIAC_SIGNS } from '@/types';
 interface ChartSimplePDFProps {
   chart: NatalChart;
   size?: number;
+  isTraditional?: boolean;
 }
 
-export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProps) {
+export default function ChartSimplePDF({ chart, size = 350, isTraditional = false }: ChartSimplePDFProps) {
   const cx = size / 2;
   const cy = size / 2;
   
@@ -162,37 +163,59 @@ export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProp
       <Circle cx={cx} cy={cy} r={innerR} fill="none" stroke={liteStroke} strokeWidth="0.5" />
 
       {/* Planetas */}
-      {chart.planets.map((planet) => {
-        const angle = toAngle(planet.longitude);
-        // Distribuímos os planetas no anel entre houses e inner
-        const planetR = housesR - 18;
-        const x = cx + planetR * Math.cos(angle);
-        const y = cy + planetR * Math.sin(angle);
+      {(() => {
+        let planetsToRender = chart.planets;
+        
+        if (isTraditional) {
+          const classic = ['Sol', 'Lua', 'Mercúrio', 'Vênus', 'Marte', 'Júpiter', 'Saturno'];
+          planetsToRender = chart.planets.filter(p => classic.includes(p.name));
+          
+          if (chart.lots) {
+             const lotsAsPlanets = chart.lots.map(l => ({
+               name: l.name,
+               sign: l.sign,
+               degree: l.degree % 30,
+               longitude: l.degree,
+               house: 0,
+               retrograde: false
+             })) as any;
+             planetsToRender = [...planetsToRender, ...lotsAsPlanets];
+          }
+        }
 
-        return (
-          <G key={`pdf-planet-${planet.name}`}>
-            {/* Background circle for clarity */}
-            <Circle cx={x} cy={y} r={7} fill={bgColor} />
-            {/* Símbolo do Planeta */}
-            <Text
-              x={x - 4}
-              y={y + 4}
-              style={{ fontSize: 10, fill: textColor, fontFamily: 'DejaVu Sans' }}
-            >
-              {planetSymbols[planet.name] || planet.name.substring(0, 1)}
-            </Text>
-            {planet.retrograde && (
+        return planetsToRender.map((p, i) => {
+          const angle = toAngle(p.longitude);
+          const planetR = housesR - 18;
+          const x = cx + planetR * Math.cos(angle);
+          const y = cy + planetR * Math.sin(angle);
+          
+          let color = textColor;
+          if (isTraditional) {
+            if (p.name === 'Sol') color = '#b45309';
+            if (p.name === 'Lua') color = '#475569';
+            if (p.name === 'Marte') color = '#b91c1c';
+            if (p.name === 'Saturno') color = '#1e293b';
+            if (p.name.includes('Fortuna')) color = '#059669';
+            if (p.name.includes('Espírito')) color = '#7c3aed';
+          }
+
+          return (
+            <G key={`pdf-planet-${i}`}>
+              <Circle cx={x} cy={y} r={7} fill={bgColor} />
               <Text
-                x={x + 3}
-                y={y + 5}
-                style={{ fontSize: 4, fill: '#ef4444' }}
+                x={x - 4}
+                y={y + 4}
+                style={{ fontSize: 10, fill: color, fontFamily: 'DejaVu Sans' }}
               >
-                R
+                {planetSymbols[p.name] || p.name.substring(0, 1)}
               </Text>
-            )}
-          </G>
-        );
-      })}
+              {p.retrograde && (
+                <Text x={x + 3} y={y + 5} style={{ fontSize: 4, fill: '#ef4444' }}>R</Text>
+              )}
+            </G>
+          );
+        });
+      })()}
 
       {/* Eixos Principais (AC/MC) */}
       {(() => {

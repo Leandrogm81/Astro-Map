@@ -15,6 +15,7 @@ import {
   Circle
 } from '@react-pdf/renderer';
 import { NatalChart, PlanetPosition, ZodiacSign, ZODIAC_SIGNS } from '@/types';
+import { TraditionalAssessment } from '@/lib/traditional/scoring';
 import ChartSimplePDF from './ChartSimplePDF';
 import { Download, Loader2 } from 'lucide-react';
 import { 
@@ -229,6 +230,8 @@ interface PDFDocumentProps {
   solarYear?: number;
   reportText?: string;
   solarReportText?: string;
+  isTraditional?: boolean;
+  traditionalAssessments?: TraditionalAssessment[];
 }
 
 const formatDeg = (deg: number) => {
@@ -782,6 +785,98 @@ const MyPDFDocument = ({ chart, solarRevolution, solarYear, reportText, solarRep
   );
 };
 
+const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessments }: PDFDocumentProps) => {
+  const data = chart.birthData;
+  const isDay = chart.planets.find(p => p.name === 'Sol')?.house! >= 7;
+
+  return (
+    <Document title={`AstroMap - Tratado Tradicional - ${data.name}`}>
+      {/* CAPA CLÁSSICA */}
+      <Page size="A4" style={[styles.page, { backgroundColor: '#0f172a', color: '#fff', justifyContent: 'center', alignItems: 'center' }]}>
+        <View style={{ alignItems: 'center', borderWidth: 2, borderColor: '#fbbf24', padding: 60, borderRadius: 2 }}>
+          <Text style={{ fontSize: 32, fontFamily: 'Helvetica-Bold', color: '#fbbf24', letterSpacing: 2, textAlign: 'center' }}>
+            TRATADO DE ASTROLOGIA TRADICIONAL
+          </Text>
+          <View style={{ height: 1, width: 150, backgroundColor: '#fbbf24', marginVertical: 20 }} />
+          <Text style={{ fontSize: 14, textTransform: 'uppercase', letterSpacing: 4, color: '#94a3b8' }}>Estudo de Dignidades e Operacionalidade</Text>
+          <Text style={{ fontSize: 28, fontFamily: 'Helvetica-Bold', marginTop: 80 }}>{data.name}</Text>
+          <Text style={{ fontSize: 10, marginTop: 150, color: '#64748b' }}>Escrito por AstroMap AI | {new Date().toLocaleDateString('pt-BR')}</Text>
+        </View>
+      </Page>
+
+      {/* MANDALA TRADICIONAL */}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Radix Tradicional (O Septenário)</Text>
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 15 }}>
+          <View style={[styles.infoCard, { borderLeftWidth: 4, borderLeftColor: isDay ? '#fbbf24' : '#1e1b4b' }]}>
+            <Text style={styles.infoLabel}>Seita do Mapa</Text>
+            <Text style={styles.infoValue}>{isDay ? 'DIURNO (Sol acima do Horizonte)' : 'NOTURNO (Sol abaixo do Horizonte)'}</Text>
+          </View>
+        </View>
+        <View style={styles.chartWrapper}>
+          <ChartSimplePDF chart={chart} size={420} isTraditional={true} />
+          <Text style={{ fontSize: 8, marginTop: 10, color: '#64748b' }}>Mandala Tradicional - 7 Planetas Clássicos e Lotes Herméticos</Text>
+        </View>
+        <Footer />
+      </Page>
+
+      {/* TABELA DE DIGNIDADES E FORÇA (ALMUTEN) */}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Dignidade Essencial e Força Operacional</Text>
+        <View style={styles.table}>
+          <View style={[styles.tableHeader, { backgroundColor: '#1e293b' }]}>
+            <Text style={[styles.tableCellBold, { flex: 1.2, color: '#fff' }]}>Governador</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Signo/Casa</Text>
+            <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Dignidade Essencial</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Seita</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff', textAlign: 'center' }]}>Score</Text>
+          </View>
+          {traditionalAssessments?.map((a, i) => (
+            <View key={i} style={styles.tableRow} wrap={false}>
+              <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold' }]}>{a.planetId}</Text>
+              <Text style={styles.tableCell}>{a.sign} (C{a.house})</Text>
+              <Text style={[styles.tableCell, { flex: 1.5, fontSize: 7 }]}>{a.dignity}</Text>
+              <Text style={[styles.tableCell, { color: a.sectStatus === 'In-Sect' ? '#10b981' : '#ef4444' }]}>{a.sectStatus}</Text>
+              <Text style={[styles.tableCellBold, { textAlign: 'center', color: a.totalScore > 0 ? '#10b981' : '#ef4444' }]}>{a.totalScore}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: '#b45309', marginTop: 30 }]}>Lotes Herméticos (Pontos Sensíveis)</Text>
+        <View style={styles.table}>
+          <View style={[styles.tableHeader, { backgroundColor: '#1e293b' }]}>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Lote</Text>
+            <Text style={[styles.tableCellBold, { color: '#fff' }]}>Signo/Grau</Text>
+            <Text style={[styles.tableCellBold, { flex: 2, color: '#fff' }]}>Natureza do Ponto</Text>
+          </View>
+          {chart.lots?.map((lot, i) => (
+            <View key={i} style={styles.tableRow} wrap={false}>
+              <Text style={[styles.tableCell, { fontWeight: 'bold' }]}>{lot.name}</Text>
+              <Text style={styles.tableCell}>{lot.sign} {formatDeg(lot.degree % 30)}</Text>
+              <Text style={[styles.tableCell, { flex: 2, fontSize: 7, color: '#64748b' }]}>{lot.description}</Text>
+            </View>
+          ))}
+        </View>
+        <Footer />
+      </Page>
+
+      {/* RELATÓRIO DE IA TRADICIONAL */}
+      {reportText && (
+        <Page size="A4" style={styles.page}>
+          <Header />
+          <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#0f172a', color: '#fbbf24', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
+            Tratado de Interpretação Clássica
+          </Text>
+          <MarkdownParagraphs text={reportText} />
+          <Footer />
+        </Page>
+      )}
+    </Document>
+  );
+};
+
 interface ExportPDFProps {
   chart: NatalChart;
   solarRevolution?: NatalChart | null;
@@ -789,41 +884,60 @@ interface ExportPDFProps {
   reportText?: string;
   solarReportText?: string;
   variant?: 'full' | 'compact';
+  isTraditional?: boolean;
+  traditionalAssessments?: TraditionalAssessment[];
 }
 
-export default function ExportPDF({ chart, solarRevolution, solarYear, reportText, solarReportText, variant = 'full' }: ExportPDFProps) {
+export default function ExportPDF({ 
+  chart, 
+  solarRevolution, 
+  solarYear, 
+  reportText, 
+  solarReportText, 
+  variant = 'full',
+  isTraditional = false,
+  traditionalAssessments = []
+}: ExportPDFProps) {
   const isCompact = variant === 'compact';
+
+  const document = isTraditional ? (
+    <TraditionalTreatisePDF 
+      chart={chart} 
+      reportText={reportText} 
+      traditionalAssessments={traditionalAssessments}
+      isTraditional={true}
+    />
+  ) : (
+    <MyPDFDocument 
+      chart={chart} 
+      solarRevolution={solarRevolution} 
+      solarYear={solarYear}
+      reportText={reportText}
+      solarReportText={solarReportText}
+    />
+  );
+
+  const fileName = isTraditional 
+    ? `Tratado_Tradicional_${chart.birthData.name}.pdf`
+    : `AstroMap_Exclusivo_${chart.birthData.name}.pdf`;
 
   if (isCompact) {
     return (
       <PDFDownloadLink
-        document={
-          <MyPDFDocument 
-            chart={chart} 
-            solarRevolution={solarRevolution} 
-            solarYear={solarYear}
-            reportText={reportText}
-            solarReportText={solarReportText}
-          />
-        }
-        fileName={`AstroMap_Exclusivo_${chart.birthData.name}_${new Date().toISOString().split('T')[0]}.pdf`}
+        document={document}
+        fileName={fileName}
       >
         {({ loading }) => (
           <button
             disabled={loading}
-            title="Inclui 2 Mapas, 6 Tabelas Analíticas e Relatórios Profundos"
             className={`px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-all ${
               loading 
                 ? 'bg-slate-800 text-slate-500 cursor-wait' 
                 : 'bg-gold-500/10 text-gold-400 border border-gold-500/20 hover:bg-gold-500/20 shadow-lg shadow-gold-500/5 active:scale-95'
             }`}
           >
-            {loading ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Download className="w-3.5 h-3.5" />
-            )}
-            {loading ? '...' : 'PDF'}
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            {loading ? '...' : (isTraditional ? 'TRATADO' : 'PDF')}
           </button>
         )}
       </PDFDownloadLink>
@@ -833,16 +947,8 @@ export default function ExportPDF({ chart, solarRevolution, solarYear, reportTex
   return (
     <div className="flex flex-col gap-4">
       <PDFDownloadLink
-        document={
-          <MyPDFDocument 
-            chart={chart} 
-            solarRevolution={solarRevolution} 
-            solarYear={solarYear}
-            reportText={reportText}
-            solarReportText={solarReportText}
-          />
-        }
-        fileName={`AstroMap_Exclusivo_${chart.birthData.name}_${new Date().toISOString().split('T')[0]}.pdf`}
+        document={document}
+        fileName={fileName}
         className="w-full"
       >
         {({ loading }) => (
@@ -851,21 +957,19 @@ export default function ExportPDF({ chart, solarRevolution, solarYear, reportTex
             className={`w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-3 font-bold transition-all text-sm ${
               loading 
                 ? 'bg-slate-800 text-slate-500 cursor-wait' 
-                : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-400 hover:to-purple-500 shadow-lg shadow-indigo-500/25 active:scale-95'
+                : isTraditional 
+                  ? 'bg-gradient-to-r from-amber-600 to-yellow-500 text-slate-950 hover:from-amber-500 hover:to-yellow-400'
+                  : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-400 hover:to-purple-500 shadow-lg shadow-indigo-500/25 active:scale-95'
             }`}
           >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Download className="w-5 h-5" />
-            )}
-            {loading ? 'Preparando Dossiê Completo...' : 'BAIXAR LIVRO DA VIDA (PDF)'}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+            {loading ? 'Preparando Dossiê...' : (isTraditional ? 'BAIXAR TRATADO TRADICIONAL' : 'BAIXAR LIVRO DA VIDA (PDF)')}
           </button>
         )}
       </PDFDownloadLink>
       
       <p className="text-[10px] text-center text-slate-500 uppercase tracking-widest font-bold">
-        Inclui 2 Mapas, 6 Tabelas Analíticas e Relatórios Profundos
+        {isTraditional ? 'Inclui Mandala Clássica, Tabela de Dignidades e Relatório de IA' : 'Inclui 2 Mapas, 6 Tabelas Analíticas e Relatórios Profundos'}
       </p>
     </div>
   );

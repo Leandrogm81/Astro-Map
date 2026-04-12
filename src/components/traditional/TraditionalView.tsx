@@ -7,15 +7,25 @@ import TraditionalPlanetTable from '@/components/traditional/TraditionalPlanetTa
 import TraditionalSummary from '@/components/traditional/TraditionalSummary';
 import TraditionalPlanetDrawer from '@/components/traditional/TraditionalPlanetDrawer';
 import TraditionalAIReport from '@/components/traditional/TraditionalAIReport';
-import { Sparkles, Info } from 'lucide-react';
+import ExportPDF from '@/components/ExportPDF';
+import { 
+  Sparkles, 
+  Info, 
+  ChevronDown, 
+  ArrowLeft,
+  Settings,
+  Download
+} from 'lucide-react';
 
 interface TraditionalViewProps {
   chart: NatalChart;
+  onBack?: () => void;
 }
 
-export default function TraditionalView({ chart }: TraditionalViewProps) {
+export default function TraditionalView({ chart, onBack }: TraditionalViewProps) {
   const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
   const [showAllLots, setShowAllLots] = useState(false);
+  const [reportText, setReportText] = useState<string>('');
 
   // Cálculos técnicos tradicionais para os 7 clássicos
   const assessments = useMemo(() => {
@@ -42,6 +52,37 @@ export default function TraditionalView({ chart }: TraditionalViewProps) {
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header com Export */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <button 
+              onClick={onBack}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Estudo Tradicional</h1>
+            <p className="text-slate-500 text-xs uppercase tracking-widest font-medium">Septenário & Dignidades</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <ExportPDF 
+            chart={chart} 
+            reportText={reportText}
+            isTraditional={true}
+            traditionalAssessments={assessments}
+            variant="compact"
+          />
+          <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all">
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
       {/* Resumo Superior */}
       <TraditionalSummary chart={chart} assessments={assessments} />
 
@@ -102,6 +143,7 @@ export default function TraditionalView({ chart }: TraditionalViewProps) {
           <TraditionalAIReport 
             chart={chart} 
             assessments={assessments}
+            onReportUpdated={setReportText}
           />
         </div>
       </div>
