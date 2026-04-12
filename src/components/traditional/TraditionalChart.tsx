@@ -504,10 +504,19 @@ export default function TraditionalChart({
           <circle cx={CX} cy={CY} r={R_ASPECTS} fill="#020617" stroke="#475569" strokeWidth="2" />
           
           {houseLines}
+
+          {/* Linha de Teste (Deve aparecer cruzando o centro) */}
+          <line x1={CX-100} y1={CY-100} x2={CX+100} y2={CY+100} stroke="white" strokeWidth="2" strokeDasharray="5,5" opacity="0.5" />
+          
           {septenaryAspects}
           {lotNodes}
           {planetNodes}
           {renderTooltip()}
+
+          {/* Diagnóstico de Aspectos */}
+          <text x={CX} y={CY+30} textAnchor="middle" fill="#475569" fontSize="10" opacity="0.5">
+            Aspectos: {septenaryAspects.length}
+          </text>
 
           {/* Crosshair Central */}
           <g opacity="0.4">
