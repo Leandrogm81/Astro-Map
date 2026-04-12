@@ -186,9 +186,15 @@ body::before {
 
 /* Scrollbar None Utility */
 .scrollbar-none {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  -ms-overflow-style: none; /* IE and Edge */
 }
+
+@supports (scrollbar-width: none) {
+  .scrollbar-none {
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
 .scrollbar-none::-webkit-scrollbar {
-  display: none;
+  display: none; /* Chrome, Safari and Opera */
 }
