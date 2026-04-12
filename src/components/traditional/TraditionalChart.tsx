@@ -292,27 +292,32 @@ export default function TraditionalChart({
       );
     });
 
-  // Aspectos tradicionais condicionais
+  // Aspectos tradicionais condicionais (Reforçados para visibilidade máxima)
   const septenaryAspects = options.showAspects ? chart.aspects
     .filter(a => {
       const p1Id = a.planet1.toLowerCase();
       const p2Id = a.planet2.toLowerCase();
-      // Filtrar apenas aspectos entre os 7 clássicos
-      const isP1Classic = classicIds.includes(p1Id);
-      const isP2Classic = classicIds.includes(p2Id);
-      return isP1Classic && isP2Classic && a.orb <= 10;
+      return classicIds.includes(p1Id) && classicIds.includes(p2Id) && a.orb <= 10;
     })
     .map((a, i) => {
-      const p1 = positionedPlanets.find(pp => pp.id === a.planet1.toLowerCase() || pp.name.toLowerCase() === a.planet1.toLowerCase());
-      const p2 = positionedPlanets.find(pp => pp.id === a.planet2.toLowerCase() || pp.name.toLowerCase() === a.planet2.toLowerCase());
+      // Busca robusta por ID ou Nome (ignore case)
+      const p1 = positionedPlanets.find(pp => 
+        pp.id?.toLowerCase() === a.planet1.toLowerCase() || 
+        pp.name?.toLowerCase() === a.planet1.toLowerCase()
+      );
+      const p2 = positionedPlanets.find(pp => 
+        pp.id?.toLowerCase() === a.planet2.toLowerCase() || 
+        pp.name?.toLowerCase() === a.planet2.toLowerCase()
+      );
+      
       if (!p1 || !p2) return null;
 
-      let color = '#94a3b8'; // Default
-      if (a.type === 'trine') color = '#10b981'; // Verde vibrante
-      if (a.type === 'sextile') color = '#3b82f6'; // Azul vibrante
-      if (a.type === 'square') color = '#ef4444'; // Vermelho vibrante
-      if (a.type === 'opposition') color = '#f97316'; // Laranja vibrante
-      if (a.type === 'conjunction') color = '#fbbf24'; // Ouro
+      let color = '#94a3b8';
+      if (a.type === 'trine') color = '#10b981';
+      if (a.type === 'sextile') color = '#3b82f6';
+      if (a.type === 'square') color = '#ef4444';
+      if (a.type === 'opposition') color = '#f97316';
+      if (a.type === 'conjunction') color = '#fbbf24';
 
       return (
         <line 
@@ -320,9 +325,9 @@ export default function TraditionalChart({
           x1={CX + R_ASPECTS * Math.cos(p1.angle)} y1={CY + R_ASPECTS * Math.sin(p1.angle)}
           x2={CX + R_ASPECTS * Math.cos(p2.angle)} y2={CY + R_ASPECTS * Math.sin(p2.angle)}
           stroke={color} 
-          strokeWidth={2} 
-          opacity={0.6}
-          strokeDasharray={a.orb > 5 ? "4,2" : "none"} // Linha pontilhada para órbitas largas
+          strokeWidth={2.5} 
+          opacity={1}
+          strokeDasharray={a.orb > 6 ? "5,3" : "none"}
         />
       );
     }) : [];
