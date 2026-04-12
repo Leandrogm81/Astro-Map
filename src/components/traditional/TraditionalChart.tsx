@@ -247,10 +247,10 @@ export default function TraditionalChart({
     <div className="relative w-full h-[850px] flex items-center justify-center p-8">
       <svg 
         viewBox="0 0 800 800" className="w-full h-full touch-none cursor-grab"
-        onPointerDown={e=>{setIsDragging(true); setLastMousePos({x:e.clientX, y:e.clientY}); (e.target as any).setPointerCapture(e.pointerId)}}
-        onPointerMove={e=>{if(!isDragging)return; setPan(p=>({x:p.x+e.clientX-lastMousePos.x, y:p.y+e.clientY-lastMousePos.y})); setLastMousePos({x:e.clientX, y:e.clientY})}}
+        onPointerDown={e=>{setIsDragging(true); setLastMousePos({x:e.clientX, y:e.clientY}); (e.target as Element).setPointerCapture(e.pointerId)}}
+        onPointerMove={e=>{if(!isDragging)return; setPan((p: {x:number, y:number})=>({x:p.x+e.clientX-lastMousePos.x, y:p.y+e.clientY-lastMousePos.y})); setLastMousePos({x:e.clientX, y:e.clientY})}}
         onPointerUp={()=>setIsDragging(false)}
-        onWheel={e=>{const d=e.deltaY>0?0.9:1.1; setZoom(z=>Math.min(Math.max(z*d,0.5),4))}}
+        onWheel={e=>{const d=e.deltaY>0?0.9:1.1; setZoom((z: number)=>Math.min(Math.max(z*d,0.5),4))}}
       >
         <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0]">
           <circle cx={CX} cy={CY} r={R_TOTAL} fill="#0f172a" stroke="#7c3aed" strokeWidth="2" />
@@ -266,7 +266,12 @@ export default function TraditionalChart({
         </g>
       </svg>
       {/* Botão de Menu Simplificado */}
-      <button onClick={()=>handleOptionChange('showSettings', !options.showSettings)} className="absolute right-10 top-10 p-3 bg-slate-900 border border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all shadow-xl">
+      <button 
+        title="Configurações do Mapa"
+        aria-label="Configurações do Mapa"
+        onClick={()=>handleOptionChange('showSettings', !options.showSettings)} 
+        className="absolute right-10 top-10 p-3 bg-slate-900 border border-slate-700 rounded-xl text-slate-400 hover:text-white transition-all shadow-xl"
+      >
         ⚙️
       </button>
 
@@ -279,6 +284,7 @@ export default function TraditionalChart({
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-widest block mb-2">Sistema de Casas</label>
               <select 
+                title="Escolha o sistema de casas"
                 value={options.houseSystem}
                 onChange={(e) => handleOptionChange('houseSystem', e.target.value)}
                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-sm text-white"
@@ -291,6 +297,8 @@ export default function TraditionalChart({
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-300">Mostrar Aspectos</span>
               <button 
+                title="Alternar visibilidade de aspectos"
+                aria-label="Alternar visibilidade de aspectos"
                 onClick={() => handleOptionChange('showAspects', !options.showAspects)}
                 className={`w-10 h-5 rounded-full transition-all ${options.showAspects ? 'bg-purple-600' : 'bg-slate-700'}`}
               >
