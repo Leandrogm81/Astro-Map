@@ -93,10 +93,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
       {/* Mandala e Tabela */}
       <div className="flex flex-col gap-6">
         {/* Mandala Centralizada e Grande */}
-        <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-4 shadow-xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
-            <Sparkles className="w-12 h-12 text-gold-500" />
-          </div>
+        <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-4 shadow-xl relative overflow-hidden">
           
           <div className="flex items-center justify-between mb-4 px-2">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
