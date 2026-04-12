@@ -29,6 +29,7 @@ export interface TraditionalPoints {
 }
 
 export interface PlanetPosition {
+  id: string;
   name: string;
   symbol: string;
   longitude: number; // 0-360 graus eclípticos

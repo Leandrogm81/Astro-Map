@@ -6,7 +6,9 @@ import type {
   Aspect, 
   BirthData, 
   NatalChart,
-  ZodiacSign 
+  ZodiacSign,
+  LotPosition,
+  TraditionalPoints
 } from '@/types';
 import { PLANETS, ZODIAC_SIGNS } from '@/types';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from './astrology';
@@ -283,6 +285,7 @@ async function calculatePlanetPosition(date: Date, planetId: string): Promise<Pl
   const planetInfo = PLANETS.find(p => p.id === planetId)!;
   
   return {
+    id: planetId,
     name: planetInfo.name,
     symbol: planetInfo.symbol,
     longitude,
@@ -309,6 +312,7 @@ function calculateNodePosition(date: Date): PlanetPosition {
   const normalized = longitude < 0 ? longitude + 360 : longitude;
   
   return {
+    id: 'node',
     name: 'Nodo Norte',
     symbol: '☊',
     longitude: normalized,
@@ -335,6 +339,7 @@ function calculateChironPosition(date: Date): PlanetPosition {
   const longitude = (207.67 + years * 7.1) % 360;
   
   return {
+    id: 'chiron',
     name: 'Quíron',
     symbol: '⚷',
     longitude,
@@ -361,6 +366,7 @@ function calculateLilithPosition(date: Date): PlanetPosition {
   if (longitude < 0) longitude += 360;
 
   return {
+    id: 'lilith',
     name: 'Lilith',
     symbol: '⚸',
     longitude,
