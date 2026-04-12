@@ -1,5 +1,5 @@
 import { NatalChart, PlanetPosition } from '@/types';
-import { TraditionalAssessment } from './traditional/scoring';
+import { TraditionalAssessment } from './traditional/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
 
 /**
