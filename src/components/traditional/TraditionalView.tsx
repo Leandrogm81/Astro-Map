@@ -98,7 +98,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
             </h3>
             <button 
               onClick={() => setShowAllLots(!showAllLots)}
-              className="text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-gold-400 hover:border-gold-500/30 transition-all font-medium"
+              className="text-xs px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all font-medium"
             >
               {showAllLots ? 'Ver Só Fortuna/Espírito' : 'Ver Todos os Lotes'}
             </button>
