@@ -39,6 +39,8 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
   const [models, setModels] = useState<Model[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
@@ -58,10 +60,19 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
       if (onReportUpdated) onReportUpdated(savedReport);
     }
     
+    setModelsLoading(true);
+    setModelsError(null);
     fetch('/api/report')
       .then(res => res.json())
-      .then(data => { if (data.models) setModels(data.models); })
-      .catch(console.error);
+      .then(data => {
+        if (data.models) setModels(data.models);
+        else setModelsError('Falha ao carregar modelos');
+      })
+      .catch(err => {
+        console.error('Erro ao carregar modelos:', err);
+        setModelsError('Erro de conexão ao carregar modelos');
+      })
+      .finally(() => setModelsLoading(false));
   }, [chart, solarYear]);
 
   // Auto-scroll durante o streaming

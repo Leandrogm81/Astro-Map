@@ -38,6 +38,8 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
   const [models, setModels] = useState<Model[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsError, setModelsError] = useState<string | null>(null);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   
@@ -54,10 +56,19 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
       if (onReportUpdated) onReportUpdated(savedReport);
     }
     
+    setModelsLoading(true);
+    setModelsError(null);
     fetch('/api/report')
       .then(res => res.json())
-      .then(data => { if (data.models) setModels(data.models); })
-      .catch(console.error);
+      .then(data => {
+        if (data.models) setModels(data.models);
+        else setModelsError('Falha ao carregar modelos');
+      })
+      .catch(err => {
+        console.error('Erro ao carregar modelos:', err);
+        setModelsError('Erro de conexão ao carregar modelos');
+      })
+      .finally(() => setModelsLoading(false));
   }, [chart]);
 
   useEffect(() => {
@@ -97,27 +108,27 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
       }
 
       const reader = response.body?.getReader();
+      if (!reader) throw new Error('Falha no stream de dados');
+
       const decoder = new TextDecoder();
       let fullText = '';
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value, { stream: true });
-          fullText += chunk;
-          setReportText(fullText);
-          if (onReportUpdated) onReportUpdated(fullText);
-        }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        fullText += chunk;
+        setReportText(fullText);
+        if (onReportUpdated) onReportUpdated(fullText);
       }
 
       const reportKey = `trad_report_${chart.birthData.name}_${chart.birthData.date}`;
       localStorage.setItem(reportKey, fullText);
       
-    } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro inesperado');
-      console.error(err);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Ocorreu um erro inesperado';
+      setError(message);
     } finally {
       setLoading(false);
       setIsStreaming(false);
