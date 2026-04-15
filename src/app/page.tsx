@@ -285,7 +285,7 @@ export default function Home() {
                       <div className="space-y-4">
                         {editingChartId && (
                           <div className="bg-blue-500/20 text-blue-200 border border-blue-500/30 p-3 rounded-lg text-sm flex justify-between items-center">
-                            <span>Você está editando um mapa salvo. Clique em "Calcular" para atualizar.</span>
+                            <span>Você está editando um mapa salvo. Clique em &quot;Calcular&quot; para atualizar.</span>
                             <button onClick={() => { setEditingChartId(null); setInitialFormData(undefined); }} className="text-blue-400 hover:text-blue-300 underline">Cancelar</button>
                           </div>
                         )}
@@ -369,7 +369,7 @@ export default function Home() {
                 </div>
 
                 <div className="sticky top-[56px] z-40 flex items-center gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20 overflow-x-auto scrollbar-none">
-                  <UnifiedMenu activeTab={activeTab} onTabChange={(id) => setActiveTab(id as any)} />
+                  <UnifiedMenu activeTab={activeTab} onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} />
                   {[
                     { id: 'traditional', label: 'Tradicional', icon: Sparkles },
                     { id: 'revolution', label: 'Revolução Solar', icon: Sun },
@@ -422,8 +422,6 @@ export default function Home() {
                   {activeTab === 'houses' && (
                     <div className="space-y-6">
                       <HousesTable chart={chart} system="placidus" />
-                      <hr className="border-purple-500/20" />
-                      <HousesTable chart={chart} system="whole" />
                     </div>
                   )}
 
@@ -469,7 +467,7 @@ export default function Home() {
                   </span>
                   <span className="flex items-center gap-1">
                     <Moon className="w-4 h-4" />
-                    Dois sistemas de casas
+                    Casas Placidus
                   </span>
                   <span className="flex items-center gap-1">
                     <Sun className="w-4 h-4" />

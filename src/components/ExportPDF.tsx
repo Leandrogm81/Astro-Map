@@ -9,10 +9,7 @@ import {
   StyleSheet, 
   PDFDownloadLink, 
   Font,
-  Image as PDFImage,
-  Svg,
-  Line,
-  Circle
+  Image as PDFImage
 } from '@react-pdf/renderer';
 import { NatalChart, ZODIAC_SIGNS } from '@/types';
 import { TraditionalAssessment } from '@/lib/traditional/types';
@@ -20,12 +17,10 @@ import ChartSimplePDF from './ChartSimplePDF';
 import { Download, Loader2 } from 'lucide-react';
 import { 
   getDignity, 
-  getDomicileRuler, 
   calculateDispositorChain, 
   getInterceptedSigns, 
   calculateCrossAspects, 
-  getHouseForPlanet,
-  getZodiacSign 
+  getHouseForPlanet
 } from '@/lib/astrology';
 
 // Registrar fontes para um ar mais premium e garantir glifos astrológicos
@@ -45,17 +40,17 @@ const styles = StyleSheet.create({
     paddingBottom: 85,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
-    color: '#1a1a1a',
+    color: '#1e293b',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 25,
-    borderBottomWidth: 1,
+    marginBottom: 20,
+    borderBottomWidth: 1.5,
     borderBottomStyle: 'solid',
-    borderBottomColor: '#eeeeee',
-    paddingBottom: 15,
+    borderBottomColor: '#1e1b4b',
+    paddingBottom: 12,
   },
   logoContainer: {
     flexDirection: 'row',
@@ -63,93 +58,117 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logo: {
-    width: 35,
-    height: 35,
+    width: 32,
+    height: 32,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#4f46e5',
+    color: '#1e1b4b',
+    letterSpacing: 1,
+    fontFamily: 'Helvetica-Bold',
   },
   subtitle: {
-    fontSize: 10,
-    color: '#666666',
+    fontSize: 9,
+    color: '#64748b',
     marginTop: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 25,
     pageBreakInside: 'avoid',
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#4f46e5',
+    marginBottom: 12,
+    color: '#1e1b4b',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d4af37',
+    paddingBottom: 4,
+    width: '100%',
+    fontFamily: 'Helvetica-Bold',
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 12,
     marginBottom: 15,
   },
   infoCard: {
-    padding: 10,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 6,
     borderWidth: 1,
     borderStyle: 'solid',
-    borderColor: '#f0f0f0',
+    borderColor: '#e2e8f0',
     flex: 1,
     minWidth: '45%',
   },
   infoLabel: {
-    fontSize: 8,
-    color: '#666666',
-    marginBottom: 2,
+    fontSize: 7,
+    color: '#64748b',
+    marginBottom: 3,
     textTransform: 'uppercase',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   infoValue: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
+    color: '#1e293b',
   },
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 10,
-    padding: 10,
+    marginVertical: 15,
+    padding: 20,
     backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    borderRadius: 8,
   },
   table: {
     marginVertical: 10,
     borderWidth: 1,
     borderStyle: 'solid',
-    borderColor: '#e5e7eb',
-    borderRadius: 4,
+    borderColor: '#e2e8f0',
+    borderRadius: 6,
+    overflow: 'hidden',
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
-    padding: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    backgroundColor: '#1E1B4B',
+    padding: 8,
   },
   tableRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-    padding: 6,
+    borderBottomColor: '#f1f5f9',
+    padding: 8,
     alignItems: 'center'
+  },
+  tableRowEven: {
+    backgroundColor: '#ffffff',
+  },
+  tableRowOdd: {
+    backgroundColor: '#f8fafc',
   },
   tableCell: {
     fontSize: 8,
     flex: 1,
+    color: '#334155',
   },
   tableCellBold: {
     fontSize: 8,
     fontWeight: 'bold',
     flex: 1,
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   footer: {
     position: 'absolute',
@@ -157,71 +176,91 @@ const styles = StyleSheet.create({
     left: 40,
     right: 40,
     textAlign: 'center',
-    fontSize: 8,
-    color: '#999999',
+    fontSize: 7,
+    color: '#94a3b8',
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#f1f5f9',
     paddingTop: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   symbol: {
     fontFamily: 'DejaVu Sans',
     fontSize: 10,
   },
-  // Novos estilos para o Markdown melhorado
   mdH3: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 8,
-    color: '#312e81',
+    marginTop: 18,
+    marginBottom: 10,
+    color: '#1e1b4b',
     borderLeftWidth: 3,
-    borderLeftColor: '#4f46e5',
-    paddingLeft: 8,
-    backgroundColor: '#f5f7ff',
-    padding: 4,
-  },
-  mdPara: {
-    fontSize: 10,
-    lineHeight: 1.5,
-    color: '#333333',
-    textAlign: 'justify',
-    marginBottom: 8,
+    borderLeftColor: '#d4af37',
+    paddingLeft: 10,
+    backgroundColor: '#f8fafc',
+    padding: 6,
+    fontFamily: 'Helvetica-Bold',
   },
   aiText: {
     fontSize: 10,
-    lineHeight: 1.5,
-    color: '#333333',
+    lineHeight: 1.6,
+    color: '#334155',
     textAlign: 'justify',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   mdBold: {
     fontWeight: 'bold',
-    color: '#1e1b4b',
-  },
-  mdList: {
-    marginLeft: 15,
-    marginBottom: 8,
+    color: '#0f172a',
+    fontFamily: 'Helvetica-Bold',
   },
   mdListItem: {
     flexDirection: 'row',
-    marginBottom: 4,
+    marginBottom: 6,
+    paddingLeft: 10,
   },
   mdBullet: {
-    width: 10,
+    width: 12,
     fontSize: 10,
+    color: '#d4af37',
   },
   mdSeparator: {
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#e2e8f0',
     marginVertical: 15,
   },
-  // Estilos analíticos
   badge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     fontSize: 7,
     fontWeight: 'bold',
+  },
+  summaryTitle: {
+    fontSize: 24,
+    color: '#1e1b4b',
+    marginBottom: 30,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    fontFamily: 'Helvetica-Bold',
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 4,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    color: '#1e1b4b',
+    fontWeight: 'bold',
+  },
+  summaryPage: {
+    fontSize: 10,
+    color: '#64748b',
   }
 });
 
@@ -300,14 +339,14 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
       {/* Tabela de Planetas */}
       <View style={{ flex: 1.5, minWidth: '60%' }}>
         <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>Planetas e Dignidades</Text>
-        <View style={styles.table}>
+    <View style={styles.table}>
           <View style={styles.tableHeader}>
             <Text style={[styles.tableCellBold, { flex: 0.3 }]}>#</Text>
             <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Planeta</Text>
             <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Signo</Text>
             <Text style={styles.tableCellBold}>Grau</Text>
             <Text style={[styles.tableCellBold, { flex: 0.5 }]}>Casa</Text>
-            <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Dignidade / Regência</Text>
+            <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Dignidade</Text>
           </View>
           {chart.planets.map((p, i) => {
             const dignity = getDignity(p.name, p.sign);
@@ -315,7 +354,7 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
             const isCritical = dignity === 'Exílio' || dignity === 'Queda';
             
             return (
-              <View wrap={false} key={i} style={styles.tableRow}>
+              <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                 <Text style={[styles.symbol, { flex: 0.3 }]}>{getPlanetSymbol(p.name)}</Text>
                 <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold' }]}>{p.name}{p.retrograde ? ' ℞' : ''}</Text>
                 <Text style={[styles.tableCell, { flex: 1.2 }]}>{p.sign}</Text>
@@ -323,7 +362,7 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
                 <Text style={[styles.tableCell, { flex: 0.5 }]}>{p.house}</Text>
                 <Text style={[styles.tableCell, { 
                   flex: 1.5, 
-                  color: isDignified ? '#10b981' : (isCritical ? '#ef4444' : '#666666'),
+                  color: isDignified ? '#10b981' : (isCritical ? '#ef4444' : '#64748b'),
                   fontWeight: isDignified || isCritical ? 'bold' : 'normal'
                 }]}>
                   {dignity}
@@ -345,7 +384,7 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
             <Text style={styles.tableCellBold}>Grau</Text>
           </View>
           {chart.housesPlacidus.map((h, i) => (
-            <View wrap={false} key={i} style={styles.tableRow}>
+            <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
               <Text style={[styles.tableCell, { flex: 0.5 }]}>{h.number}</Text>
               <Text style={[styles.tableCell, { flex: 1.5, fontWeight: h.number % 3 === 1 ? 'bold' : 'normal' }]}>
                 {h.number === 1 ? 'Ascendente' : h.number === 10 ? 'Meio do Céu' : (h.number === 4 ? 'Fundo do Céu' : (h.number === 7 ? 'Descendente' : `Casa ${h.number}`))}
@@ -370,7 +409,7 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
   };
 
   const getElement = (sign: string) => {
-    const s = ZODIAC_SIGNS.find((zs: any) => zs.name === sign);
+    const s = ZODIAC_SIGNS.find(zs => zs.name === sign);
     return s?.element || 'fire';
   };
 
@@ -460,7 +499,7 @@ const MarkdownParagraphs = ({ text }: { text: string }) => {
   return (
     <View style={{ marginTop: 10 }}>
       {lines.map((line, i) => {
-        let content = line.trim();
+        const content = line.trim();
         if (!content) return <View key={i} style={{ height: 10 }} />;
         
         // Separadores
@@ -542,7 +581,7 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta (RS)</Text>
               <Text style={styles.tableCellBold}>Casa (RS)</Text>
-              <Text style={[styles.tableCellBold, { color: '#f59e0b' }]}>Casa (Natal)</Text>
+              <Text style={[styles.tableCellBold, { color: '#d4af37' }]}>Casa (Natal)</Text>
               <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Área Ativada</Text>
             </View>
             {solar.planets.map((p, i) => {
@@ -554,10 +593,10 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
                 10: 'Carreira / Status Público', 11: 'Projetos / Amizades', 12: 'Espiritualidade / Retiro'
               };
               return (
-                <View wrap={false} key={i} style={styles.tableRow}>
+                <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                   <Text style={[styles.tableCell, { flex: 1, fontWeight: 'bold' }]}>{p.name}</Text>
                   <Text style={styles.tableCell}>{p.house}</Text>
-                  <Text style={[styles.tableCell, { fontWeight: 'bold', color: '#d97706' }]}>{natalHouse}</Text>
+                  <Text style={[styles.tableCell, { fontWeight: 'bold', color: '#1E1B4B' }]}>{natalHouse}</Text>
                   <Text style={[styles.tableCell, { flex: 1.5, fontSize: 7 }]}>{areaLabels[natalHouse]}</Text>
                 </View>
               );
@@ -567,7 +606,7 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
 
         {/* Aspectos Cruzados */}
         <View style={{ flex: 1, minWidth: '40%' }}>
-          <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>Pincipais Aspectos Cruzados (RS ↔ Natal)</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>Aspectos Cruzados (RS ↔ Natal)</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={styles.tableCellBold}>RS</Text>
@@ -576,9 +615,9 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
               <Text style={styles.tableCellBold}>Orbe</Text>
             </View>
             {crossAspects.map((a, i) => (
-              <View wrap={false} key={i} style={styles.tableRow}>
+              <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                 <Text style={styles.tableCell}>{a.planet1}</Text>
-                <Text style={styles.tableCellBold}>{a.type.toUpperCase()}</Text>
+                <Text style={[styles.tableCell, { fontWeight: 'bold', color: '#1E1B4B' }]}>{a.type.toUpperCase()}</Text>
                 <Text style={styles.tableCell}>{a.planet2}</Text>
                 <Text style={styles.tableCell}>{a.orb.toFixed(1)}°</Text>
               </View>
@@ -591,7 +630,7 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
 };
 
 
-const MyPDFDocument = ({ 
+export const MyPDFDocument = ({ 
   chart, 
   solarRevolution, 
   solarYear, 
@@ -604,45 +643,102 @@ const MyPDFDocument = ({
 
   return (
     <Document title={`AstroMap - Dossier Astrológico - ${data.name}`}>
-      {/* PÁGINA 1: CAPA PREMIUM */}
-      <Page size="A4" style={[styles.page, { backgroundColor: '#111827', color: '#fff', justifyContent: 'center', alignItems: 'center' }]}>
-        <View style={{ alignItems: 'center' }}>
-          <PDFImage src="/assets/logo-premium.png" style={{ width: 120, height: 120, marginBottom: 20 }} />
-          <Text style={{ fontSize: 42, fontFamily: 'Helvetica-Bold', color: '#fbbf24', letterSpacing: 4 }}>ASTROMAP</Text>
-          <Text style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 8, marginTop: 10, color: '#94a3b8' }}>O Livro da Vida</Text>
-          <View style={{ height: 2, width: 200, backgroundColor: '#fbbf24', marginVertical: 30 }} />
-          <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold' }}>{data.name}</Text>
-          <Text style={{ fontSize: 10, marginTop: 100, color: '#64748b' }}>Gerado em {new Date().toLocaleDateString('pt-BR')}</Text>
+      {/* PÁGINA 1: CAPA PREMIUM INFINITY */}
+      <Page size="A4" style={[styles.page, { backgroundColor: '#0f172a', color: '#fff', justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
+        <View style={{ 
+          position: 'absolute', top: 20, left: 20, right: 20, bottom: 20, 
+          borderWidth: 1.5, borderColor: '#d4af3733', borderRadius: 4 
+        }} />
+        
+        <View style={{ alignItems: 'center', width: '100%', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#d4af37', paddingVertical: 40 }}>
+          <PDFImage src="/assets/logo-premium.png" style={{ width: 90, height: 90, marginBottom: 20 }} />
+          <Text style={{ fontSize: 36, fontFamily: 'Helvetica-Bold', color: '#d4af37', letterSpacing: 6, textTransform: 'uppercase' }}>ASTROMAP</Text>
+          <Text style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 8, marginTop: 12, color: '#94a3b8' }}>O Livro da Vida</Text>
+        </View>
+
+        <View style={{ marginTop: 60, alignItems: 'center' }}>
+          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 10 }}>Dossiê Exclusivo de</Text>
+          <Text style={{ fontSize: 32, fontFamily: 'Helvetica-Bold', color: '#fff', textAlign: 'center' }}>{data.name}</Text>
+          <View style={{ height: 1, width: 80, backgroundColor: '#d4af37', marginTop: 20 }} />
+        </View>
+
+        <View style={{ position: 'absolute', bottom: 60, alignItems: 'center' }}>
+          <Text style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase', letterSpacing: 2 }}>Codificado por AstroMap AI</Text>
+          <Text style={{ fontSize: 8, color: '#475569', marginTop: 5 }}>{new Date().toLocaleDateString('pt-BR')}</Text>
         </View>
       </Page>
 
-      {/* PÁGINA 2: IDENTIDADE E RADIX */}
+      {/* PÁGINA 2: SUMÁRIO INTEGRADO */}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <View style={{ paddingTop: 20, paddingHorizontal: 30 }}>
+          <Text style={styles.summaryTitle}>Conteído do Dossiê</Text>
+          
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>1. O Mapa do Nascimento (Radix)</Text>
+            <Text style={styles.summaryPage}>03</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>2. Geometria Planetária e Casas</Text>
+            <Text style={styles.summaryPage}>04</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>3. Aspectos e Diálogos Celestes</Text>
+            <Text style={styles.summaryPage}>05</Text>
+          </View>
+
+          {reportText && (
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>4. Interpretação Natal Profunda (IA)</Text>
+              <Text style={styles.summaryPage}>06</Text>
+            </View>
+          )}
+
+          {solarRevolution && (
+            <View style={{ marginTop: 20 }}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>5. Revolução Solar ({solarYear})</Text>
+                <Text style={styles.summaryPage}>09</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>6. Dinâmicas Anuais e Interposição</Text>
+                <Text style={styles.summaryPage}>10</Text>
+              </View>
+              {solarReportText && (
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>7. Relatório Preditivo Anual (IA)</Text>
+                  <Text style={styles.summaryPage}>11</Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+        <Footer />
+      </Page>
+
+      {/* PÁGINA 1: IDENTIDADE E RADIX */}
       <Page size="A4" style={styles.page}>
         <Header />
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Radix: O Mapa do Nascimento</Text>
+          <Text style={styles.sectionTitle}>Radix: A Promessa do Nascimento</Text>
           <View style={styles.grid}>
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Nome</Text>
+              <Text style={styles.infoLabel}>Nativus</Text>
               <Text style={styles.infoValue}>{data.name}</Text>
             </View>
             <View style={styles.infoCard}>
               <Text style={styles.infoLabel}>Encarnação</Text>
-              <Text style={styles.infoValue}>{data.date} às {data.time}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Local</Text>
-              <Text style={styles.infoValue}>{data.location}</Text>
+              <Text style={styles.infoValue}>{data.date} | {data.time}</Text>
             </View>
             <View style={styles.infoCard}>
               <Text style={styles.infoLabel}>Coordenadas</Text>
-              <Text style={styles.infoValue}>{data.latitude.toFixed(4)}, {data.longitude.toFixed(4)}</Text>
+              <Text style={styles.infoValue}>{data.location}</Text>
             </View>
           </View>
         </View>
         <View style={styles.chartWrapper}>
           <ChartSimplePDF chart={chart} size={380} />
-          <Text style={{ fontSize: 8, marginTop: 5, color: '#94a3b8' }}>Mandala de Radix - Sistema Placidus</Text>
+          <Text style={{ fontSize: 7, marginTop: 8, color: '#94a3b8', textTransform: 'uppercase' }}>Mandala de Radix - Domificação Placidus</Text>
         </View>
         <Footer />
       </Page>
@@ -653,20 +749,24 @@ const MyPDFDocument = ({
           <Header />
           <Text style={styles.sectionTitle}>Geometria Planetária e Dignidades</Text>
           <View style={styles.table}>
-            <View style={[styles.tableHeader, { backgroundColor: '#f97316' }]}>
-              <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Corpo Celeste</Text>
-              <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Signo</Text>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Grau</Text>
-              <Text style={[styles.tableCellBold, { flex: 0.5, color: '#fff' }]}>Casa</Text>
-              <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Dignidade</Text>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Corpo Celeste</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Signo</Text>
+              <Text style={styles.tableCellBold}>Grau</Text>
+              <Text style={[styles.tableCellBold, { flex: 0.5 }]}>Casa</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Dignidade</Text>
             </View>
             {chart.planets.map((p, i) => (
-              <View key={i} style={styles.tableRow} wrap={false}>
+              <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                 <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>{p.name}{p.retrograde ? ' ℞' : ''}</Text>
                 <Text style={[styles.tableCell, { flex: 1.5 }]}>{p.sign}</Text>
                 <Text style={styles.tableCell}>{formatDeg(p.degree)}</Text>
                 <Text style={[styles.tableCell, { flex: 0.5 }]}>{p.house}</Text>
-                <Text style={[styles.tableCell, { flex: 1.5, color: getDignity(p.name, p.sign).includes('Exílio') ? '#ef4444' : (getDignity(p.name, p.sign).includes('Domicílio') ? '#10b981' : '#1a1a1a') }]}>
+                <Text style={[styles.tableCell, { 
+                  flex: 1.5, 
+                  color: getDignity(p.name, p.sign).includes('Domicílio') ? '#10b981' : (getDignity(p.name, p.sign).includes('Exílio') ? '#ef4444' : '#334155'),
+                  fontWeight: getDignity(p.name, p.sign).includes('Domicílio') || getDignity(p.name, p.sign).includes('Exílio') ? 'bold' : 'normal'
+                }]}>
                   {getDignity(p.name, p.sign)}
                 </Text>
               </View>
@@ -684,9 +784,9 @@ const MyPDFDocument = ({
           
           {chart.traditionalPoints && (
             <View style={[styles.grid, { marginBottom: 20 }]}>
-              <View style={[styles.infoCard, { borderColor: '#fbbf24' }]}>
+              <View style={[styles.infoCard, { borderLeftWidth: 3, borderLeftColor: '#d4af37' }]}>
                 <Text style={styles.infoLabel}>Senhor da Natividade</Text>
-                <Text style={[styles.infoValue, { color: '#d97706' }]}>{chart.traditionalPoints.lordOfNativity.name}</Text>
+                <Text style={styles.infoValue}>{chart.traditionalPoints.lordOfNativity.name}</Text>
               </View>
               <View style={styles.infoCard}>
                 <Text style={styles.infoLabel}>Hyleg (Portador da Vida)</Text>
@@ -704,15 +804,15 @@ const MyPDFDocument = ({
           )}
 
           <View style={styles.table}>
-            <View style={[styles.tableHeader, { backgroundColor: '#8b5cf6' }]}>
-              <Text style={[styles.tableCellBold, { flex: 1.5, color: '#fff' }]}>Lote Hermético</Text>
-              <Text style={[styles.tableCellBold, { flex: 1.2, color: '#fff' }]}>Signo</Text>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Grau</Text>
-              <Text style={[styles.tableCellBold, { flex: 0.5, color: '#fff' }]}>Casa</Text>
-              <Text style={[styles.tableCellBold, { flex: 2, color: '#fff' }]}>Essência</Text>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Lote Hermético</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Signo</Text>
+              <Text style={styles.tableCellBold}>Grau</Text>
+              <Text style={[styles.tableCellBold, { flex: 0.5 }]}>Casa</Text>
+              <Text style={[styles.tableCellBold, { flex: 2 }]}>Essência</Text>
             </View>
             {chart.lots?.map((lot, i) => (
-              <View key={i} style={styles.tableRow} wrap={false}>
+              <View key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]} wrap={false}>
                 <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>{lot.name}</Text>
                 <Text style={[styles.tableCell, { flex: 1.2 }]}>{lot.sign}</Text>
                 <Text style={styles.tableCell}>{formatDeg(lot.degree)}</Text>
@@ -729,31 +829,25 @@ const MyPDFDocument = ({
       {!isAIRSOnly && (
         <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={styles.sectionTitle}>Domificação: Arquitetura do Destino</Text>
-          <View style={{ flexDirection: 'row', gap: 20 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Placidus (Arco de Tempo)</Text>
-              <View style={styles.table}>
-                {chart.housesPlacidus.map((h, i) => (
-                  <View key={i} style={styles.tableRow}>
-                    <Text style={{ fontSize: 8, flex: 0.5 }}>{h.number}</Text>
-                    <Text style={{ fontSize: 8, flex: 1.5 }}>{h.sign}</Text>
-                    <Text style={{ fontSize: 8, flex: 1 }}>{formatDeg(h.degree)}</Text>
-                  </View>
-                ))}
+          <Text style={styles.sectionTitle}>Domificação Placidus: Arquitetura do Destino</Text>
+          <View style={{ width: '100%' }}>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableCellBold, { flex: 0.5 }]}>#</Text>
+                <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Casa / Ângulo</Text>
+                <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Signo na Cúspide</Text>
+                <Text style={styles.tableCellBold}>Grau Exato</Text>
               </View>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 5 }}>Whole Signs (Signos Inteiros)</Text>
-              <View style={styles.table}>
-                {chart.housesWhole.map((h, i) => (
-                  <View key={i} style={styles.tableRow}>
-                    <Text style={{ fontSize: 8, flex: 0.5 }}>{h.number}</Text>
-                    <Text style={{ fontSize: 8, flex: 1.5 }}>{h.sign}</Text>
-                    <Text style={{ fontSize: 8, flex: 1 }}>{formatDeg(h.degree)}</Text>
-                  </View>
-                ))}
-              </View>
+              {chart.housesPlacidus.map((h, i) => (
+                <View key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
+                  <Text style={{ fontSize: 8, flex: 0.5 }}>{h.number}</Text>
+                  <Text style={{ fontSize: 8, flex: 1.5, fontWeight: h.number % 3 === 1 ? 'bold' : 'normal' }}>
+                    {h.number === 1 ? 'Ascendente' : h.number === 10 ? 'Meio do Céu' : (h.number === 4 ? 'Fundo do Céu' : (h.number === 7 ? 'Descendente' : `Casa ${h.number}`))}
+                  </Text>
+                  <Text style={{ fontSize: 8, flex: 1.5 }}>{h.sign}</Text>
+                  <Text style={{ fontSize: 8, flex: 1 }}>{formatDeg(h.degree)}</Text>
+                </View>
+              ))}
             </View>
           </View>
           <AnalyticsSummary chart={chart} />
@@ -767,20 +861,22 @@ const MyPDFDocument = ({
           <Header />
           <Text style={styles.sectionTitle}>Dinâmica de Aspectos: Conversas do Céu</Text>
           <View style={styles.table}>
-            <View style={[styles.tableHeader, { backgroundColor: '#3b82f6' }]}>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Corpo 1</Text>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Relacionamento</Text>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Corpo 2</Text>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Orbe</Text>
-              <Text style={[styles.tableCellBold, { color: '#fff' }]}>Fase</Text>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta A</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Aspecto</Text>
+              <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta B</Text>
+              <Text style={styles.tableCellBold}>Orbe</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Dinâmica</Text>
             </View>
-            {chart.aspects.slice(0, 25).map((a, i) => (
-              <View key={i} style={styles.tableRow} wrap={false}>
-                <Text style={styles.tableCell}>{a.planet1}</Text>
-                <Text style={[styles.tableCell, { fontWeight: 'bold', textTransform: 'uppercase' }]}>{a.type}</Text>
-                <Text style={styles.tableCell}>{a.planet2}</Text>
-                <Text style={styles.tableCell}>{a.orb.toFixed(2)}°</Text>
-                <Text style={[styles.tableCell, { color: a.applying ? '#10b981' : '#94a3b8' }]}>{a.applying ? 'Aplicativo' : 'Separativo'}</Text>
+            {chart.aspects.slice(0, 30).map((a, i) => (
+              <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
+                <Text style={[styles.tableCell, { flex: 1 }]}>{a.planet1}</Text>
+                <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold', color: '#1E1B4B' }]}>{a.type.toUpperCase()}</Text>
+                <Text style={[styles.tableCell, { flex: 1 }]}>{a.planet2}</Text>
+                <Text style={styles.tableCell}>{a.orb.toFixed(1)}°</Text>
+                <Text style={[styles.tableCell, { flex: 1.2, color: a.applying ? '#d4af37' : '#94a3b8', fontWeight: a.applying ? 'bold' : 'normal' }]}>
+                  {a.applying ? 'Aplicativo' : 'Separativo'}
+                </Text>
               </View>
             ))}
           </View>
@@ -792,9 +888,21 @@ const MyPDFDocument = ({
       {reportText && (
         <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#1e1b4b', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
-            Tratado de Interpretação Natal Integral
-          </Text>
+          <View style={{ 
+            backgroundColor: '#1e1b4b', 
+            padding: 20, 
+            borderRadius: 4, 
+            marginBottom: 20,
+            borderBottomWidth: 4,
+            borderBottomColor: '#d4af37'
+          }}>
+            <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 2 }}>
+              Tratado de Interpretação Natal Integral
+            </Text>
+            <Text style={{ fontSize: 8, color: '#d4af37', textAlign: 'center', marginTop: 5, letterSpacing: 4, textTransform: 'uppercase' }}>
+              Codificado pela Inteligência Artificial AstroMap
+            </Text>
+          </View>
           <MarkdownParagraphs text={reportText} />
           <Footer />
         </Page>
@@ -839,9 +947,10 @@ const MyPDFDocument = ({
   );
 };
 
-const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessments }: PDFDocumentProps) => {
+export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessments }: PDFDocumentProps) => {
   const data = chart.birthData;
-  const isDay = (chart.planets.find(p => p.name === 'Sol')?.house ?? 1) >= 7;
+  const sun = chart.planets.find(p => p.name === 'Sol');
+  const isDay = (sun?.house || 1) >= 7;
 
   return (
     <Document title={`AstroMap - Tratado Tradicional - ${data.name}`}>
