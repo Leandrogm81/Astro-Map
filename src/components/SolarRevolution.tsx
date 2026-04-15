@@ -65,8 +65,8 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
   const getYearThemes = () => {
     if (!solarReturn) return [];
     const themes: { label: string; icon: any }[] = [];
-    const srAsc = solarReturn.housesPlacidus[0].sign;
-    const natalAsc = natalChart.housesPlacidus[0].sign;
+    const srAsc = solarReturn.housesPlacidus?.[0]?.sign;
+    const natalAsc = natalChart.housesPlacidus?.[0]?.sign;
     const srSunHouse = solarReturn.planets.find(p => p.name === 'Sol')?.house;
 
     if (srAsc === natalAsc) themes.push({ label: 'Retorno Profundo', icon: Target });
@@ -187,7 +187,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
     return `${d}°${m}'`;
   };
 
-  const natalAsc = natalChart.housesPlacidus[0].sign;
+  const natalAsc = natalChart.housesPlacidus?.[0]?.sign;
 
   return (
     <div className="space-y-6">
@@ -259,9 +259,9 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
             <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ascendente do Ano</span>
               <div className="text-xl font-black text-white mt-1 font-serif">
-                {solarReturn.housesPlacidus[0].sign}
+                {solarReturn.housesPlacidus?.[0]?.sign}
               </div>
-              <p className="text-[10px] text-purple-400 mt-1 font-bold">Grau {formatDegree(solarReturn.housesPlacidus[0].degree)}</p>
+              <p className="text-[10px] text-purple-400 mt-1 font-bold">Grau {formatDegree(solarReturn.housesPlacidus?.[0]?.degree ?? 0)}</p>
             </div>
 
             <div className="glass-gold p-4 rounded-2xl">
@@ -283,7 +283,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
             <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tema Central</span>
               <div className="text-sm font-bold text-purple-300 mt-2 leading-tight font-serif">
-                 {solarReturn.housesPlacidus[0].sign === natalAsc ? 'Retorno Profundo' : 'Nova Abordagem'}
+                 {solarReturn.housesPlacidus?.[0]?.sign === natalAsc ? 'Retorno Profundo' : 'Nova Abordagem'}
               </div>
             </div>
           </div>

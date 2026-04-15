@@ -12,26 +12,36 @@ export function calculateTraditionalPoints(
   isDay: boolean
 ): TraditionalPoints {
   const getPlanet = (id: string) => planets.find(p => p.id === id);
-  const sun = getPlanet('sun')!;
-  const moon = getPlanet('moon')!;
+  const sun = getPlanet('sun');
+  const moon = getPlanet('moon');
+
+  if (!sun || !moon) {
+    return {
+      hyleg: { id: 'sun', name: 'Sol', label: 'Hyleg', description: 'Dados insuficientes.' },
+      alcocoden: { id: 'sun', name: 'Sol', label: 'Alcocoden', description: 'Dados insuficientes.' },
+      almutenFiguris: { id: 'sun', name: 'Sol', label: 'Almuten Figuris', description: 'Dados insuficientes.' },
+      lordOfNativity: { id: 'sun', name: 'Sol', label: 'Senhor do Ascendente', description: 'Dados insuficientes.' }
+    };
+  }
+
   const fortuneLon = calculateFortune(sun, moon, ascendant, isDay);
-  
+
   // 1. Lord of Nativity (Regente do Ascendente)
-  const ascSign = houses[0].sign as ZodiacSign;
+  const ascSign = houses?.[0]?.sign as ZodiacSign ?? 'Áries';
   const lordOfNativityId = getTraditionalDomicileRuler(ascSign);
-  const lordOfNativityPlanet = getPlanet(lordOfNativityId)!;
+  const lordOfNativityPlanet = getPlanet(lordOfNativityId) ?? { name: 'Desconhecido', symbol: '?' };
 
   // 2. Hyleg (Doador da Vida)
   const hylegId = calculateHylegId(sun, moon, ascendant, isDay);
-  const hylegPlanet = hylegId === 'ascendant' ? { name: 'Ascendente', symbol: 'ASC' } : getPlanet(hylegId)!;
+  const hylegPlanet = hylegId === 'ascendant' ? { name: 'Ascendente', symbol: 'ASC' } : (getPlanet(hylegId) ?? { name: 'Desconhecido', symbol: '?' });
 
   // 3. Almuten Figuris (Vencedor do Mapa)
   const almutenId = calculateAlmutenFigurisId(planets, fortuneLon, houses, ascendant, isDay);
-  const almutenPlanet = getPlanet(almutenId)!;
+  const almutenPlanet = getPlanet(almutenId) ?? { name: 'Desconhecido', symbol: '?' };
 
   // 4. Alcocoden (Doador de Anos)
   const alcocodenId = calculateAlcocodenId(hylegId, planets, isDay);
-  const alcocodenPlanet = getPlanet(alcocodenId)!;
+  const alcocodenPlanet = getPlanet(alcocodenId) ?? { name: 'Desconhecido', symbol: '?' };
 
   return {
     hyleg: {
@@ -95,8 +105,8 @@ function calculateAlmutenFigurisId(
   classicIds.forEach(id => scores[id] = 0);
 
   const pointsToEvaluate = [
-    { lon: planets.find(p => p.id === 'sun')!.longitude, weight: 1 },
-    { lon: planets.find(p => p.id === 'moon')!.longitude, weight: 1 },
+    { lon: planets.find(p => p.id === 'sun')?.longitude ?? ascLon, weight: 1 },
+    { lon: planets.find(p => p.id === 'moon')?.longitude ?? ascLon, weight: 1 },
     { lon: ascLon, weight: 1 },
     { lon: fortuneLon, weight: 1 }
   ];
@@ -130,11 +140,14 @@ function calculateAlmutenFigurisId(
 
 function calculateAlcocodenId(hylegId: string, planets: PlanetPosition[], isDay: boolean): string {
   if (hylegId === 'ascendant' || hylegId === 'mc') {
-    const ascSign = planets.find(p => p.id === 'sun')?.sign; // Fallback
+    const ascSign = planets.find(p => p.id === 'sun')?.sign;
     return getTraditionalDomicileRuler(ascSign as ZodiacSign || 'Áries');
   }
-  
-  const hylegPlanet = planets.find(p => p.id === hylegId)!;
+
+  const hylegPlanet = planets.find(p => p.id === hylegId);
+  if (!hylegPlanet) {
+    return getTraditionalDomicileRuler('Áries');
+  }
   const hylegSign = hylegPlanet.sign as ZodiacSign;
   return getTraditionalDomicileRuler(hylegSign);
 }

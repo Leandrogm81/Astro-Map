@@ -15,7 +15,7 @@ export function calculateTraditionalAssessment(
   isDayChart: boolean
 ): TraditionalAssessment {
   const sign = planet.sign as ZodiacSign;
-  const sun = allPlanets.find(p => p.id === 'sun')!;
+  const sun = allPlanets.find(p => p.id === 'sun');
   
   const essential: Record<string, number> = {};
   const accidental: Record<string, number> = {};
@@ -42,7 +42,7 @@ export function calculateTraditionalAssessment(
   }
 
   // 2. Dignidades Acidentais
-  const solarCond = planet.id !== 'sun' 
+  const solarCond = planet.id !== 'sun' && sun
     ? getSolarCondition(planet.longitude, sun.longitude)
     : { isCazimi: false, isCombust: false, isUnderRays: false };
 

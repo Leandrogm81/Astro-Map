@@ -282,8 +282,11 @@ async function calculatePlanetPosition(date: Date, planetId: string): Promise<Pl
   if (speed > 180) speed -= 360;
   if (speed < -180) speed += 360;
   
-  const planetInfo = PLANETS.find(p => p.id === planetId)!;
-  
+  const planetInfo = PLANETS.find(p => p.id === planetId);
+  if (!planetInfo) {
+    throw new Error(`Unknown planet: ${planetId}`);
+  }
+
   return {
     id: planetId,
     name: planetInfo.name,
@@ -464,7 +467,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
   
   // Calculate houses
   const housesPlacidus = calculatePlacidusHouses(jd, latitude, longitude);
-  const ascendant = housesPlacidus[0].longitude;
+  const ascendant = housesPlacidus?.[0]?.longitude ?? 0;
   const housesWhole = calculateWholeSignsHouses(ascendant);
 
   // Sect Calculation (Day vs Night)
@@ -517,7 +520,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
     housesWhole,
     aspects,
     ascendant,
-    mc: housesPlacidus[9].longitude,
+    mc: housesPlacidus?.[9]?.longitude ?? 0,
     lots,
     traditionalPoints,
     isDayChart,

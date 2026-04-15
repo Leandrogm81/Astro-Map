@@ -7,9 +7,22 @@ interface TraditionalSpecialPointsProps {
 }
 
 export default function TraditionalSpecialPoints({ points }: TraditionalSpecialPointsProps) {
+  if (!points) {
+    return (
+      <div className="grid grid-cols-2 gap-4 mb-8 px-1">
+        <div className="p-6 rounded-xl border border-slate-700/50 bg-slate-800/30 min-h-[160px] flex items-center justify-center">
+          <p className="text-slate-500 text-sm">Dados não disponíveis</p>
+        </div>
+        <div className="p-6 rounded-xl border border-slate-700/50 bg-slate-800/30 min-h-[160px] flex items-center justify-center">
+          <p className="text-slate-500 text-sm">Dados não disponíveis</p>
+        </div>
+      </div>
+    );
+  }
+
   const cards = [
     {
-      ...points.lordOfNativity,
+      ...(points.lordOfNativity ?? {}),
       icon: <Crown className="w-5 h-5 text-amber-400" />,
       tag: "Direção",
       bgColor: "from-amber-600/10 to-amber-900/5",
@@ -18,7 +31,7 @@ export default function TraditionalSpecialPoints({ points }: TraditionalSpecialP
       label: "Senhor da Natividade"
     },
     {
-      ...points.hyleg,
+      ...(points.hyleg ?? {}),
       icon: <Heart className="w-5 h-5 text-rose-400" />,
       tag: "Vitalidade",
       bgColor: "from-rose-600/10 to-rose-900/5",
@@ -27,7 +40,7 @@ export default function TraditionalSpecialPoints({ points }: TraditionalSpecialP
       label: "Hyleg"
     },
     {
-      ...points.almutenFiguris,
+      ...(points.almutenFiguris ?? {}),
       icon: <Sparkles className="w-5 h-5 text-violet-400" />,
       tag: "Guardião",
       bgColor: "from-violet-600/10 to-violet-900/5",
@@ -36,7 +49,7 @@ export default function TraditionalSpecialPoints({ points }: TraditionalSpecialP
       label: "Almuten Figuris"
     },
     {
-      ...points.alcocoden,
+      ...(points.alcocoden ?? {}),
       icon: <Shield className="w-5 h-5 text-emerald-400" />,
       tag: "Longevidade",
       bgColor: "from-emerald-600/10 to-emerald-900/5",
