@@ -1,52 +1,39 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# 🤖 AGENTS.MD - Papéis e Responsabilidades
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+## Agente Principal: Planner (Claude Opus 4.5 ou Gemini 3 Pro)
+- Responsável por criar planos detalhados.
+- Deve sempre entregar:
+  1. Objetivo claro
+  2. Arquitetura proposta
+  3. Lista de arquivos a criar/alterar
+  4. Testes necessários
+  5. Possíveis edge cases e riscos
 
-## AI Behavioral Guidelines (Mandatory)
+## Agente Coder (Gemini Flash ou GPT-4.5)
+- Executa exatamente o plano aprovado.
+- Usa OpenCode para edições precisas.
+- Nunca inventa funcionalidades fora do escopo.
 
-Para garantir a melhor qualidade e manutenção do código, as seguintes regras do `CLAUDE.md` são **obrigatórias**:
+## Agente Reviewer (SonarLint + Humano)
+- Faz review de qualidade, segurança e performance.
+- Deve rodar lint + testes automaticamente.
+- Só aprova se passar em 100% das regras do GEMINI.md.
 
-### 1. Pense Antes de Codar
+## Agente Tester
+- Cria e executa testes unitários, de integração e e2e.
+- Usa ferramentas: pytest, Jest, Playwright, etc.
 
-- **Não presuma.** Exponha incertezas e questione ambiguidades.
-- Apresente alternativas e simplicidade antes de implementar soluções complexas.
+## Agente Documenter
+- Atualiza README, ARCHITECTURE.md e comentários.
+- Mantém o projeto sempre documentado.
 
-### 2. Simplicidade em Primeiro Lugar
+## Regras de Colaboração entre Agentes
+- Planner → Coder → Tester → Reviewer → Documenter (fluxo padrão).
+- Todo agente deve citar o GEMINI.md quando necessário.
+- Mudanças grandes só são aplicadas após aprovação humana (diff review).
+- Use MCPs/Skills do Antigravity para automações repetitivas.
 
-- **Código mínimo necessário.** Nada de funcionalidades especulativas ou abstrações para uso único.
-- Se o código puder ser reduzido (ex: de 200 para 50 linhas), ele deve ser reescrito.
-
-### 3. Mudanças Cirúrgicas
-
-- **Toque apenas no que é necessário.** Respeite o estilo existente.
-- Não refatore o que não está quebrado e não "melhore" códigos adjacentes sem solicitação.
-- Remova apenas imports/variáveis criados ou tornados órfãos pelas **minhas** mudanças.
-
-### 4. Execução Orientada a Objetivos
-
-- Defina critérios de sucesso claros.
-- Antes de tarefas complexas, apresente um plano breve.
-- Verifique o resultado final em relação ao pedido original.
-
-### 5. Qualidade e Manutenção (Obrigatório)
-
-**Não finalize nenhuma tarefa com erros pendentes.**
-
-- **Auditoria de Erros:** Verifique sempre o painel "Problems" do IDE. Se houver alertas ou erros, eles DEVEM ser corrigidos antes da entrega.
-- **Validação Automática:** Utilize obrigatoriamente a skill `lint-and-validate` após cada alteração de código significativa.
-- **Zero Tollerance:** Código com falhas de Lint (ESLint), erros de Tipagem (TypeScript/TSC) ou falhas de segurança não deve ser considerado pronto.
-- **Auto-Correção:** Se um comando falhar ou um erro for detectado, analise a causa raiz, corrija e valide novamente até que o relatório esteja limpo.
-
-### 6. Fluxo de Trabalho (Obrigatório)
-
-- **Sempre peça autorização antes de iniciar a execução de um plano.**
-- **Uma vez autorizado, execute todas as mudanças de arquivos e comandos de forma autônoma** até concluir a tarefa, sem pedir permissão para cada alteração individual.
-- A autonomia encerra-se quando o walkthrough final é apresentado.
-
-### 7. Sincronização e Idioma (Obrigatório)
-
-- **Git Push Automático:** Toda vez que um código for gerado ou alterado, um `git push` deve ser realizado obrigatoriamente para o GitHub.
-- **Idioma Padrão:** Todo novo arquivo criado ou conteúdo textual gerado (documentação, comentários, interface) deve ser obrigatoriamente em **Português (PT-BR)**.
-
+## Prompt Padrão para Iniciar Tarefa
+"Você é o [Papel]. Siga estritamente o GEMINI.md. 
+Objetivo: [descreva]. 
+Primeiro passo: crie o plano completo."
