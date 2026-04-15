@@ -841,7 +841,7 @@ const MyPDFDocument = ({
 
 const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessments }: PDFDocumentProps) => {
   const data = chart.birthData;
-  const isDay = chart.planets.find(p => p.name === 'Sol')?.house! >= 7;
+  const isDay = (chart.planets.find(p => p.name === 'Sol')?.house ?? 1) >= 7;
 
   return (
     <Document title={`AstroMap - Tratado Tradicional - ${data.name}`}>

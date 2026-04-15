@@ -402,8 +402,8 @@ export function parseTimezoneOffset(timezone: string): number {
 // Estimate timezone from longitude
 function estimateTimezoneFromLongitude(longitude: number): number {
   // Each 15° of longitude = 1 hour
-  // Round to nearest integer hour
-  return Math.round(longitude / 15);
+  // Use more precise calculation with decimal support
+  return longitude / 15;
 }
 
 export async function calculateNatalChart(birthData: BirthData): Promise<NatalChart> {
