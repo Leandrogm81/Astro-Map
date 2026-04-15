@@ -1,0 +1,226 @@
+export { ZODIAC_SIGNS } from '@/types';
+import { ZodiacSign, PlanetPosition, HouseCusp, ZODIAC_SIGNS } from '@/types';
+
+export function getZodiacSign(longitude: number): ZodiacSign {
+  const normalized = longitude % 360;
+  const index = Math.floor(normalized / 30) % 12;
+  return ZODIAC_SIGNS[index].name;
+}
+
+export function getSignDegree(longitude: number): number {
+  return longitude % 30;
+}
+
+export function formatDegree(degree: number): string {
+  const d = Math.floor(degree);
+  const m = Math.floor((degree - d) * 60);
+  return `${d}°${m.toString().padStart(2, '0')}'`;
+}
+
+export function getHouseForPlanet(longitude: number, houses: HouseCusp[]): number {
+  // Normalizar longitude para 0-360
+  const lon = ((longitude % 360) + 360) % 360;
+
+  // Encontra em qual casa o planeta está
+  for (let i = 0; i < 12; i++) {
+    const houseStart = houses[i].longitude;
+    const houseEnd = houses[(i + 1) % 12].longitude;
+    
+    // Trata o caso de "wrap around" (casa que cruza 0°)
+    if (houseEnd < houseStart) {
+      if (lon >= houseStart || lon < houseEnd) {
+        return i + 1;
+      }
+    } else {
+      if (lon >= houseStart && lon < houseEnd) {
+        return i + 1;
+      }
+    }
+  }
+
+  // Fallback: encontrar a casa mais próxima
+  let closestHouse = 1;
+  let minDiff = 360;
+  for (let i = 0; i < 12; i++) {
+    let diff = lon - houses[i].longitude;
+    diff = ((diff % 360) + 360) % 360;
+    if (diff < minDiff) {
+      minDiff = diff;
+      closestHouse = i + 1;
+    }
+  }
+  return closestHouse;
+}
+
+export function getElementColor(element: 'fire' | 'earth' | 'air' | 'water'): string {
+  switch (element) {
+    case 'fire':
+      return '#ef4444'; // red-500
+    case 'earth':
+      return '#22c55e'; // green-500
+    case 'air':
+      return '#fbbf24'; // yellow-400 (cor de Ar)
+    case 'water':
+      return '#3b82f6'; // blue-500 (cor de Água)
+  }
+}
+
+export function getDignity(planet: string, sign: ZodiacSign): string {
+  // Traduzir para chaves internas simplificadas se vier em português
+  const p = planet.toLowerCase();
+  
+  // Domicílios
+  const dom: Record<string, ZodiacSign[]> = {
+    'sol': ['Leão'],
+    'lua': ['Câncer'],
+    'mercúrio': ['Gêmeos', 'Virgem'],
+    'vênus': ['Touro', 'Libra'],
+    'marte': ['Áries', 'Escorpião'],
+    'júpiter': ['Sagitário', 'Peixes'],
+    'saturno': ['Capricórnio', 'Aquário'],
+    'urano': ['Aquário'], // Moderno
+    'netuno': ['Peixes'], // Moderno
+    'plutão': ['Escorpião'], // Moderno
+  };
+
+  // Exílio (Oposto do Domicílio)
+  const exilio: Record<string, ZodiacSign[]> = {
+    'sol': ['Aquário'],
+    'lua': ['Capricórnio'],
+    'mercúrio': ['Sagitário', 'Peixes'],
+    'vênus': ['Escorpião', 'Áries'],
+    'marte': ['Libra', 'Touro'],
+    'júpiter': ['Gêmeos', 'Virgem'],
+    'saturno': ['Câncer', 'Leão'],
+    'urano': ['Leão'],
+    'netuno': ['Virgem'],
+    'plutão': ['Touro'],
+  };
+
+  // Exaltações
+  const exaltacao: Record<string, ZodiacSign[]> = {
+    'sol': ['Áries'],
+    'lua': ['Touro'],
+    'mercúrio': ['Virgem'],
+    'vênus': ['Peixes'],
+    'marte': ['Capricórnio'],
+    'júpiter': ['Câncer'],
+    'saturno': ['Libra'],
+  };
+
+  // Queda (Oposto da exaltação)
+  const queda: Record<string, ZodiacSign[]> = {
+    'sol': ['Libra'],
+    'lua': ['Escorpião'],
+    'mercúrio': ['Peixes'],
+    'vênus': ['Virgem'],
+    'marte': ['Câncer'],
+    'júpiter': ['Capricórnio'],
+    'saturno': ['Áries'],
+  };
+
+  if (dom[p]?.includes(sign)) return 'Domicílio';
+  if (exaltacao[p]?.includes(sign)) return 'Exaltação';
+  if (exilio[p]?.includes(sign)) return 'Exílio';
+  if (queda[p]?.includes(sign)) return 'Queda';
+  return 'Neutro / Peregrino';
+}
+
+export function getDomicileRuler(sign: ZodiacSign): string {
+  const rulers: Record<string, string> = {
+    'Áries': 'Marte',
+    'Touro': 'Vênus',
+    'Gêmeos': 'Mercúrio',
+    'Câncer': 'Lua',
+    'Leão': 'Sol',
+    'Virgem': 'Mercúrio',
+    'Libra': 'Vênus',
+    'Escorpião': 'Plutão',
+    'Sagitário': 'Júpiter',
+    'Capricórnio': 'Saturno',
+    'Aquário': 'Urano',
+    'Peixes': 'Netuno'
+  };
+  return rulers[sign] || '';
+}
+
+export type DispositorLink = {
+  planet: string;
+  isRuledBy: string;
+};
+
+export function calculateDispositorChain(planets: PlanetPosition[]): DispositorLink[] {
+  return planets.map(p => ({
+    planet: p.name,
+    isRuledBy: getDomicileRuler(p.sign)
+  }));
+}
+
+export function getInterceptedSigns(houses: HouseCusp[]): ZodiacSign[] {
+  const intercepted: ZodiacSign[] = [];
+  const houseSigns = houses.map(h => getZodiacSign(h.longitude));
+  
+  ZODIAC_SIGNS.forEach(sign => {
+    // Se nenhum cúspide de casa está neste signo, ele pode estar interceptado
+    if (!houseSigns.includes(sign.name)) {
+      intercepted.push(sign.name);
+    }
+  });
+
+  return intercepted;
+}
+
+export function calculateAspectType(angle: number): { type: string; exactAngle: number } | null {
+  const aspects = [
+    { angle: 0, name: 'conjunção' },
+    { angle: 60, name: 'sextil' },
+    { angle: 90, name: 'quadratura' },
+    { angle: 120, name: 'trígono' },
+    { angle: 180, name: 'oposição' },
+    { angle: 30, name: 'semisextil' },
+    { angle: 45, name: 'semiquadratura' },
+    { angle: 135, name: 'sesquiquadratura' },
+    { angle: 150, name: 'quincúncio' },
+  ];
+
+  for (const aspect of aspects) {
+    const diff = Math.abs(angle - aspect.angle);
+    if (diff <= 8 || diff >= 352) { // orb de 8°
+      return { type: aspect.name, exactAngle: aspect.angle };
+    }
+    // Verifica ângulo no outro sentido
+    const diff2 = Math.abs(angle - (360 - aspect.angle));
+    if (diff2 <= 8) {
+      return { type: aspect.name, exactAngle: aspect.angle };
+    }
+  }
+
+  return null;
+}
+
+export function calculateCrossAspects(planetsA: PlanetPosition[], planetsB: PlanetPosition[]) {
+  const aspects: any[] = [];
+  
+  planetsA.forEach(p1 => {
+    planetsB.forEach(p2 => {
+      const diff = Math.abs(p1.longitude - p2.longitude);
+      const angle = diff > 180 ? 360 - diff : diff;
+      
+      const aspectData = calculateAspectType(angle);
+      
+      if (aspectData) {
+        // Mapear nomes de volta para AspectType se necessário, ou manter string
+        aspects.push({
+          planet1: p1.name,
+          planet2: p2.name,
+          type: aspectData.type,
+          angle: angle,
+          orb: Math.abs(angle - aspectData.exactAngle),
+          applying: false // Simplificado para revolução
+        });
+      }
+    });
+  });
+  
+  return aspects;
+}
