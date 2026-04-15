@@ -128,35 +128,32 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <TraditionalPositionsTable chart={chart} />
         <TraditionalSpecialPoints points={traditionalPoints} />
       </div>
 
-      {/* Informações Planetárias em Largura Total */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-6 shadow-xl h-fit">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-            Análise de Dignidades
-          </h3>
-          <TraditionalPlanetTable 
-            assessments={assessments} 
-            onPlanetClick={handlePlanetClick} 
-            selectedPlanetId={selectedPlanetId}
-          />
-          
-          <div className="mt-8 p-4 bg-gold-500/5 rounded-2xl border border-gold-500/10 flex items-start gap-4">
-            <Info className="w-6 h-6 text-gold-400 shrink-0 mt-1" />
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Esta análise utiliza regências tradicionais (7 planetas clássicos), triplicidades dorotheanas e dignidades essenciais por signo e seita. A pontuação reflete a força operacional do planeta no mapa.
-            </p>
-          </div>
-        </div>
+      {/* Análise de Dignidades - Tabela Completa */}
+      <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-6 shadow-xl">
+        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+          Análise de Dignidades
+        </h3>
+        <TraditionalPlanetTable
+          assessments={assessments}
+          onPlanetClick={handlePlanetClick}
+          selectedPlanetId={selectedPlanetId}
+        />
 
-        <div className="lg:col-span-1">
-          <TraditionalAspectList chart={chart} />
+        <div className="mt-8 p-4 bg-gold-500/5 rounded-2xl border border-gold-500/10 flex items-start gap-4">
+          <Info className="w-6 h-6 text-gold-400 shrink-0 mt-1" />
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Esta análise utiliza regências tradicionais (7 planetas clássicos), triplicidades dorotheanas e dignidades essenciais por signo e seita. A pontuação reflete a força operacional do planeta no mapa.
+          </p>
         </div>
       </div>
+
+      {/* Análise de Aspectos Tradicionais - Tabela Completa */}
+      <TraditionalAspectList chart={chart} />
 
       {/* Relatório de IA Tradicional */}
       <div className="mt-12">
