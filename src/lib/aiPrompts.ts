@@ -203,7 +203,11 @@ export function formatSolarComparisonForAI(
  */
 export function formatTraditionalChartForAI(chart: NatalChart, assessments: TraditionalAssessment[]): string {
   const { birthData, housesPlacidus } = chart;
-  
+
+  if (!birthData) {
+    return 'Erro: Dados de nascimento não encontrados.';
+  }
+
   let result = `DADOS TÉCNICOS DE ASTROLOGIA TRADICIONAL (SETENÁRIO E HELENÍSTICA)\n`;
   result += `===================================================================\n\n`;
   result += `NOME: ${birthData.name}\n`;
@@ -231,7 +235,7 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
   const classicPlanets = ['Sol', 'Lua', 'Mercúrio', 'Vênus', 'Marte', 'Júpiter', 'Saturno'];
   
   for (const planeName of classicPlanets) {
-    const assessment = assessments.find(a => a.planetId.toLowerCase() === planeName.toLowerCase());
+    const assessment = assessments.find(a => a?.planetId?.toLowerCase() === planeName.toLowerCase());
     if (!assessment) continue;
 
     const retro = assessment.isRetrograde ? ' (RETRÓGRADO — Debilidade Acidental)' : '';
@@ -258,15 +262,15 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     result += `     - Termo: ${termStr}\n`;
     result += `     - Face/Decano: ${faceStr}\n`;
     
-    const cond = assessment.condition;
-    const labels = [];
-    if (cond.isCazimi) labels.push("Cazimi (No coração do Sol)");
-    if (cond.isCombust) labels.push("Combusto (Queimado pelo Sol)");
-    if (cond.isUnderRays) labels.push("Sob os Raios");
-    if (cond.isHayz) labels.push("Hayz (Condição de Seita Ideal)");
-    if (cond.isInMutualReception && cond.isInMutualReception.length > 0) {
-      labels.push(`Recepção Mútua com ${cond.isInMutualReception.join(', ')}`);
-    }
+const cond = assessment.condition || {};
+  const labels = [];
+  if (cond.isCazimi) labels.push("Cazimi (No coração do Sol)");
+  if (cond.isCombust) labels.push("Combusto (Queimado pelo Sol)");
+  if (cond.isUnderRays) labels.push("Sob os Raios");
+  if (cond.isHayz) labels.push("Hayz (Condição de Seita Ideal)");
+  if (cond.isInMutualReception && Array.isArray(cond.isInMutualReception) && cond.isInMutualReception.length > 0) {
+    labels.push(`Recepção Mútua com ${cond.isInMutualReception.join(', ')}`);
+  }
     
     if (labels.length > 0) {
       result += `   * Acidentes/Recepções: ${labels.join(' | ')}\n`;
@@ -274,11 +278,13 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     result += `\n`;
   }
 
-  // === Signos das Casas ===
+// === Signos das Casas ===
   result += `CÚSPIDES DAS CASAS (DOMÍNIOS DO DESTINO):\n`;
   result += `-`.repeat(60) + '\n';
-  for (const house of housesPlacidus) {
-    result += `Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)}\n`;
+  if (housesPlacidus && Array.isArray(housesPlacidus)) {
+    for (const house of housesPlacidus) {
+      result += `Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)}\n`;
+    }
   }
   result += `\n`;
 
@@ -286,8 +292,9 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
   result += `ASPECTOS TRADICIONAIS (PTOLOMEICOS):\n`;
   result += `-`.repeat(60) + '\n';
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-  const traditionalAspects = chart.aspects.filter(a => 
-    classicIds.includes(a.planet1.toLowerCase()) && 
+  const traditionalAspects = (chart.aspects || []).filter(a =>
+    a?.planet1 && a?.planet2 &&
+    classicIds.includes(a.planet1.toLowerCase()) &&
     classicIds.includes(a.planet2.toLowerCase()) &&
     ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
   );

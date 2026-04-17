@@ -16,6 +16,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
+import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
 
 interface Model {
   id: string;
@@ -53,8 +54,9 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
     if (storedApiKey) setApiKey(storedApiKey);
     
     // Tentar carregar relatório salvo para este mapa
-    const reportKey = `report_${chart.birthData.name}_${chart.birthData.date}${solarYear ? `_SR${solarYear}` : ''}`;
-    const savedReport = localStorage.getItem(reportKey);
+    const reportKey = getReportKey(chart.birthData, !!solarRevolution, solarYear);
+    const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, !!solarRevolution, solarYear);
+    const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
     if (savedReport) {
       setReportText(savedReport);
       if (onReportUpdated) onReportUpdated(savedReport);
@@ -129,7 +131,7 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
       }
 
       // Salvar no localStorage ao finalizar
-      const reportKey = `report_${chart.birthData.name}_${chart.birthData.date}${solarYear ? `_SR${solarYear}` : ''}`;
+      const reportKey = getReportKey(chart.birthData, !!solarRevolution, solarYear);
       localStorage.setItem(reportKey, accumulatedText);
       
       if (onReportGenerated) {
@@ -150,8 +152,10 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
 
   const handleDeleteReport = () => {
     if (confirm('Tem certeza que deseja apagar permanentemente este relatório?')) {
-      const reportKey = `report_${chart.birthData.name}_${chart.birthData.date}${solarYear ? `_SR${solarYear}` : ''}`;
+      const reportKey = getReportKey(chart.birthData, !!solarRevolution, solarYear);
+      const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, !!solarRevolution, solarYear);
       localStorage.removeItem(reportKey);
+      localStorage.removeItem(legacyKey);
       setReportText('');
     }
   };

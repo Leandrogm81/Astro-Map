@@ -14,6 +14,7 @@ import {
 import { NatalChart, ZODIAC_SIGNS } from '@/types';
 import { TraditionalAssessment } from '@/lib/traditional/types';
 import ChartSimplePDF from './ChartSimplePDF';
+import TraditionalChartPDF from './TraditionalChartPDF';
 import { Download, Loader2 } from 'lucide-react';
 import { 
   getDignity, 
@@ -24,10 +25,6 @@ import {
 } from '@/lib/astrology';
 
 // Registrar fontes para um ar mais premium e garantir glifos astrológicos
-Font.register({
-  family: 'Helvetica-Bold',
-  src: 'https://cdn.jsdelivr.net/npm/@canvas-fonts/helvetica/Helvetica-Bold.ttf'
-});
 
 Font.register({
   family: 'DejaVu Sans',
@@ -1029,7 +1026,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
           </View>
         </View>
         <View style={styles.chartWrapper}>
-          <ChartSimplePDF chart={chart} size={380} isTraditional={true} />
+          <TraditionalChartPDF chart={chart} size={380} />
           <Text style={{ fontSize: 8, marginTop: 5, color: '#64748b' }}>Mandala Tradicional - 7 Planetas Clássicos e Lotes Herméticos</Text>
         </View>
         <Footer />

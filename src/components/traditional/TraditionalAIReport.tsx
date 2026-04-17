@@ -36,10 +36,8 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
   const [models, setModels] = useState<Model[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(true);
-  const [modelsError, setModelsError] = useState<string | null>(null);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   
@@ -56,19 +54,14 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
       if (onReportUpdated) onReportUpdated(savedReport);
     }
     
-    setModelsLoading(true);
-    setModelsError(null);
     fetch('/api/report')
       .then(res => res.json())
       .then(data => {
         if (data.models) setModels(data.models);
-        else setModelsError('Falha ao carregar modelos');
       })
       .catch(err => {
         console.error('Erro ao carregar modelos:', err);
-        setModelsError('Erro de conexão ao carregar modelos');
-      })
-      .finally(() => setModelsLoading(false));
+      });
   }, [chart]);
 
   useEffect(() => {
@@ -144,9 +137,12 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 group/report">
       {/* Header do Relatório */}
-      <div className="bg-slate-900/80 backdrop-blur-md rounded-3xl border border-gold-500/20 p-6 shadow-2xl relative overflow-hidden">
+      <div className="bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-gold-500/20 p-6 shadow-2xl relative overflow-hidden transition-all duration-500 hover:border-gold-500/40">
+        {/* User Requested Gold Glow Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/10 via-gold-400/5 to-transparent opacity-0 group-hover/report:opacity-100 transition-opacity duration-700 pointer-events-none" />
+        
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
@@ -264,7 +260,10 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
         )}
 
         {reportText ? (
-          <div className="bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-white/5 p-8 md:p-12 shadow-inner group">
+          <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl border border-white/5 p-8 md:p-12 shadow-inner group relative overflow-hidden transition-all duration-500 hover:border-gold-500/20">
+            {/* Subtle Gold Background Glow for the report text area */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 blur-[100px] -translate-y-1/2 translate-x-1/2" />
+            
             <div 
               ref={scrollRef}
               className="prose prose-invert prose-gold max-w-none 
@@ -309,11 +308,16 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
 
             <div className="relative z-10 flex flex-col items-center">
               <div className="relative mb-8">
-                <div className="w-24 h-24 rounded-full border-4 border-gold-500/5 border-t-gold-500 animate-spin transition-all duration-1000"></div>
+                <div className="w-24 h-24 rounded-full border-4 border-gold-500/10 border-t-gold-500 animate-spin transition-all duration-1000 shadow-[0_0_30px_rgba(212,175,55,0.2)]"></div>
+                <div className="absolute inset-0 rounded-full border border-white/5 animate-pulse scale-110"></div>
                 <Sparkles className="w-8 h-8 text-gold-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-bounce" />
               </div>
-              <p className="text-xl font-serif text-gold-200 animate-pulse tracking-wide">Consultando as Esferas Celestes...</p>
-              <p className="text-sm text-slate-500 mt-4 font-medium tracking-widest uppercase">Decifrando o Destino</p>
+              <p className="text-xl font-serif text-gold-200 animate-pulse tracking-wide font-black">Consultando as Esferas Celestes...</p>
+              <div className="flex items-center gap-3 mt-4">
+                <span className="h-[2px] w-8 bg-gradient-to-r from-transparent to-gold-500/40"></span>
+                <p className="text-xs text-slate-500 font-medium tracking-[0.3em] uppercase">Decifrando o Destino</p>
+                <span className="h-[2px] w-8 bg-gradient-to-l from-transparent to-gold-500/40"></span>
+              </div>
             </div>
           </div>
         )}

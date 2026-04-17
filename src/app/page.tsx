@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BirthData, NatalChart, AIReport as AIReportType, SavedChart } from '@/types';
 import { initSweph, calculateNatalChart } from '@/lib/ephemeris';
-import { saveChart, updateChart } from '@/lib/storage';
+import { saveChart, updateChart, getReportKey, getReportKeyLegacy } from '@/lib/storage';
 import BirthForm from '@/components/BirthForm';
 import AstroChart from '@/components/AstroChart';
 import PlanetTable from '@/components/PlanetTable';
@@ -135,8 +135,10 @@ export default function Home() {
       setChart(currentChart);
       
       // Carrega relatório natal se existir cache
-      const reportKey = `report_${currentChart.birthData.name}_${currentChart.birthData.date}`;
-      const savedReport = localStorage.getItem(reportKey);
+      const reportKey = getReportKey(currentChart.birthData);
+      const legacyKey = getReportKeyLegacy(currentChart.birthData.name, currentChart.birthData.date);
+      const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
+      
       if (savedReport) {
         setAiReport({ sections: [], summary: savedReport, generatedAt: new Date().toISOString() });
       } else {
@@ -148,8 +150,9 @@ export default function Home() {
 
       // Carrega relatório de revolução solar se existir cache
       if (savedChart.solarYear) {
-         const solarReportKey = `solar_report_${currentChart.birthData.name}_${currentChart.birthData.date}_${savedChart.solarYear}`;
-         const savedSolarReport = localStorage.getItem(solarReportKey);
+         const solarReportKey = getReportKey(currentChart.birthData, true, savedChart.solarYear);
+         const solarLegacyKey = getReportKeyLegacy(currentChart.birthData.name, currentChart.birthData.date, true, savedChart.solarYear);
+         const savedSolarReport = localStorage.getItem(solarReportKey) || localStorage.getItem(solarLegacyKey);
          if (savedSolarReport) setSolarReportText(savedSolarReport);
          else setSolarReportText('');
       } else {
@@ -432,6 +435,8 @@ export default function Home() {
                   {activeTab === 'report' && (
                     <AIReport 
                       chart={chart} 
+                      solarRevolution={solarRevolution}
+                      solarYear={solarYear}
                       onReportGenerated={handleReportGenerated}
                       onReportUpdated={setNatalReportText}
                     />
@@ -440,6 +445,8 @@ export default function Home() {
                   {activeTab === 'revolution' && (
                     <SolarRevolution 
                       natalChart={chart}
+                      initialYear={solarYear}
+                      initialSolarRevolution={solarRevolution}
                       onRevolutionCalculated={handleRevolutionCalculated}
                       onReportUpdated={setSolarReportText}
                     />

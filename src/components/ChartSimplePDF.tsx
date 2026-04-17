@@ -1,12 +1,10 @@
 import React from 'react';
 import { Svg, Circle, Line, Text, G, Path } from '@react-pdf/renderer';
-import { NatalChart, ZODIAC_SIGNS, PLANETS, PlanetPosition } from '@/types';
-import { EGYPTIAN_TERMS, getFaceRuler } from '@/lib/traditional/dignities';
+import { NatalChart, ZODIAC_SIGNS, PLANETS } from '@/types';
 
 interface ChartSimplePDFProps {
   chart: NatalChart;
   size?: number;
-  isTraditional?: boolean;
 }
 
 const SIGN_COLORS: Record<string, string> = {
@@ -31,7 +29,7 @@ const ASPECT_COLORS: Record<string, string> = {
   'conjunction': '#fbbf24'// Dourado
 };
 
-export default function ChartSimplePDF({ chart, size = 350, isTraditional = false }: ChartSimplePDFProps) {
+export default function ChartSimplePDF({ chart, size = 350 }: ChartSimplePDFProps) {
   const cx = size / 2;
   const cy = size / 2;
   
@@ -40,14 +38,8 @@ export default function ChartSimplePDF({ chart, size = 350, isTraditional = fals
   const signsOuterR = outerR;
   const signsInnerR = outerR - 25;
   
-  // Aneis de Dignidades
-  const termsOuterR = signsInnerR;
-  const termsInnerR = signsInnerR - 18;
-  const decansOuterR = termsInnerR;
-  const decansInnerR = termsInnerR - 15;
-  
-  const housesR = decansInnerR;
-  const innerR = housesR - 40;
+  const housesR = signsInnerR;
+  const innerR = housesR - 50;
   const planetR = housesR - 18;
 
   const strokeColor = '#334155'; // Slate escuro para bordas
@@ -136,99 +128,33 @@ export default function ChartSimplePDF({ chart, size = 350, isTraditional = fals
         );
       })}
 
-      {/* 3. Dignidades: Termos Egípcios */}
-      {isTraditional && ZODIAC_SIGNS.map((sign) => {
-        const signStart = ZODIAC_SIGNS.indexOf(sign) * 30;
-        const termsData = EGYPTIAN_TERMS[sign.name as keyof typeof EGYPTIAN_TERMS];
-        let lastLimit = 0;
-        
-        return termsData.map((term, ti) => {
-          const start = signStart + lastLimit;
-          const end = signStart + term.limit;
-          const midAngle = toAngle((start + end) / 2);
-          const tr = (termsOuterR + termsInnerR) / 2;
-          const planetInfo = PLANETS.find(p => p.id === term.planet.toLowerCase());
-          const symbol = planetInfo?.symbol || term.planet[0];
-          
-          lastLimit = term.limit;
-          
-          return (
-            <G key={`term-${sign.name}-${ti}`}>
-              <Path 
-                d={getArcPath(start, end, termsOuterR, termsInnerR)} 
-                fill="none" stroke={gridStroke} strokeWidth="0.3" opacity="0.3" 
-              />
-              <Text
-                x={cx + tr * Math.cos(midAngle) - 3}
-                y={cy + tr * Math.sin(midAngle) + 3}
-                style={{ fontSize: 7, fill: labelColor, fontFamily: 'DejaVu Sans' }}
-              >
-                {symbol}
-              </Text>
-            </G>
-          );
-        });
-      })}
-
-      {/* 4. Dignidades: Decanos (Faces) */}
-      {isTraditional && ZODIAC_SIGNS.map((sign, si) => {
-        const signStart = si * 30;
-        return [0, 10, 20].map((d) => {
-          const rulerId = getFaceRuler(sign.name as any, d);
-          const planetInfo = PLANETS.find(p => p.id === rulerId.toLowerCase());
-          const symbol = planetInfo?.symbol || rulerId[0];
-          const start = signStart + d;
-          const end = start + 10;
-          const midAngle = toAngle(start + 5);
-          const dr = (decansOuterR + decansInnerR) / 2;
-
-          return (
-            <G key={`face-${si}-${d}`}>
-              <Path 
-                d={getArcPath(start, end, decansOuterR, decansInnerR)} 
-                fill="none" stroke={gridStroke} strokeWidth="0.3" opacity="0.2" 
-              />
-              <Text
-                x={cx + dr * Math.cos(midAngle) - 2}
-                y={cy + dr * Math.sin(midAngle) + 2}
-                style={{ fontSize: 4, fill: labelColor, fontFamily: 'DejaVu Sans' }}
-              >
-                {symbol}
-              </Text>
-            </G>
-          );
-        });
-      })}
-
       {/* 5. Linhas das Casas */}
       {chart.housesPlacidus.map((house) => {
         const angle = toAngle(house.longitude);
         const isAngular = [1, 4, 7, 10].includes(house.number);
         const nextAngle = toAngle(house.longitude + 15);
-        // Reposicionado para dentro para não sobrepor dignidades
-        const numR = isTraditional ? housesR - 10 : housesR + 8;
+        const numR = housesR + 8;
 
         return (
           <G key={`house-${house.number}`}>
-            {/* No modo tradicional, as linhas AC/DC/MC/IC já são desenhadas pelo bloco de eixos. Esconde as angulares aqui para evitar duplicidade. */}
-            {!(isTraditional && isAngular) && (
-              <Line
-                x1={cx + housesR * Math.cos(angle)}
-                y1={cy + housesR * Math.sin(angle)}
-                x2={cx + innerR * Math.cos(angle)}
-                y2={cy + innerR * Math.sin(angle)}
-                stroke={isAngular ? goldColor : gridStroke}
-                strokeWidth={isAngular ? 1.5 : 0.6}
-                opacity={isAngular ? 0.9 : 0.4}
-              />
+            <Line
+              x1={cx + housesR * Math.cos(angle)}
+              y1={cy + housesR * Math.sin(angle)}
+              x2={cx + innerR * Math.cos(angle)}
+              y2={cy + innerR * Math.sin(angle)}
+              stroke={isAngular ? goldColor : gridStroke}
+              strokeWidth={isAngular ? 1.5 : 0.6}
+              opacity={isAngular ? 0.9 : 0.4}
+            />
+            {!isAngular && (
+              <Text
+                x={cx + numR * Math.cos(nextAngle) - 3}
+                y={cy + numR * Math.sin(nextAngle) + 3}
+                style={{ fontSize: 8, fill: labelColor }}
+              >
+                {house.number}
+              </Text>
             )}
-            <Text
-              x={cx + numR * Math.cos(nextAngle) - 3}
-              y={cy + numR * Math.sin(nextAngle) + 3}
-              style={{ fontSize: 8, fill: isAngular ? goldColor : labelColor }}
-            >
-              {house.number}
-            </Text>
           </G>
         );
       })}
@@ -260,68 +186,40 @@ export default function ChartSimplePDF({ chart, size = 350, isTraditional = fals
       })}
 
       {/* 6. Planetas */}
-      {(() => {
-        let planetsToRender = chart.planets;
-        if (isTraditional) {
-          const classic = ['Sol', 'Lua', 'Mercúrio', 'Vênus', 'Marte', 'Júpiter', 'Saturno'];
-          planetsToRender = chart.planets.filter(p => classic.includes(p.name));
-          
-          if (chart.lots) {
-             const lotsAsPlanets = chart.lots
-               .filter(l => l.id === 'fortune' || l.id === 'spirit')
-               .map(l => ({
-                 name: l.name,
-                 id: l.id,
-                 sign: l.sign,
-                 degree: l.degree % 30,
-                 longitude: l.longitude,
-                 house: 0,
-                 retrograde: false,
-                 symbol: l.symbol,
-                 latitude: 0,
-                 speed: 0
-               })) as PlanetPosition[];
-             planetsToRender = [...planetsToRender, ...lotsAsPlanets];
-          }
-        }
+      {chart.planets.map((p, i) => {
+        const angle = toAngle(p.longitude);
+        const x = cx + planetR * Math.cos(angle);
+        const y = cy + planetR * Math.sin(angle);
+        
+        let color = goldColor;
+        if (p.name === 'Sol') color = '#b45309';
+        if (p.name === 'Lua') color = '#334155'; 
+        if (p.name === 'Marte') color = '#b91c1c'; 
+        if (p.name === 'Saturno') color = '#0f172a'; 
+        if (p.name === 'Mercúrio') color = '#2563eb'; 
+        if (p.name === 'Vênus') color = '#15803d'; 
 
-        return planetsToRender.map((p, i) => {
-          const angle = toAngle(p.longitude);
-          const x = cx + planetR * Math.cos(angle);
-          const y = cy + planetR * Math.sin(angle);
-          
-          let color = goldColor;
-          if (p.name === 'Sol') color = '#b45309';
-          if (p.name === 'Lua') color = '#334155'; 
-          if (p.name === 'Marte') color = '#b91c1c'; 
-          if (p.name === 'Saturno') color = '#0f172a'; 
-          if (p.name === 'Mercúrio') color = '#2563eb'; 
-          if (p.name === 'Vênus') color = '#15803d'; 
-          if (p.id === 'fortune') color = '#854d0e';
-          if (p.id === 'spirit') color = '#7e22ce';
-
-          return (
-            <G key={`planet-${i}`}>
-              <Line 
-                x1={x} y1={y} 
-                x2={cx + housesR * Math.cos(angle)} y2={cy + housesR * Math.sin(angle)}
-                stroke={color} strokeWidth="0.5" opacity="0.4"
-              />
-              <Circle cx={x} cy={y} r={9} fill={bgColor} stroke={color} strokeWidth="1" />
-              <Text
-                x={x - 4.5}
-                y={y + 4.5}
-                style={{ fontSize: 11, fill: color, fontFamily: 'DejaVu Sans' }}
-              >
-                {PLANET_SYMBOLS[p.name] || p.symbol || p.name[0]}
-              </Text>
-              {p.retrograde && (
-                <Text x={x + 4} y={y - 4} style={{ fontSize: 5, fill: '#ef4444' }}>R</Text>
-              )}
-            </G>
-          );
-        });
-      })()}
+        return (
+          <G key={`planet-${i}`}>
+            <Line 
+              x1={x} y1={y} 
+              x2={cx + housesR * Math.cos(angle)} y2={cy + housesR * Math.sin(angle)}
+              stroke={color} strokeWidth="0.5" opacity="0.4"
+            />
+            <Circle cx={x} cy={y} r={9} fill={bgColor} stroke={color} strokeWidth="1" />
+            <Text
+              x={x - 4.5}
+              y={y + 4.5}
+              style={{ fontSize: 11, fill: color, fontFamily: 'DejaVu Sans' }}
+            >
+              {PLANET_SYMBOLS[p.name] || p.symbol || p.name[0]}
+            </Text>
+            {p.retrograde && (
+              <Text x={x + 4} y={y - 4} style={{ fontSize: 5, fill: '#ef4444' }}>R</Text>
+            )}
+          </G>
+        );
+      })}
 
       {/* 7. Eixos AC/DC e MC/IC Destacados (Graus Reais) */}
       {(() => {

@@ -26,14 +26,14 @@ export const AVAILABLE_MODELS = [
     cost: 'R$ 0,019' 
   },
   { 
-    id: 'google/gemini-2.5-flash', 
-    name: 'Premium — Gemini 2.5 Flash', 
+    id: 'google/gemini-2.0-flash-001', 
+    name: 'Premium — Gemini 2.0 Flash', 
     description: 'Máxima sofisticação e escrita superior. Indicado para análises refinadas.\nCusto: R$ 0,055 / relatório', 
     cost: 'R$ 0,055' 
   },
   { 
-    id: 'google/gemini-2.5-flash-lite:nitro', 
-    name: 'Contexto Longo — Gemini 2.5 Flash Lite Nitro', 
+    id: 'google/gemini-2.0-flash-lite:nitro', 
+    name: 'Contexto Longo — Gemini 2.0 Flash Lite Nitro', 
     description: 'Ideal para grandes volumes de dados e relatórios muito extensos.\nCusto: R$ 0,011 / relatório', 
     cost: 'R$ 0,011' 
   },
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
         .map((l: LotPosition) => `- ${l.name || 'Lote'}: ${l.sign || '---'} ${formatDeg(l.degree)}`)
         .join('\n');
 
-      userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval). 
+userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval).
 
 DADOS EXATOS DE POSIÇÃO:
 PLANETAS CLÁSSICOS:
@@ -116,7 +116,14 @@ ${planetData}
 LOTES HERMÉTICOS:
 ${lotData}
 
-Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo para a análise profunda.\n\n${formatTraditionalChartForAI(chart, assessments)}`;
+Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo para a análise profunda.\n\n${(() => {
+  try {
+    return formatTraditionalChartForAI(chart, assessments || []);
+  } catch (e) {
+    console.error('Erro ao formatar carta tradicional:', e);
+    return 'Erro ao processar dados tradicionais.';
+  }
+})()}`;
     } else if (isSolar) {
       userMessage = `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
     } else {

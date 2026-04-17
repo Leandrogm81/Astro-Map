@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { NatalChart, PlanetPosition, ZODIAC_SIGNS, PLANETS, HERMETIC_LOTS } from '@/types';
 import { EGYPTIAN_TERMS, getFaceRuler } from '@/lib/traditional/dignities';
+import { getTraditionalWheelAnchor, longitudeToTraditionalAngle } from '@/lib/traditional/wheelGeometry';
 
 const CX = 400;
 const CY = 400;
@@ -81,10 +82,9 @@ export default function TraditionalChart({
     return { x: transformed.x, y: transformed.y };
   };
 
-  const asc = chart.ascendant;
+  const asc = getTraditionalWheelAnchor(chart);
   const longitudeToAngle = (lon: number) => {
-    // Mesma lógica do AstroChart: 180 na esquerda, ângulo diminui no sentido anti-horário
-    return ((180 - (lon - asc + 360) % 360) * Math.PI) / 180;
+    return longitudeToTraditionalAngle(lon, asc);
   };
 
   const getArcPath = (startLon: number, endLon: number, rOut: number, rIn: number) => {

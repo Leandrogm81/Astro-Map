@@ -86,8 +86,27 @@ export function importChartFromJSON(json: string): SavedChart | null {
       throw new Error('Invalid chart data');
     }
     
-    // Gerar novo ID para evitar conflitos
-    return saveChart(data.name, data.chart);
+    // Se não tiver ID, gera um. Se já tiver, usa o dele (fiel ao export)
+    // Se houver risco de colisão futuro, o usuário pode ser alertado, 
+    // mas para restauração o ID deve ser o mesmo.
+    const savedChart: SavedChart = {
+      ...data,
+      id: data.id || generateId(),
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+
+    const charts = getSavedCharts();
+    
+    // Evita duplicata se importar o mesmo mapa várias vezes
+    const existingIndex = charts.findIndex(c => c.id === savedChart.id);
+    if (existingIndex !== -1) {
+      charts[existingIndex] = savedChart;
+    } else {
+      charts.push(savedChart);
+    }
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(charts));
+    return savedChart;
   } catch (error) {
     console.error('Import error:', error);
     return null;
@@ -96,4 +115,32 @@ export function importChartFromJSON(json: string): SavedChart | null {
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Gera uma chave única para cache de relatórios baseada nos dados do mapa.
+ * Inclui nome, data, hora e coordenadas para evitar colisões.
+ */
+export function getReportKey(birthData: BirthData, isSolar: boolean = false, year?: number): string {
+  const { name, date, time, latitude, longitude } = birthData;
+  // Arredondar coordenadas para evitar pequenas variações decimais
+  const lat = latitude.toFixed(2);
+  const lon = longitude.toFixed(2);
+  
+  const base = `${name}_${date}_${time}_${lat}_${lon}`;
+  
+  if (isSolar && year) {
+    return `solar_report_v2_${base}_${year}`;
+  }
+  return `report_v2_${base}`;
+}
+
+/**
+ * Fallback para as chaves antigas (menos específicas)
+ */
+export function getReportKeyLegacy(name: string, date: string, isSolar: boolean = false, year?: number): string {
+  if (isSolar && year) {
+    return `solar_report_${name}_${date}_${year}`;
+  }
+  return `report_${name}_${date}`;
 }

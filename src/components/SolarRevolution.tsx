@@ -8,6 +8,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TransitWheel from './TransitWheel';
 import { calculateCrossAspects, getHouseForPlanet, getElementColor, ZODIAC_SIGNS } from '@/lib/astrology';
+import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
+
 
 const HOUSE_MEANINGS: Record<number, { title: string; area: string }> = {
   1: { title: 'Identidade', area: 'Autoimagem, começos e vitalidade' },
@@ -25,13 +27,21 @@ const HOUSE_MEANINGS: Record<number, { title: string; area: string }> = {
 };
 interface SolarRevolutionProps {
   natalChart: NatalChart;
+  initialYear?: number;
+  initialSolarRevolution?: NatalChart | null;
   onRevolutionCalculated?: (solarReturn: NatalChart | null, year: number) => void;
   onReportUpdated?: (reportText: string) => void;
 }
 
-export default function SolarRevolution({ natalChart, onRevolutionCalculated, onReportUpdated }: SolarRevolutionProps) {
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [solarReturn, setSolarReturn] = useState<NatalChart | null>(null);
+export default function SolarRevolution({ 
+  natalChart, 
+  initialYear, 
+  initialSolarRevolution, 
+  onRevolutionCalculated, 
+  onReportUpdated 
+}: SolarRevolutionProps) {
+  const [year, setYear] = useState(initialYear || new Date().getFullYear());
+  const [solarReturn, setSolarReturn] = useState<NatalChart | null>(initialSolarRevolution || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportText, setReportText] = useState<string>('');
@@ -77,11 +87,18 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
     return themes.length > 0 ? themes : [{ label: 'Novo Ciclo', icon: Compass }];
   };
 
+  // Sincronizar com props iniciais quando mudarem (ao carregar mapa salvo)
+  useEffect(() => {
+    if (initialYear) setYear(initialYear);
+    if (initialSolarRevolution) setSolarReturn(initialSolarRevolution);
+  }, [initialYear, initialSolarRevolution]);
+
   // Carregar relatório salvo ao mudar de mapa/ano
   useEffect(() => {
     if (natalChart && year) {
-      const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
-      const savedReport = localStorage.getItem(reportKey);
+      const reportKey = getReportKey(natalChart.birthData, true, year);
+      const legacyKey = getReportKeyLegacy(natalChart.birthData.name, natalChart.birthData.date, true, year);
+      const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
       setReportText(savedReport || '');
     }
   }, [natalChart, year]);
@@ -111,9 +128,11 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
     }
   }, [natalChart, year, onRevolutionCalculated]);
 
-  // Calcular automaticamente quando o mapa natal mudar ou o ano mudar
+  // Calcular automaticamente apenas se não tivermos um retorno solar inicial para este mapa/ano
   useEffect(() => {
-    calculateRevolution();
+    if (!solarReturn || (initialYear && year !== initialYear)) {
+      calculateRevolution();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [natalChart]);
 
@@ -163,7 +182,7 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
       }
 
       // Salvar
-      const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
+      const reportKey = getReportKey(natalChart.birthData, true, year);
       localStorage.setItem(reportKey, accumulated);
 
     } catch (err) {
@@ -175,8 +194,10 @@ export default function SolarRevolution({ natalChart, onRevolutionCalculated, on
 
   const handleDeleteReport = () => {
     if (confirm('Deseja apagar este relatório anual?')) {
-      const reportKey = `solar_report_${natalChart.birthData.name}_${natalChart.birthData.date}_${year}`;
+      const reportKey = getReportKey(natalChart.birthData, true, year);
+      const legacyKey = getReportKeyLegacy(natalChart.birthData.name, natalChart.birthData.date, true, year);
       localStorage.removeItem(reportKey);
+      localStorage.removeItem(legacyKey);
       setReportText('');
     }
   };
