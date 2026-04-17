@@ -1,4 +1,4 @@
-import { NatalChart, PlanetPosition } from '@/types';
+import { NatalChart, ZodiacSign } from '@/types';
 import { TraditionalAssessment } from './traditional/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
 
@@ -58,7 +58,7 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `-`.repeat(60) + '\n';
   result += `Ascendente (ASC): ${getZodiacSign(ascendant)} ${formatDegree(ascendant % 30)}\n`;
   result += `Meio do Céu (MC): ${getZodiacSign(mc)} ${formatDegree(mc % 30)}\n`;
-  result += `Regente do Ascendente: ${getDomicileRuler(getZodiacSign(ascendant) as any)}\n`;
+  result += `Regente do Ascendente: ${getDomicileRuler(getZodiacSign(ascendant) as ZodiacSign)}\n`;
   
   // === Cúspides ===
   result += `\nCÚSPIDES DAS CASAS (Placidus):\n`;
@@ -163,7 +163,7 @@ export function formatSolarComparisonForAI(
   
   const crossAspects = calculateCrossAspects(srPlanets, natal.planets)
     .filter(a => ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type))
-    .sort((a: any, b: any) => a.orb - b.orb)
+    .sort((a, b) => (a as { orb: number }).orb - (b as { orb: number }).orb)
     .slice(0, 20);
   
   if (crossAspects.length > 0) {
@@ -202,7 +202,7 @@ export function formatSolarComparisonForAI(
  * Formata os dados técnicos tradicionais para a IA
  */
 export function formatTraditionalChartForAI(chart: NatalChart, assessments: TraditionalAssessment[]): string {
-  const { birthData, planets, housesPlacidus } = chart;
+  const { birthData, housesPlacidus } = chart;
   
   let result = `DADOS TÉCNICOS DE ASTROLOGIA TRADICIONAL (SETENÁRIO E HELENÍSTICA)\n`;
   result += `===================================================================\n\n`;
@@ -217,10 +217,10 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
   
   if (chart.traditionalPoints) {
     const tp = chart.traditionalPoints;
-    result += `- ALMUTEN FIGURIS: ${tp.almutenFiguris.name} (Planeta com maior autoridade sobre os pontos vitais)\n`;
-    result += `- HYLEG: ${tp.hyleg.name} (O Doador de Vida/Vitalidade)\n`;
-    result += `- ALCOCODEN: ${tp.alcocoden.name} (O Doador de Anos/Longevidade)\n`;
-    result += `- SENHOR DA NATIVIDADE: ${tp.lordOfNativity.name} (Regente do Ascendente)\n`;
+    result += `- ALMUTEN FIGURIS: ${tp.almutenFiguris?.name || 'Não identificado'}\n`;
+    result += `- HYLEG: ${tp.hyleg?.name || 'Não identificado'}\n`;
+    result += `- ALCOCODEN: ${tp.alcocoden?.name || 'Não identificado'}\n`;
+    result += `- SENHOR DA NATIVIDADE: ${tp.lordOfNativity?.name || 'Não identificado'}\n`;
   }
   result += `-`.repeat(60) + '\n\n';
 
@@ -249,11 +249,14 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     result += `   * Dignidade Essencial: ${assessment.dignity}${debilityStr}\n`;
     result += `   * Almuten/Pontuação: ${score} pts [Condição: ${condition}]\n`;
     result += `   * Hierarquia de Regência:\n`;
-    result += `     - Domicílio: ${assessment.dignities.domicile}\n`;
-    result += `     - Exaltação: ${assessment.dignities.exaltation || 'Nenhuma'}\n`;
-    result += `     - Triplicidade: ${assessment.dignities.triplicity || '---'}\n`;
-    result += `     - Termo: Regido por ${assessment.interpretations.term.split('.')[0].split(' ')[0]} (${assessment.interpretations.term})\n`;
-    result += `     - Face/Decano: Regido por ${assessment.interpretations.face.split('.')[0].split(' ')[0]} (${assessment.interpretations.face})\n`;
+    result += `     - Domicílio: ${assessment.dignities?.domicile || '---'}\n`;
+    result += `     - Exaltação: ${assessment.dignities?.exaltation || 'Nenhuma'}\n`;
+    result += `     - Triplicidade: ${assessment.dignities?.triplicity || '---'}\n`;
+    const termStr = assessment.interpretations?.term || "";
+    const faceStr = assessment.interpretations?.face || "";
+    
+    result += `     - Termo: ${termStr}\n`;
+    result += `     - Face/Decano: ${faceStr}\n`;
     
     const cond = assessment.condition;
     const labels = [];
@@ -300,8 +303,8 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
   result += `-`.repeat(60) + '\n';
   if (chart.lots) {
     for (const lot of chart.lots) {
-      const house = getZodiacSign(lot.degree) === lot.sign ? "Casa Angular/Sucedente" : ""; // Simplificado para texto
-      result += `- ${lot.name}: ${lot.sign} ${formatDegree(lot.degree % 30)} na Casa ${getHouseForPlanet(lot.degree, housesPlacidus)}\n`;
+      const houseNum = housesPlacidus && housesPlacidus.length > 0 ? getHouseForPlanet(lot.degree, housesPlacidus) : '?';
+      result += `- ${lot.name}: ${lot.sign} ${formatDegree(lot.degree % 30)} na Casa ${houseNum}\n`;
       result += `  (Propósito: ${lot.description})\n`;
     }
   }

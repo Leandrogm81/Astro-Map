@@ -8,6 +8,7 @@ import {
   TRADITIONAL_PROMPT_SYSTEM
 } from '@/lib/aiPrompts';
 import { PlanetPosition, LotPosition } from '@/types';
+import { calculateTraditionalPoints } from '@/lib/traditional/points';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -65,6 +66,20 @@ export async function POST(request: NextRequest) {
 
     const isSolar = !!(solarRevolution && solarYear);
     
+    // Garantir dados tradicionais se necessário
+    if (isTraditional && !chart.traditionalPoints) {
+      try {
+        chart.traditionalPoints = calculateTraditionalPoints(
+          chart.ascendant || 0,
+          chart.planets || [],
+          chart.housesPlacidus || [],
+          chart.isDayChart ?? false
+        );
+      } catch (e) {
+        console.error('Falha ao calcular pontos tradicionais no servidor:', e);
+      }
+    }
+
     // Seleção de Prompt do Sistema
     let systemPrompt = NATAL_PROMPT_SYSTEM;
     if (isTraditional) {
@@ -76,19 +91,20 @@ export async function POST(request: NextRequest) {
     // Construção da Mensagem do Usuário
     let userMessage = '';
     if (isTraditional) {
-      const formatDeg = (lon: number) => {
+      const formatDeg = (lon: number | undefined) => {
+        if (typeof lon !== 'number') return '0°0\'';
         const deg = Math.floor(lon % 30);
         const min = Math.floor((lon % 1) * 60);
         return `${deg}°${min}'`;
       };
 
-      const planetData = chart.planets
-        .filter((p: PlanetPosition) => ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id.toLowerCase()))
-        .map((p: PlanetPosition) => `- ${p.name}: ${p.sign} ${formatDeg(p.longitude)} na Casa ${p.house}`)
+      const planetData = (chart.planets || [])
+        .filter((p: PlanetPosition) => p?.id && ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id.toLowerCase()))
+        .map((p: PlanetPosition) => `- ${p.name || 'Desconhecido'}: ${p.sign || '---'} ${formatDeg(p.longitude)} na Casa ${p.house || '?'}`)
         .join('\n');
 
       const lotData = (chart.lots || [])
-        .map((l: LotPosition) => `- ${l.name}: ${l.sign} ${formatDeg(l.degree)}`)
+        .map((l: LotPosition) => `- ${l.name || 'Lote'}: ${l.sign || '---'} ${formatDeg(l.degree)}`)
         .join('\n');
 
       userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval). 
@@ -137,7 +153,6 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
 
     // Configurar o Stream para o cliente
     const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -156,7 +171,7 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
             closed = true;
             try {
               controller.close();
-            } catch (e) {
+            } catch {
               // Já fechado ou erro inconsequente no encerramento
             }
           }
@@ -192,7 +207,7 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
                 if (content) {
                   controller.enqueue(encoder.encode(content));
                 }
-              } catch (e) {
+              } catch {
                 // Linha SSE incompleta ou mal-formada neste chunk, ignorar com segurança
                 // No próximo chunk o buffer terá a linha completa
               }
@@ -215,7 +230,10 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
     });
   } catch (error) {
     console.error('API error:', error);
-    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Erro interno do servidor', 
+      details: error instanceof Error ? error.message : 'Erro desconhecido' 
+    }, { status: 500 });
   }
 }
 

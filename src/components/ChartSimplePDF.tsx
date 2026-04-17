@@ -1,6 +1,6 @@
 import React from 'react';
-import { Svg, Circle, Line, Text, G, Path, Defs, RadialGradient, Stop } from '@react-pdf/renderer';
-import { NatalChart, ZODIAC_SIGNS, PLANETS } from '@/types';
+import { Svg, Circle, Line, Text, G, Path } from '@react-pdf/renderer';
+import { NatalChart, ZODIAC_SIGNS, PLANETS, PlanetPosition } from '@/types';
 import { EGYPTIAN_TERMS, getFaceRuler } from '@/lib/traditional/dignities';
 
 interface ChartSimplePDFProps {
@@ -277,8 +277,10 @@ export default function ChartSimplePDF({ chart, size = 350, isTraditional = fals
                  longitude: l.longitude,
                  house: 0,
                  retrograde: false,
-                 symbol: l.symbol
-               })) as any;
+                 symbol: l.symbol,
+                 latitude: 0,
+                 speed: 0
+               })) as PlanetPosition[];
              planetsToRender = [...planetsToRender, ...lotsAsPlanets];
           }
         }
@@ -321,19 +323,13 @@ export default function ChartSimplePDF({ chart, size = 350, isTraditional = fals
         });
       })()}
 
-      {/* 7. Eixos AC/DC e MC/IC Destacados (Whole Sign) */}
+      {/* 7. Eixos AC/DC e MC/IC Destacados (Graus Reais) */}
       {(() => {
-        // Cálculo de Signos Inteiros para alinhamento tradicional
-        const ascSignStart = Math.floor(chart.ascendant / 30) * 30;
-        const dcSignStart = (ascSignStart + 180) % 360;
-        const mcWholeSign = (ascSignStart + 270) % 360;
-        const icWholeSign = (ascSignStart + 90) % 360;
-
         const eixos = [
-          { lon: ascSignStart, label: 'AC' },
-          { lon: dcSignStart, label: 'DC' },
-          { lon: mcWholeSign, label: 'MC' },
-          { lon: icWholeSign, label: 'IC' }
+          { lon: chart.ascendant, label: 'AC' },
+          { lon: (chart.ascendant + 180) % 360, label: 'DC' },
+          { lon: chart.mc, label: 'MC' },
+          { lon: (chart.mc + 180) % 360, label: 'IC' }
         ];
 
         return (

@@ -36,7 +36,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash');
   const [models, setModels] = useState<Model[]>([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState<string | null>(null);
@@ -292,7 +292,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
             </div>
             <h3 className="text-xl font-bold text-white mb-2">Nenhum tratado gerado</h3>
             <p className="text-slate-400 max-w-md text-center text-sm px-6">
-              Clique em "Gerar Tratado" para que a inteligência artificial analise suas dignidades tradicionais e lotes herméticos.
+              Clique em &quot;Gerar Tratado&quot; para que a inteligência artificial analise suas dignidades tradicionais e lotes herméticos.
             </p>
           </div>
         )}

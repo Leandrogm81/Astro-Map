@@ -679,35 +679,35 @@ export const MyPDFDocument = ({
             <Text style={styles.summaryPage}>03</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>2. Geometria Planetária e Casas</Text>
+            <Text style={styles.summaryLabel}>2. Planetas, Dignidades e Casas</Text>
             <Text style={styles.summaryPage}>04</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>3. Aspectos e Diálogos Celestes</Text>
-            <Text style={styles.summaryPage}>05</Text>
+            <Text style={styles.summaryLabel}>3. Geometria de Aspectos</Text>
+            <Text style={styles.summaryPage}>06</Text>
           </View>
 
           {reportText && (
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>4. Interpretação Natal Profunda (IA)</Text>
-              <Text style={styles.summaryPage}>06</Text>
+              <Text style={styles.summaryLabel}>4. Tratado Interpretativo Natal (IA)</Text>
+              <Text style={styles.summaryPage}>07</Text>
             </View>
           )}
 
           {solarRevolution && (
             <View style={{ marginTop: 20 }}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>5. Revolução Solar ({solarYear})</Text>
-                <Text style={styles.summaryPage}>09</Text>
+                <Text style={styles.summaryLabel}>5. Mapa da Revolução Solar ({solarYear})</Text>
+                <Text style={styles.summaryPage}>10</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>6. Dinâmicas Anuais e Interposição</Text>
-                <Text style={styles.summaryPage}>10</Text>
+                <Text style={styles.summaryLabel}>6. Interposição e Dados Técnicos</Text>
+                <Text style={styles.summaryPage}>11</Text>
               </View>
               {solarReportText && (
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>7. Relatório Preditivo Anual (IA)</Text>
-                  <Text style={styles.summaryPage}>11</Text>
+                  <Text style={styles.summaryLabel}>7. Prognóstico Anual Estratégico (IA)</Text>
+                  <Text style={styles.summaryPage}>12</Text>
                 </View>
               )}
             </View>
@@ -743,9 +743,8 @@ export const MyPDFDocument = ({
         <Footer />
       </Page>
 
-      {/* PÁGINA 3: PLANETAS E DIGNIDADES */}
-      {!isAIRSOnly && (
-        <Page size="A4" style={styles.page}>
+      {/* PÁGINA 4: PLANETAS E DIGNIDADES */}
+      <Page size="A4" style={styles.page}>
           <Header />
           <Text style={styles.sectionTitle}>Geometria Planetária e Dignidades</Text>
           <View style={styles.table}>
@@ -774,7 +773,6 @@ export const MyPDFDocument = ({
           </View>
           <Footer />
         </Page>
-      )}
 
       {/* PÁGINA 4: LOTES HERMÉTICOS E PONTOS TRADICIONAIS */}
       {!isAIRSOnly && (
@@ -825,9 +823,8 @@ export const MyPDFDocument = ({
         </Page>
       )}
 
-      {/* PÁGINA 5: CASAS ASTROLÓGICAS (SISTEMAS) */}
-      {!isAIRSOnly && (
-        <Page size="A4" style={styles.page}>
+      {/* PÁGINA 6: CASAS ASTROLÓGICAS (SISTEMAS) */}
+      <Page size="A4" style={styles.page}>
           <Header />
           <Text style={styles.sectionTitle}>Domificação Placidus: Arquitetura do Destino</Text>
           <View style={{ width: '100%' }}>
@@ -853,11 +850,9 @@ export const MyPDFDocument = ({
           <AnalyticsSummary chart={chart} />
           <Footer />
         </Page>
-      )}
 
-      {/* PÁGINA 6: ASPECTOS NATAL */}
-      {!isAIRSOnly && (
-        <Page size="A4" style={styles.page}>
+      {/* PÁGINA 7: ASPECTOS NATAL */}
+      <Page size="A4" style={styles.page}>
           <Header />
           <Text style={styles.sectionTitle}>Dinâmica de Aspectos: Conversas do Céu</Text>
           <View style={styles.table}>
@@ -882,7 +877,6 @@ export const MyPDFDocument = ({
           </View>
           <Footer />
         </Page>
-      )}
 
       {/* PÁGINAS 7-10: TRATADO NATAL (IA) */}
       {reportText && (
