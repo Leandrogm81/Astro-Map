@@ -242,11 +242,11 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     const score = assessment.totalScore;
     const condition = score >= 10 ? 'Soberana/Excepcional' : score >= 5 ? 'Forte' : score <= -10 ? 'Crítica/Severa' : score <= -5 ? 'Debilitada' : 'Moderada';
     
-    // Mapeamento de Debilidades se houver
-    const debilities = [];
-    if (assessment.score.breakdown.essential['Exílio']) debilities.push('Exílio (Detrimento)');
-    if (assessment.score.breakdown.essential['Queda']) debilities.push('Queda (Fall)');
-    const debilityStr = debilities.length > 0 ? ` [DEBILIDADES: ${debilities.join(', ')}]` : '';
+// Mapeamento de Debilidades se houver
+  const debilities = [];
+  if (assessment.score?.breakdown?.essential?.['Exílio']) debilities.push('Exílio (Detrimento)');
+  if (assessment.score?.breakdown?.essential?.['Queda']) debilities.push('Queda (Fall)');
+  const debilityStr = debilities.length > 0 ? ` [DEBILIDADES: ${debilities.join(', ')}]` : '';
 
     result += `> ${planeName.toUpperCase()}:\n`;
     result += `   * Signo/Casa: ${assessment.sign} na Casa ${assessment.house}${retro}\n`;
