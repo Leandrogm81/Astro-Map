@@ -1,4 +1,4 @@
-# AstroMap - Mapa Astral com IA
+# AstroMap — Mapa Astral com IA
 
 Aplicativo web completo para cálculo e interpretação de mapas astrais, com relatórios gerados por inteligência artificial.
 
@@ -9,184 +9,77 @@ Aplicativo web completo para cálculo e interpretação de mapas astrais, com re
 - **Dois Sistemas de Casas**: Placidus e Signos Inteiros (Whole Signs)
 - **Relatório IA**: Geração de interpretações completas via OpenRouter (Cloud-native)
 - **Revolução Solar**: Cálculo de trânsitos e previsões anuais
+- **Astrologia Tradicional**: Análise helenística/medieval com Almuten, Hyleg, dignidades
 - **Exportar PDF**: Download do relatório completo
 - **Salvar Localmente**: Mapas salvos no localStorage (privacidade total)
 
-## 📋 PASSO A PASSO: Como colocar a API dentro do app
-
-### 1. Estrutura da API
-
-A API está localizada em:
-```
-src/app/api/report/route.ts
-```
-
-Este arquivo faz:
-- Recebe dados do mapa astral do frontend
-- Chama a API da OpenRouter **no servidor** (chave fica segura)
-- Retorna o relatório formatado
-
-### 2. Configurar a Chave API
-
-**Passo 2.1** - Copie o arquivo de exemplo:
-```bash
-cp .env.local.example .env.local
-```
-
-Ou no Windows:
-```cmd
-copy .env.local.example .env.local
-```
-
-**Passo 2.2** - Obtenha sua chave gratuita:
-1. Acesse: https://openrouter.ai/keys
-2. Clique em "Create API Key"
-3. Copie a chave (começa com `sk-or-v1-`)
-
-**Passo 2.3** - Edite o arquivo `.env.local`:
-```env
-OPENROUTER_API_KEY=sk-or-v1-sua-chave-real-aqui
-```
-
-⚠️ **IMPORTANTE**: Nunca commit este arquivo! Ele está no `.gitignore`.
-
-### 3. Rodar o App
+## Quick Start
 
 ```bash
 # Instalar dependências
 npm install
 
+# Configurar API Key
+cp .env.local.example .env.local
+# Edite .env.local e adicione sua chave OpenRouter
+
 # Rodar em desenvolvimento
 npm run dev
 ```
 
-Acesse: http://localhost:3000
+Acesse [http://localhost:3000](http://localhost:3000)
 
-### 4. Como funciona o fluxo
+## Documentação
 
-```
-┌─────────────┐      ┌──────────────┐      ┌─────────────┐
-│   Browser   │ ───> │  Seu Server  │ ───> │  OpenRouter │
-│  (Frontend) │      │   (Next.js)  │      │    (IA)     │
-└─────────────┘      └──────────────┘      └─────────────┘
-       │                     │                     │
-       │  1. Envia dados     │  2. Chama API       │
-       │     do mapa         │     com API Key     │
-       │                     │                     │
-       │  4. Mostra          │  3. Retorna         │
-       │     relatório       │     relatório       │
-       │                     │                     │
-```
+| Seção | Descrição |
+|-------|-----------|
+| [Visão Geral](docs/overview.md) | Descrição completa do projeto e funcionalidades |
+| [Arquitetura](docs/architecture.md) | Diagramas de fluxo, estrutura de diretórios, modelos de dados |
+| [Instalação](docs/installation.md) | Configuração local, variáveis de ambiente, scripts |
+| [Uso](docs/usage.md) | Guia passo a passo de como usar o aplicativo |
+| [Referência da API](docs/api-reference.md) | Endpoint `/api/report`, tipos, exemplos |
+| [Deploy](docs/deployment.md) | Vercel, Docker, servidor próprio, PaaS |
+| [Segurança e Privacidade](docs/security-privacy.md) | Fluxo de dados, chaves API, privacidade |
+| [Performance e Custos](docs/performance-cost.md) | Métricas, custos OpenRouter, otimizações |
+| [Extensibilidade](docs/extensibility.md) | Como adicionar sistemas de casas, planetas, modelos |
+| [Troubleshooting](docs/troubleshooting.md) | Problemas comuns e soluções |
+| [Contribuindo](docs/contributing.md) | Guia para contribuidores |
 
-**Segurança**: O app suporta tanto o uso de uma chave configurada no servidor (`.env.local`) quanto chaves inseridas pelo usuário na interface (armazenadas apenas no navegador).
-
-## 🤖 Modelos de IA Disponíveis
-
-Você pode escolher entre os modelos otimizados disponíveis:
-
-| Modelo | Qualidade | Custo | Melhor Para |
-|--------|-----------|-------|-------------|
-| **Gemini 2.0 Flash** | ⭐⭐⭐⭐ | Econômico | Velocidade e precisão geral |
-| **DeepSeek V3** | ⭐⭐⭐⭐⭐ | Muito Econômico | Excelente em Português Brasileiro |
-| **Claude 3.5 Sonnet** | ⭐⭐⭐⭐⭐ | Premium | Análises psicológicas complexas |
-| **Llama 3.3 70B** | ⭐⭐⭐⭐ | Econômico | Versatilidade e lógica |
-
-## 🚀 Deploy
-
-### Opção 1: Vercel (Recomendado)
-
-1. Push para GitHub
-2. Importe na Vercel
-3. Adicione a variável de ambiente `OPENROUTER_API_KEY`
-4. Deploy automático!
-
-### Opção 2: Servidor Próprio
-
-```bash
-# Build
-npm run build
-
-# Iniciar
-npm start
-```
-
-O app roda na porta 3000 por padrão.
-
-### Opção 3: Docker
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-EXPOSE 3000
-ENV PORT=3000
-ENV OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-CMD ["npm", "start"]
-```
-
-## 💰 Custos
-
-- **OpenRouter**: Pay-per-use (pague pelo que usar)
-- **Créditos**: Adicione créditos na sua conta OpenRouter
-- **Estimativa**: Cada relatório custa entre R$0.30 e R$2.00 dependendo do modelo
-
-## 🔒 Segurança
-
-✅ Chave API fica no servidor (`.env.local`)
-✅ Nunca é exposta no frontend
-✅ Chamadas são feitas internamente
-✅ `.env.local` está no `.gitignore`
-
-## 🛠️ Tecnologias
+## Tecnologias
 
 - **Framework**: Next.js 16.2.1 + React 19 + TypeScript
 - **Estilização**: Tailwind CSS 4
 - **Efemérides**: astronomy-engine (MIT)
-- **IA**: OpenRouter API (Streaming)
+- **IA**: OpenRouter API (Streaming SSE)
 - **PDF**: @react-pdf/renderer
+- **Estado**: Zustand
+- **Testes**: Vitest
 
-## 📝 Comandos Úteis
+## Modelos de IA Disponíveis
+
+| Modelo | Custo Estimado | Melhor Para |
+|--------|---------------|-------------|
+| Qwen 3 32B | R$ 0,0075 | Relatórios rápidos e eficientes |
+| DeepSeek V3.1 | R$ 0,019 | Excelente em Português Brasileiro |
+| Gemini 2.5 Flash | R$ 0,055 | Análises sofisticadas e detalhadas |
+| Gemini 2.5 Flash Lite | R$ 0,011 | Grandes volumes de dados |
+
+## Comandos
 
 ```bash
-# Desenvolvimento
-npm run dev
-
-# Build de produção
-npm run build
-
-# Iniciar em produção
-npm start
-
-# Lint
-npm run lint
+npm run dev      # Desenvolvimento
+npm run build    # Build de produção
+npm run start    # Iniciar em produção
+npm run lint     # Verificar código
+npm run test     # Executar testes
 ```
 
-## 🐛 Troubleshooting
-
-### "Chave API não configurada"
-Verifique se o arquivo `.env.local` existe e tem a chave correta.
-
-### "Erro 401 na API"
-Sua chave pode estar inválida ou sem créditos. Verifique em openrouter.ai
-
-### "Modelo não encontrado"
-Alguns modelos podem ficar indisponíveis. Tente outro da lista.
-
-## 📄 Licença
+## Licença
 
 MIT License - Uso livre.
 
-## 🙏 Créditos
+## Limitações Conhecidas
 
-- astronomy-engine: https://github.com/cosinekitty/astronomy
-- OpenRouter: https://openrouter.ai/
-- OpenStreetMap: https://nominatim.org/
-
-## ⚠️ Limitações Conhecidas
-
-- **Localização**: O buscador de cidades é otimizado e filtrado para o Brasil.
-- **Timezone**: O cálculo de fuso horário e horário de verão utiliza regras simplificadas para o território brasileiro.
-- **Aproximações**: Corpos secundários (Quíron, Lilith e Nodos) utilizam fórmulas de aproximação linear. Para uso profissional/crítico de Quíron, recomenda-se conferir com efemérides oficiais.
+- **Localização**: Buscador otimizado para o Brasil
+- **Timezone**: Regras simplificadas para território brasileiro
+- **Corpos secundários**: Quíron, Lilith e Nodos usam aproximações lineares
