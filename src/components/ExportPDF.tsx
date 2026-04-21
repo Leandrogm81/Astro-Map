@@ -127,8 +127,8 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 15,
-    padding: 20,
+    marginVertical: 0,
+    padding: 5,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#f1f5f9',
@@ -475,8 +475,8 @@ const Header = () => (
         <Text style={styles.subtitle}>O Livro de Destino e Autoconhecimento Astrológico</Text>
       </View>
     </View>
-    <View style={{ textAlign: 'right', minWidth: 120 }}>
-      <Text style={{ fontSize: 9, color: '#666666' }}>Dossiê exclusivo gerado em</Text>
+    <View style={{ textAlign: 'right', minWidth: 100 }}>
+      <Text style={{ fontSize: 9, color: '#666666' }}>Gerado em:</Text>
       <Text style={{ fontSize: 10, fontWeight: 'bold' }}>{new Date().toLocaleDateString('pt-BR')}</Text>
     </View>
   </View>
@@ -665,7 +665,7 @@ export const MyPDFDocument = ({
         </View>
 
         <View style={{ marginTop: 60, alignItems: 'center' }}>
-          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 10 }}>Dossiê Exclusivo de</Text>
+          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 24 }}>Dossiê Exclusivo de</Text>
           <Text style={{ fontSize: 32, fontFamily: 'DejaVu Sans', fontWeight: 'bold', color: '#fff', textAlign: 'center' }}>{data.name}</Text>
           <View style={{ height: 1, width: 80, backgroundColor: '#d4af37', marginTop: 20 }} />
         </View>
@@ -745,7 +745,7 @@ export const MyPDFDocument = ({
           </View>
         </View>
         <View style={styles.chartWrapper}>
-          <ChartSimplePDF chart={chart} size={380} />
+          <ChartSimplePDF chart={chart} size={460} />
           <Text style={{ fontSize: 7, marginTop: 8, color: '#94a3b8', textTransform: 'uppercase' }}>Mandala de Radix - Domificação Placidus</Text>
         </View>
         <Footer />
@@ -926,7 +926,7 @@ export const MyPDFDocument = ({
                 Retorno Solar: Ciclo de {solarYear} a {solarYear + 1}
               </Text>
               <View style={styles.chartWrapper}>
-                <ChartSimplePDF chart={solarRevolution} size={420} />
+                <ChartSimplePDF chart={solarRevolution} size={460} />
               </View>
             </View>
             <Footer />
@@ -1046,7 +1046,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
           </View>
         </View>
         <View style={styles.chartWrapper}>
-          <TraditionalChartPDF chart={chart} size={380} />
+          <TraditionalChartPDF chart={chart} size={460} />
           <Text style={{ fontSize: 8, marginTop: 5, color: '#64748b' }}>Mandala Tradicional - 7 Planetas Clássicos e Lotes Herméticos</Text>
         </View>
         <Footer />

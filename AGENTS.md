@@ -255,6 +255,8 @@ Aguardando análise.
 | `docs/architecture.md`| Diagramas, estrutura               | Arquitetura, fluxos de dados                 |
 | `docs/api-reference.md`| Contrato API                      | Implementação de endpoints                   |
 | `docs/extensibility.md`| Como estender                     | Adicionar novas features                     |
+| `workflows/deploy-seguro.md` | Deploy Seguro e Validação       | Antes de cada commit e push                  |
+
 
 ---
 
