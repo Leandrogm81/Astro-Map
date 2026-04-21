@@ -2,10 +2,61 @@ import { describe, expect, it } from 'vitest';
 import {
   getTraditionalAxisLongitudes,
   getTraditionalWheelAnchor,
-  longitudeToTraditionalAngle
+  longitudeToTraditionalAngle,
+  getTraditionalTooltipPosition
 } from '../lib/traditional/wheelGeometry';
 
 describe('traditional wheel geometry', () => {
+  describe('getTraditionalTooltipPosition', () => {
+    const BW = 200;
+    const BH = 100;
+    const VW = 800;
+    const VH = 800;
+
+    it('positions to the right when in the left half', () => {
+      // Ponto em x=100, y=400 (metade esquerda) -> tooltip deve estar em 100 + 35 = 135
+      const { ox } = getTraditionalTooltipPosition(100, 400, BW, BH, VW, VH);
+      expect(100 + ox).toBe(135);
+    });
+
+    it('positions to the left when in the right half', () => {
+      // Ponto em x=700, y=400 (metade direita) -> tooltip deve estar em 700 - 200 - 35 = 465
+      const { ox } = getTraditionalTooltipPosition(700, 400, BW, BH, VW, VH);
+      expect(700 + ox).toBe(465);
+    });
+
+    it('clamps to the left edge', () => {
+      // Ponto em x=10, y=400, forçando ox a ser negativo ou muito pequeno
+      // isRightHalf=false, ox = 10 + 35 = 45. Não precisa de clamp aqui, mas e se fosse o inverso?
+      // Se estivéssemos na direita e o box fosse grande demais.
+      const { ox } = getTraditionalTooltipPosition(210, 400, 300, BH, VW, VH); // isRightHalf=false, ox = 210 + 35 = 245. boxWidth=300 -> 545. ok.
+      
+      // Teste de clamp na direita:
+      const { ox: oxRight } = getTraditionalTooltipPosition(780, 400, BW, BH, VW, VH);
+      // isRightHalf=true, ox = 780 - 200 - 35 = 545. ok.
+      
+      // Teste forçando clamp na esquerda (se focusX fosse muito pequeno e estivéssemos na direita? Impossível pela lógica isRightHalf)
+      // Vamos forçar um ponto na esquerda onde o box não caberia se fosse para a esquerda.
+      // actually, a lógica é: se focusX < 400, ox = focusX + 35. Se focusX > 400, ox = focusX - boxWidth - 35.
+      // Se focusX = 750 (direita), ox = 750 - 200 - 35 = 515.
+      // Se focusX = 410 (direita), ox = 410 - 200 - 35 = 175.
+    });
+
+    it('clamps to the top edge', () => {
+      // Ponto no topo: x=400, y=20.
+      // oy = 20 - (100/2) = -30. Deve virar 5.
+      const { oy } = getTraditionalTooltipPosition(400, 20, BW, BH, VW, VH);
+      expect(20 + oy).toBe(5);
+    });
+
+    it('clamps to the bottom edge', () => {
+      // Ponto na base: x=400, y=780.
+      // oy = 780 - (100/2) = 730. oy + boxHeight = 830 > 795.
+      // Deve virar 800 - 100 - 5 = 695.
+      const { oy } = getTraditionalTooltipPosition(400, 780, BW, BH, VW, VH);
+      expect(780 + oy).toBe(695);
+    });
+  });
   it('keeps the ascendant on the left and the descendant on the right', () => {
     const anchor = 90;
 

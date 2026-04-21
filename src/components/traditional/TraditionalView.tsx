@@ -108,7 +108,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
       <TraditionalSummary chart={chart} assessments={assessments} />
 
       {/* Mandala Centralizada e Grande */}
-      <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-4 shadow-xl relative overflow-hidden">
+      <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-4 shadow-xl relative overflow-visible">
         <div className="flex items-center justify-between mb-4 px-2">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
             Mandala Tradicional

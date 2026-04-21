@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { NatalChart, PlanetPosition, ZODIAC_SIGNS, PLANETS, HERMETIC_LOTS } from '@/types';
+import { NatalChart, ZODIAC_SIGNS, PLANETS, HERMETIC_LOTS } from '@/types';
 import { EGYPTIAN_TERMS, getFaceRuler } from '@/lib/traditional/dignities';
-import { getTraditionalWheelAnchor, longitudeToTraditionalAngle } from '@/lib/traditional/wheelGeometry';
+import { getTraditionalWheelAnchor, longitudeToTraditionalAngle, getTraditionalTooltipPosition } from '@/lib/traditional/wheelGeometry';
 
 const CX = 400;
 const CY = 400;
@@ -49,10 +49,9 @@ export default function TraditionalChart({
   const [hoveredPlanetId, setHoveredPlanetId] = useState<string | null>(null);
   const [hoveredLotId, setHoveredLotId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    // Detect touch device if needed for potential UI adjustments
   }, []);
 
   // Estados internos para configurações (podem ser movidos para props no futuro se necessário)
@@ -409,23 +408,40 @@ export default function TraditionalChart({
     const focusX = CX + r * Math.cos(angle);
     const focusY = CY + r * Math.sin(angle);
 
-    const title = (target as any).name || (target as any).label || "Lote";
+    const title = target.name;
     const signIndex = Math.floor(target.longitude / 30);
     const subtitle = `${ZODIAC_SIGNS[signIndex].name} ${Math.floor(target.longitude % 30)}°${Math.floor((target.longitude % 1) * 60)}'`;
-    const desc = (target as any).description;
+    const desc = 'description' in target ? target.description : undefined;
     
-    const offsetSide = focusX > CX ? 40 : -240;
-    const offsetTop = focusY > CY ? -120 : 40;
+    // Dimensões estimadas para o clamping
+    const BOX_WIDTH = 200;
+    const BOX_HEIGHT = desc ? 120 : 90;
+
+    const { ox, oy } = getTraditionalTooltipPosition(
+      focusX, 
+      focusY, 
+      BOX_WIDTH, 
+      BOX_HEIGHT
+    );
 
     return (
-      <g transform={`translate(${focusX}, ${focusY})`} className="pointer-events-none">
-        <g transform={`translate(${offsetSide}, ${offsetTop})`}>
-          <rect width="200" height={desc ? 120 : 90} rx="14" fill="#0f172a" stroke="#fbbf24" strokeWidth="2" className="shadow-2xl" opacity="0.98" />
-          <text x="100" y="30" textAnchor="middle" fill="#fbbf24" fontSize="16" fontWeight="bold">{title}</text>
-          <text x="100" y="55" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="600">{subtitle}</text>
-          <text x="100" y="78" textAnchor="middle" fill="#94a3b8" fontSize="13">Posição Clássica</text>
+      <g transform={`translate(${focusX}, ${focusY})`} className="pointer-events-none transition-all duration-300">
+        <g transform={`translate(${ox}, ${oy})`}>
+          <rect 
+            width={BOX_WIDTH} 
+            height={BOX_HEIGHT} 
+            rx="14" 
+            fill="#0f172a" 
+            stroke="#fbbf24" 
+            strokeWidth="2" 
+            className="shadow-2xl" 
+            opacity="0.98" 
+          />
+          <text x={BOX_WIDTH / 2} y="30" textAnchor="middle" fill="#fbbf24" fontSize="16" fontWeight="bold">{title}</text>
+          <text x={BOX_WIDTH / 2} y="55" textAnchor="middle" fill="#ffffff" fontSize="14" fontWeight="600">{subtitle}</text>
+          <text x={BOX_WIDTH / 2} y="78" textAnchor="middle" fill="#94a3b8" fontSize="13">Posição Clássica</text>
           {desc && (
-            <text x="100" y="100" textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="normal">
+            <text x={BOX_WIDTH / 2} y="100" textAnchor="middle" fill="#e2e8f0" fontSize="12" fontWeight="normal">
               {desc.length > 50 ? desc.substring(0, 47) + '...' : desc}
             </text>
           )}
@@ -513,10 +529,7 @@ export default function TraditionalChart({
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
           onPointerCancel={handlePointerUp}
-          onWheel={(e) => {
-            // Desativado por solicitação do usuário: usar apenas botões laterais
-            // Se necessário no futuro, reativar lógica de deltaY
-          }}
+          onWheel={() => {}}
         >
           <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`} className="origin-[0_0] transition-transform duration-75">
             {/* Círculo Principal com Gradiente */}
