@@ -27,7 +27,7 @@ interface Model {
 
 interface AIReportProps {
   chart: NatalChart;
-  reportMode?: 'natal' | 'solar';
+  reportMode?: 'natal' | 'solar' | 'traditional';
   solarRevolution?: NatalChart | null;
   solarYear?: number;
   onReportGenerated?: (report: AIReportType | null) => void;
@@ -47,10 +47,8 @@ export default function AIReport({
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-lite');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-flash-1.5');
   const [models, setModels] = useState<Model[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(true);
-  const [modelsError, setModelsError] = useState<string | null>(null);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
@@ -71,19 +69,14 @@ export default function AIReport({
       if (onReportUpdated) onReportUpdated(savedReport);
     }
     
-    setModelsLoading(true);
-    setModelsError(null);
     fetch('/api/report')
       .then(res => res.json())
       .then(data => {
         if (data.models) setModels(data.models);
-        else setModelsError('Falha ao carregar modelos');
       })
       .catch(err => {
         console.error('Erro ao carregar modelos:', err);
-        setModelsError('Erro de conexão ao carregar modelos');
-      })
-      .finally(() => setModelsLoading(false));
+      });
   }, [chart, isSolarMode, solarYear, onReportUpdated]);
 
   // Auto-scroll durante o streaming
@@ -113,7 +106,7 @@ export default function AIReport({
         body: JSON.stringify({ 
           chart,
           reportMode,
-          solarRevolution: isSolarMode ? solarRevolution : undefined,
+          solarChart: isSolarMode ? solarRevolution : undefined,
           solarYear: isSolarMode ? solarYear : undefined,
           model: selectedModel,
           apiKey: apiKey.trim(),
@@ -121,8 +114,18 @@ export default function AIReport({
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Erro ao comunicar com a IA');
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Erro ao comunicar com a IA';
+        
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } else {
+          const text = await response.text();
+          errorMessage = text || `Erro do servidor (${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (!response.body) throw new Error('Falha no stream de dados');
@@ -330,4 +333,3 @@ export default function AIReport({
     </div>
   );
 }
-

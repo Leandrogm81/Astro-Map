@@ -7,141 +7,121 @@ import {
   SOLAR_RETURN_PROMPT_SYSTEM,
   TRADITIONAL_PROMPT_SYSTEM
 } from '@/lib/aiPrompts';
-import { PlanetPosition, LotPosition } from '@/types';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
 
+// Configurações da OpenRouter
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL_ID = 'google/gemini-2.5-flash-lite';
+const DEFAULT_MODEL_ID = 'google/gemini-flash-1.5';
 
 export const AVAILABLE_MODELS = [
   {
     id: DEFAULT_MODEL_ID,
-    name: 'Padrão - Gemini 2.5 Flash Lite',
-    description: 'Boa qualidade com baixo custo e excelente velocidade para relatórios do mapa natal.\nCusto: sob consulta na OpenRouter',
+    name: 'Padrão - Gemini 1.5 Flash',
+    description: 'Boa qualidade com baixo custo e excelente velocidade para relatórios do mapa natal.\nCusto: baixo',
     cost: 'baixo'
   },
   {
-    id: 'deepseek/deepseek-chat-v3.1',
-    name: 'Análise Forte - DeepSeek V3.1',
-    description: 'Melhor para textos mais profundos, estruturados e análises mais longas.\nCusto: sob consulta na OpenRouter',
+    id: 'deepseek/deepseek-chat',
+    name: 'Análise Forte - DeepSeek V3',
+    description: 'Melhor para textos mais profundos, estruturados e análises mais longas.\nCusto: médio',
     cost: 'médio'
   },
+  {
+    id: 'qwen/qwen-2.5-72b-instruct',
+    name: 'Alternativo - Qwen 2.5 72B',
+    description: 'Modelo potente da Alibaba, excelente para estruturação lógica e detalhes técnicos.',
+    cost: 'médio'
+  }
 ];
+
 const AVAILABLE_MODEL_IDS = new Set(AVAILABLE_MODELS.map((item) => item.id));
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { 
-      chart, 
-      model: requestedModel,
-      apiKey: clientApiKey, 
-      reportMode,
-      solarRevolution, 
-      solarYear,
-      isTraditional = false,
-      assessments = []
-    } = body;
-
-    if (!chart) {
-      return NextResponse.json({ error: 'Dados do mapa astral não fornecidos' }, { status: 400 });
-    }
-
-    const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY;
-
-    if (!apiKey) {
+    // 1. Parsing robusto do corpo da requisição
+    let body;
+    try {
+      body = await request.json();
+    } catch {
       return NextResponse.json(
-        { error: 'Chave API não fornecida. Configure na interface ou no servidor.' },
-        { status: 401 }
-      );
-    }
-
-    const hasRequestedModel = Object.prototype.hasOwnProperty.call(body, 'model');
-    if (hasRequestedModel && requestedModel !== undefined && !AVAILABLE_MODEL_IDS.has(requestedModel)) {
-      return NextResponse.json(
-        {
-          error: `Modelo não suportado: ${requestedModel}`,
-          availableModels: AVAILABLE_MODELS.map((item) => item.id),
-        },
+        { error: 'Corpo da requisição inválido. Certifique-se de enviar um JSON válido.' },
         { status: 400 }
       );
     }
 
-    const model = requestedModel ?? DEFAULT_MODEL_ID;
+    const { 
+      chart, 
+      model: requestedModel, 
+      reportMode, 
+      assessments, 
+      solarChart, 
+      solarYear,
+      apiKey: userApiKey 
+    } = body;
 
-    const effectiveMode = reportMode ?? (isTraditional ? 'traditional' : solarRevolution && solarYear ? 'solar' : 'natal');
-    const isSolar = effectiveMode === 'solar';
-    
-    // Garantir dados tradicionais se necessário
-    if (isTraditional && !chart.traditionalPoints) {
-      try {
-        chart.traditionalPoints = calculateTraditionalPoints(
-          chart.ascendant || 0,
-          chart.planets || [],
-          chart.housesPlacidus || [],
-          chart.isDayChart ?? false
-        );
-      } catch (e) {
-        console.error('Falha ao calcular pontos tradicionais no servidor:', e);
-      }
+    // 2. Validação básica de dados
+    if (!chart || !chart.birthData) {
+      return NextResponse.json(
+        { error: 'Dados do mapa natal são obrigatórios.' },
+        { status: 400 }
+      );
     }
 
-    // Seleção de Prompt do Sistema
+    // 3. Configuração de Chave API e Modelo
+    const apiKey = userApiKey || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'Chave API não configurada. Por favor, insira uma chave válida.' },
+        { status: 401 }
+      );
+    }
+
+    const model = requestedModel && AVAILABLE_MODEL_IDS.has(requestedModel) 
+      ? requestedModel 
+      : DEFAULT_MODEL_ID;
+
+    // 4. Preparação dos Prompts baseados no modo de relatório
+    const isSolarReturn = reportMode === 'solar' && solarChart;
+    const isTraditional = reportMode === 'traditional';
+
     let systemPrompt = NATAL_PROMPT_SYSTEM;
-    if (isTraditional) {
-      systemPrompt = TRADITIONAL_PROMPT_SYSTEM;
-    } else if (isSolar) {
-      systemPrompt = SOLAR_RETURN_PROMPT_SYSTEM;
-    }
-    
-    // Construção da Mensagem do Usuário
     let userMessage = '';
-    if (isTraditional) {
-      const formatDeg = (lon: number | undefined) => {
-        if (typeof lon !== 'number') return '0°0\'';
-        const deg = Math.floor(lon % 30);
-        const min = Math.floor((lon % 1) * 60);
-        return `${deg}°${min}'`;
-      };
 
-      const planetData = (chart.planets || [])
-        .filter((p: PlanetPosition) => p?.id && ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id.toLowerCase()))
-        .map((p: PlanetPosition) => `- ${p.name || 'Desconhecido'}: ${p.sign || '---'} ${formatDeg(p.longitude)} na Casa ${p.house || '?'}`)
-        .join('\n');
-
-      const lotData = (chart.lots || [])
-        .map((l: LotPosition) => `- ${l.name || 'Lote'}: ${l.sign || '---'} ${formatDeg(l.degree)}`)
-        .join('\n');
-
-userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval).
-
-DADOS EXATOS DE POSIÇÃO:
-PLANETAS CLÁSSICOS:
-${planetData}
-
-LOTES HERMÉTICOS:
-${lotData}
-
-Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo para a análise profunda.\n\n${(() => {
-  try {
-    return formatTraditionalChartForAI(chart, assessments || []);
-  } catch (e) {
-    console.error('Erro ao formatar carta tradicional:', e);
-    return 'Erro ao processar dados tradicionais.';
-  }
-})()}`;
-    } else if (isSolar) {
-      userMessage = `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
+    if (isSolarReturn) {
+      systemPrompt = SOLAR_RETURN_PROMPT_SYSTEM;
+      const year = solarYear || new Date(solarChart.birthData.date).getFullYear();
+      userMessage = `Analise minha Revolução Solar para o ano ${year} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarChart, year)}`;
+    } else if (isTraditional) {
+      systemPrompt = TRADITIONAL_PROMPT_SYSTEM;
+      
+      // Garante que pontos tradicionais existam
+      if (!chart.traditionalPoints) {
+        try {
+          chart.traditionalPoints = calculateTraditionalPoints(
+            chart.ascendant,
+            chart.planets,
+            chart.housesPlacidus,
+            chart.isDayChart ?? true
+          );
+        } catch {
+          console.error('Erro ao calcular pontos tradicionais no servidor:');
+        }
+      }
+      
+      userMessage = formatTraditionalChartForAI(chart, assessments || []);
     } else {
-      userMessage = `Por favor, interprete meu Mapa Natal com base nos seguintes dados técnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÇÃO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
+      // Padrão: Natal Moderno
+      systemPrompt = NATAL_PROMPT_SYSTEM;
+      userMessage = formatChartForAI(chart);
     }
 
+    // 5. Chamada para OpenRouter com Streaming
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://astro-map.app',
+        'HTTP-Referer': 'https://astromap.com',
         'X-Title': 'AstroMap',
       },
       body: JSON.stringify({
@@ -150,79 +130,66 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage }
         ],
-        temperature: 0.75,
-        max_tokens: 8000,
-        stream: true, // Habilitar streaming
+        temperature: 0.7,
+        max_tokens: 4000,
+        stream: true,
       }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: { message: errorText } };
+      }
+      
       return NextResponse.json(
-        { error: errorData.error?.message || `Erro na API: ${response.status}` },
+        { 
+          error: errorData.error?.message || `Erro na OpenRouter: ${response.status}`,
+          status: response.status 
+        },
         { status: response.status }
       );
     }
 
-    // Configurar o Stream para o cliente
+    // 6. Manipulação do Stream
     const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const reader = response.body?.getReader();
+
+    if (!reader) {
+      return NextResponse.json({ error: 'Falha ao iniciar stream da resposta.' }, { status: 500 });
+    }
 
     const stream = new ReadableStream({
       async start(controller) {
-        if (!response.body) {
-          controller.close();
-          return;
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
         let buffer = '';
-        let closed = false;
-
-        const safeClose = () => {
-          if (!closed) {
-            closed = true;
-            try {
-              controller.close();
-            } catch {
-              // Já fechado ou erro inconsequente no encerramento
-            }
-          }
-        };
-
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            // Suporte a caracteres multi-byte e buffer incremental
             buffer += decoder.decode(value, { stream: true });
-
-            // Processar apenas linhas completas (terminadas em \n)
             const lines = buffer.split('\n');
-            // A última parte (provavelmente incompleta) volta para o buffer
             buffer = lines.pop() || '';
 
             for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed || !trimmed.startsWith('data: ')) continue;
-
-              const dataStr = trimmed.slice(6).trim();
-
-              if (dataStr === '[DONE]') {
-                safeClose();
-                return;
-              }
+              const trimmedLine = line.trim();
+              if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+              
+              const dataStr = trimmedLine.replace(/^data: /, '').trim();
+              if (dataStr === '[DONE]') break;
 
               try {
-                const data = JSON.parse(dataStr);
-                const content = data.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  controller.enqueue(encoder.encode(content));
+                const json = JSON.parse(dataStr);
+                const text = json.choices?.[0]?.delta?.content || '';
+                if (text) {
+                  controller.enqueue(encoder.encode(text));
                 }
               } catch {
-                // Linha SSE incompleta ou mal-formada neste chunk, ignorar com segurança
-                // No próximo chunk o buffer terá a linha completa
+                // Silenciosamente ignorar chunks parciais
               }
             }
           }
@@ -230,7 +197,8 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
           console.error('Streaming error:', error);
           controller.error(error);
         } finally {
-          safeClose();
+          reader.releaseLock();
+          try { controller.close(); } catch { }
         }
       },
     });
@@ -239,12 +207,14 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
+
   } catch (error) {
-    console.error('API error:', error);
+    console.error('API Final Catch:', error);
     return NextResponse.json({ 
-      error: 'Erro interno do servidor', 
+      error: 'Erro inesperado no servidor', 
       details: error instanceof Error ? error.message : 'Erro desconhecido' 
     }, { status: 500 });
   }
@@ -253,4 +223,3 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
 export async function GET() {
   return NextResponse.json({ models: AVAILABLE_MODELS });
 }
-
