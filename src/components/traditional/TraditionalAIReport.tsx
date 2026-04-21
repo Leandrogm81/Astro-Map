@@ -17,6 +17,11 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {
+  clearTraditionalReportFromStorage,
+  loadTraditionalReportFromStorage,
+  saveTraditionalReportToStorage,
+} from '@/lib/traditional/reportStorage';
 
 interface Model {
   id: string;
@@ -47,8 +52,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
     const storedApiKey = localStorage.getItem('openrouter_api_key');
     if (storedApiKey) setApiKey(storedApiKey);
     
-    const reportKey = `trad_report_${chart.birthData.name}_${chart.birthData.date}`;
-    const savedReport = localStorage.getItem(reportKey);
+    const savedReport = loadTraditionalReportFromStorage(chart.birthData);
     if (savedReport) {
       setReportText(savedReport);
       if (onReportUpdated) onReportUpdated(savedReport);
@@ -81,6 +85,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
     setIsStreaming(true);
     setError(null);
     setReportText('');
+    onReportUpdated?.('');
 
     try {
       const response = await fetch('/api/report', {
@@ -116,8 +121,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
         if (onReportUpdated) onReportUpdated(fullText);
       }
 
-      const reportKey = `trad_report_${chart.birthData.name}_${chart.birthData.date}`;
-      localStorage.setItem(reportKey, fullText);
+      saveTraditionalReportToStorage(chart.birthData, fullText);
       
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ocorreu um erro inesperado';
@@ -131,8 +135,8 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const clearReport = () => {
     if (window.confirm('Deseja excluir este tratado permanente?')) {
       setReportText('');
-      const reportKey = `trad_report_${chart.birthData.name}_${chart.birthData.date}`;
-      localStorage.removeItem(reportKey);
+      onReportUpdated?.('');
+      clearTraditionalReportFromStorage(chart.birthData);
     }
   };
 

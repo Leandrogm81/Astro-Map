@@ -63,6 +63,18 @@ export default function Home() {
       });
   }, []);
 
+  useEffect(() => {
+    if (!chart) {
+      setNatalReportText('');
+      return;
+    }
+
+    const reportKey = getReportKey(chart.birthData);
+    const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date);
+    const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
+    setNatalReportText(savedReport || '');
+  }, [chart]);
+
   const handleFormSubmit = useCallback(async (birthData: BirthData) => {
     if (!initialized) {
       setError('Sistema ainda não inicializado. Aguarde um momento.');

@@ -1,34 +1,18 @@
 import React from 'react';
-import { NatalChart, ASPECT_ORBS } from '@/types';
+import { NatalChart } from '@/types';
 import { Info } from 'lucide-react';
+import {
+  filterTraditionalAspects,
+  getAspectLabelPt,
+  getPlanetLabelPt,
+} from '@/lib/traditional/pdfFormatting';
 
 interface TraditionalAspectListProps {
   chart: NatalChart;
 }
 
-const TRADITIONAL_TYPES = ['conjunction', 'sextile', 'square', 'trine', 'opposition'];
-
-const TYPE_NAME_PT: Record<string, string> = {
-  conjunction: 'Conjunção',
-  sextile: 'Sextil',
-  square: 'Quadratura',
-  trine: 'Trígono',
-  opposition: 'Oposição'
-};
-
-const PLANET_NAME_PT: Record<string, string> = {
-  sun: 'Sol', moon: 'Lua', mercury: 'Mercúrio', venus: 'Vênus', 
-  mars: 'Marte', jupiter: 'Júpiter', saturn: 'Saturno'
-};
-
 export default function TraditionalAspectList({ chart }: TraditionalAspectListProps) {
-  const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-  
-  const filteredAspects = chart.aspects.filter(as => {
-    return TRADITIONAL_TYPES.includes(as.type) && 
-           classicIds.includes(as.planet1.toLowerCase()) && 
-           classicIds.includes(as.planet2.toLowerCase());
-  });
+  const filteredAspects = filterTraditionalAspects(chart.aspects);
 
   if (filteredAspects.length === 0) {
     return (
@@ -62,17 +46,17 @@ export default function TraditionalAspectList({ chart }: TraditionalAspectListPr
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-white tracking-tight">
-                      {PLANET_NAME_PT[aspect.planet1.toLowerCase()] || aspect.planet1}
+                      {getPlanetLabelPt(aspect.planet1)}
                     </span>
                     <span className="text-slate-600 text-[10px]">e</span>
                     <span className="text-sm font-bold text-white tracking-tight">
-                      {PLANET_NAME_PT[aspect.planet2.toLowerCase()] || aspect.planet2}
+                      {getPlanetLabelPt(aspect.planet2)}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${getAspectColor(aspect.type)}`}>
-                    {TYPE_NAME_PT[aspect.type]}
+                    {getAspectLabelPt(aspect.type)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-center">

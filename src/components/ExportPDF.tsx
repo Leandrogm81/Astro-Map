@@ -16,6 +16,9 @@ import { TraditionalAssessment } from '@/lib/traditional/types';
 import ChartSimplePDF from './ChartSimplePDF';
 import TraditionalChartPDF from './TraditionalChartPDF';
 import { Download, Loader2 } from 'lucide-react';
+import {
+  formatPdfAspectRow,
+} from '@/lib/traditional/pdfFormatting';
 import { 
   getDignity, 
   calculateDispositorChain, 
@@ -637,6 +640,9 @@ export const MyPDFDocument = ({
 }: PDFDocumentProps) => {
   const data = chart.birthData;
   const isAIRSOnly = pdfMode === 'ai_rs_only';
+  const natalReportText = reportText?.trim() ?? '';
+  const solarReportTextNormalized = solarReportText?.trim() ?? '';
+  const aspectRows = (chart.aspects || []).slice(0, 30).map(formatPdfAspectRow);
 
   return (
     <Document title={`AstroMap - Dossier Astrológico - ${data.name}`}>
@@ -684,12 +690,12 @@ export const MyPDFDocument = ({
             <Text style={styles.summaryPage}>06</Text>
           </View>
 
-          {reportText && (
+          {natalReportText ? (
             <View style={styles.summaryItem}>
               <Text style={styles.summaryLabel}>4. Tratado Interpretativo Natal (IA)</Text>
               <Text style={styles.summaryPage}>07</Text>
             </View>
-          )}
+          ) : null}
 
           {solarRevolution && (
             <View style={{ marginTop: 20 }}>
@@ -860,10 +866,10 @@ export const MyPDFDocument = ({
               <Text style={styles.tableCellBold}>Orbe</Text>
               <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Dinâmica</Text>
             </View>
-            {chart.aspects.slice(0, 30).map((a, i) => (
+            {aspectRows.map((a, i) => (
               <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                 <Text style={[styles.tableCell, { flex: 1 }]}>{a.planet1}</Text>
-                <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold', color: '#1E1B4B' }]}>{a.type.toUpperCase()}</Text>
+                <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold', color: '#1E1B4B' }]}>{a.aspect}</Text>
                 <Text style={[styles.tableCell, { flex: 1 }]}>{a.planet2}</Text>
                 <Text style={styles.tableCell}>{a.orb.toFixed(1)}°</Text>
                 <Text style={[styles.tableCell, { flex: 1.2, color: a.applying ? '#d4af37' : '#94a3b8', fontWeight: a.applying ? 'bold' : 'normal' }]}>
@@ -876,13 +882,12 @@ export const MyPDFDocument = ({
         </Page>
 
       {/* PÁGINAS 7-10: TRATADO NATAL (IA) */}
-      {reportText && (
-        <Page size="A4" style={styles.page}>
+      <Page size="A4" style={styles.page}>
           <Header />
-          <View style={{ 
-            backgroundColor: '#1e1b4b', 
-            padding: 20, 
-            borderRadius: 4, 
+          <View style={{
+            backgroundColor: '#1e1b4b',
+            padding: 20,
+            borderRadius: 4,
             marginBottom: 20,
             borderBottomWidth: 4,
             borderBottomColor: '#d4af37'
@@ -894,10 +899,17 @@ export const MyPDFDocument = ({
               Codificado pela Inteligência Artificial AstroMap
             </Text>
           </View>
-          <MarkdownParagraphs text={reportText} />
+          {natalReportText ? (
+            <MarkdownParagraphs text={natalReportText} />
+          ) : (
+            <View style={{ padding: 18, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc' }}>
+              <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>
+                O relatório de IA não foi encontrado para este mapa. Gere o relatório no app para incluí-lo neste PDF.
+              </Text>
+            </View>
+          )}
           <Footer />
         </Page>
-      )}
 
       {/* PÁGINA 11-13: REVOLUÇÃO SOLAR (Se Houver) */}
       {solarRevolution && solarYear && (
@@ -924,13 +936,13 @@ export const MyPDFDocument = ({
       )}
 
       {/* PÁGINA 14-16: RELATÓRIO PREDITIVO (IA) */}
-      {solarReportText && (
+      {solarReportTextNormalized && (
         <Page size="A4" style={styles.page}>
           <Header />
           <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#d97706', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
             Arquétipos e Tendências do Ano ({solarYear})
           </Text>
-          <MarkdownParagraphs text={solarReportText} />
+          <MarkdownParagraphs text={solarReportTextNormalized} />
           <Footer />
         </Page>
       )}
@@ -942,6 +954,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
   const data = chart.birthData;
   const sun = chart.planets.find(p => p.name === 'Sol');
   const isDay = (sun?.house || 1) >= 7;
+  const traditionalReportText = reportText?.trim() ?? '';
 
   return (
     <Document title={`AstroMap - Tratado Tradicional - ${data.name}`}>
@@ -1126,16 +1139,22 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
       </Page>
 
       {/* RELATÓRIO DE IA TRADICIONAL */}
-      {reportText && (
-        <Page size="A4" style={styles.page}>
-          <Header />
-          <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#0f172a', color: '#fbbf24', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
-            Tratado de Interpretação Clássica
-          </Text>
-          <MarkdownParagraphs text={reportText} />
-          <Footer />
-        </Page>
-      )}
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#0f172a', color: '#fbbf24', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
+          Tratado de Interpretação Clássica
+        </Text>
+        {traditionalReportText ? (
+          <MarkdownParagraphs text={traditionalReportText} />
+        ) : (
+          <View style={{ padding: 18, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc' }}>
+            <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>
+              O relatório de IA tradicional não foi encontrado para este mapa. Gere o tratado no app para incluí-lo neste PDF.
+            </Text>
+          </View>
+        )}
+        <Footer />
+      </Page>
     </Document>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { NatalChart, PlanetPosition } from '@/types';
+import { NatalChart } from '@/types';
 import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
 import { TraditionalAssessment } from '@/lib/traditional/types';
 import TraditionalChart from '@/components/traditional/TraditionalChart';
@@ -12,6 +12,10 @@ import TraditionalAspectList from '@/components/traditional/TraditionalAspectLis
 import ExportPDF from '@/components/ExportPDF';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
 import TraditionalPositionsTable from '@/components/traditional/TraditionalPositionsTable';
+import {
+  getTraditionalReportStorageKey,
+  loadTraditionalReportFromStorage,
+} from '@/lib/traditional/reportStorage';
 import { 
   Sparkles, 
   Info, 
@@ -30,7 +34,22 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
   const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
   const [showAllLots, setShowAllLots] = useState(false);
-  const [reportText, setReportText] = useState<string>('');
+  const reportStorageKey = useMemo(() => getTraditionalReportStorageKey(chart.birthData), [chart.birthData]);
+  const [reportState, setReportState] = useState(() => ({
+    storageKey: reportStorageKey,
+    text: loadTraditionalReportFromStorage(chart.birthData),
+  }));
+  const reportText =
+    reportState.storageKey === reportStorageKey
+      ? reportState.text
+      : loadTraditionalReportFromStorage(chart.birthData);
+
+  const handleReportUpdated = (text: string) => {
+    setReportState({
+      storageKey: reportStorageKey,
+      text,
+    });
+  };
 
   const handlePlanetClick = (id: string | null, position?: { x: number, y: number }) => {
     setSelectedPlanetId(id);
@@ -95,11 +114,11 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
         </div>
         
         <div className="flex items-center gap-3">
-          <ExportPDF 
-            chart={chart} 
-            reportText={reportText}
-            isTraditional={true}
-            traditionalAssessments={Object.values(assessments)}
+        <ExportPDF 
+          chart={chart} 
+          reportText={reportText}
+          isTraditional={true}
+          traditionalAssessments={Object.values(assessments)}
             variant="compact"
           />
         </div>
@@ -160,7 +179,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
         <TraditionalAIReport 
           chart={chart} 
           assessments={Object.values(assessments)}
-          onReportUpdated={setReportText}
+          onReportUpdated={handleReportUpdated}
         />
       </div>
 

@@ -95,6 +95,7 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
     setIsStreaming(true);
     setError(null);
     setReportText('');
+    onReportUpdated?.('');
 
     try {
       const response = await fetch('/api/report', {
@@ -157,6 +158,8 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
       localStorage.removeItem(reportKey);
       localStorage.removeItem(legacyKey);
       setReportText('');
+      onReportUpdated?.('');
+      onReportGenerated?.(null);
     }
   };
 
