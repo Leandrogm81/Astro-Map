@@ -27,7 +27,7 @@ import {
   getHouseForPlanet
 } from '@/lib/astrology';
 
-// Registrar fontes para um ar mais premium e garantir glifos astrolÃ³gicos
+// Registrar fontes para um ar mais premium e garantir glifos astrológicos
 
 Font.register({
   family: 'DejaVu Sans',
@@ -278,37 +278,37 @@ interface PDFDocumentProps {
 const formatDeg = (deg: number) => {
   const d = Math.floor(deg);
   const m = Math.floor((deg - d) * 60);
-  return `${d}Â°${m.toString().padStart(2, '0')}'`;
+  return `${d}°${m.toString().padStart(2, '0')}'`;
 };
 
 const getPlanetSymbol = (name: string) => {
   const symbols: Record<string, string> = {
-    'Sol': 'â˜‰', 'Lua': 'â˜½', 'MercÃºrio': 'â˜¿', 'VÃªnus': 'â™€',
-    'Marte': 'â™‚', 'JÃºpiter': 'â™ƒ', 'Saturno': 'â™„', 'Urano': 'â™…',
-    'Netuno': 'â™†', 'PlutÃ£o': 'â™‡', 'Nodo Norte': 'â˜Š', 'QuÃ­ron': 'âš·',
-    'Lilith': 'âš¸', 'Roda da Fortuna': 'âŠ—',
-    'North Node': 'â˜Š', 'Chiron': 'âš·'
+    'Sol': '☉', 'Lua': '☽', 'Mercúrio': '☿', 'Vênus': '♀',
+    'Marte': '♂', 'Júpiter': '♃', 'Saturno': '♄', 'Urano': '♅',
+    'Netuno': '♆', 'Plutão': '♇', 'Nodo Norte': '☊', 'Quíron': '⚷',
+    'Lilith': '⚸', 'Roda da Fortuna': '⊗',
+    'North Node': '☊', 'Chiron': '⚷'
   };
   return symbols[name] || name[0];
 };
 
 const getPlanetLabel = (id: string): string => {
   const map: Record<string, string> = {
-    sun: 'Sol', moon: 'Lua', mercury: 'MercÃºrio',
-    venus: 'VÃªnus', mars: 'Marte', jupiter: 'JÃºpiter', saturn: 'Saturno'
+    sun: 'Sol', moon: 'Lua', mercury: 'Mercúrio',
+    venus: 'Vênus', mars: 'Marte', jupiter: 'Júpiter', saturn: 'Saturno'
   };
   return map[id] || id;
 };
 
 const getPlanetSymbolTrad = (id: string): string => {
   const map: Record<string, string> = {
-    sun: 'â˜‰', moon: 'â˜½', mercury: 'â˜¿',
-    venus: 'â™€', mars: 'â™‚', jupiter: 'â™ƒ', saturn: 'â™„'
+    sun: '☉', moon: '☽', mercury: '☿',
+    venus: '♀', mars: '♂', jupiter: '♃', saturn: '♄'
   };
   return map[id] || '';
 };
 
-// Auxiliares de TraduÃ§Ã£o Tradicional
+// Auxiliares de Tradução Tradicional
 const translateSectStatus = (status: string) => {
   const norm = status.toUpperCase().replace(/-/g, '_');
   const map: Record<string, string> = {
@@ -316,9 +316,9 @@ const translateSectStatus = (status: string) => {
     'OUT_OF_SECT': 'FORA DE SEITA',
     'HAYZ': 'HAYZ (IDEAL)',
     'EX_CONDITION': 'EXCELENTE',
-    'BENEFIC': 'BENÃ‰FICO',
-    'MALEFIC_OUT_OF_SECT': 'MALÃ‰FICO/FORA',
-    'MALEFIC': 'MALÃ‰FICO'
+    'BENEFIC': 'BENÉFICO',
+    'MALEFIC_OUT_OF_SECT': 'MALÉFICO/FORA',
+    'MALEFIC': 'MALÉFICO'
   };
   return map[norm] || status;
 };
@@ -328,7 +328,7 @@ const translateDignity = (dignity: string) => {
   return dignity;
 };
 
-// Componente utilitÃ¡rio para renderizar as tabelas de um mapa
+// Componente utilitário para renderizar as tabelas de um mapa
 const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => (
   <View style={{ marginBottom: 20 }}>
     <Text style={[styles.sectionTitle, { fontSize: 12, backgroundColor: '#4f46e5', color: '#fff', padding: 6, borderRadius: 4 }]}> 
@@ -405,7 +405,7 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
   };
   
   const elementLabels: Record<string, string> = {
-    fire: 'Fogo', earth: 'Terra', air: 'Ar', water: 'Ãgua'
+    fire: 'Fogo', earth: 'Terra', air: 'Ar', water: 'Água'
   };
 
   const getElement = (sign: string) => {
@@ -424,12 +424,12 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 8 }]}>Resumo AnalÃ­tico e DinÃ¢micas de ForÃ§a</Text>
+      <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 8 }]}>Resumo Analítico e Dinâmicas de Força</Text>
       
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         {/* Elementos */}
         <View style={{ flex: 1, marginRight: 8, backgroundColor: '#f8fafc', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' }}>
-          <Text style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 5, color: '#64748b' }}>DISTRIBUIÃ‡ÃƒO ELEMENTAL</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 5, color: '#64748b' }}>DISTRIBUIÇÃO ELEMENTAL</Text>
           <View>
             {['fire', 'earth', 'air', 'water'].map(el => (
               <View key={el} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
@@ -440,13 +440,13 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
           </View>
         </View>
 
-        {/* Cadeia de DisposiÃ§Ã£o */}
+        {/* Cadeia de Disposição */}
         <View style={{ flex: 1.5, marginLeft: 8, backgroundColor: '#f8fafc', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' }}>
-          <Text style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 5, color: '#64748b' }}>REGÃŠNCIA E DISPOSIÃ‡ÃƒO FINAL</Text>
+          <Text style={{ fontSize: 8, fontWeight: 'bold', marginBottom: 5, color: '#64748b' }}>REGÊNCIA E DISPOSIÇÃO FINAL</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {chain.slice(0, 10).map((link, i) => (
               <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ fontSize: 7 }}>{link.planet} â†’ {link.isRuledBy}</Text>
+                <Text style={{ fontSize: 7 }}>{link.planet} → {link.isRuledBy}</Text>
                 {i < chain.slice(0, 10).length - 1 && <Text style={{ fontSize: 7, color: '#94a3b8' }}> | </Text>}
               </View>
             ))}
@@ -468,11 +468,11 @@ const Header = () => (
       <PDFImage src="/assets/logo-premium.png" style={styles.logo} />
       <View>
         <Text style={styles.title}>AstroMap</Text>
-        <Text style={styles.subtitle}>O Livro de Destino e Autoconhecimento AstrolÃ³gico</Text>
+        <Text style={styles.subtitle}>O Livro de Destino e Autoconhecimento Astrológico</Text>
       </View>
     </View>
     <View style={{ textAlign: 'right' }}>
-      <Text style={{ fontSize: 9, color: '#666666' }}>DossiÃª exclusivo gerado em</Text>
+      <Text style={{ fontSize: 9, color: '#666666' }}>Dossiê exclusivo gerado em</Text>
       <Text style={{ fontSize: 10, fontWeight: 'bold' }}>{new Date().toLocaleDateString('pt-BR')}</Text>
     </View>
   </View>
@@ -480,8 +480,8 @@ const Header = () => (
 
 const Footer = () => (
   <View style={styles.footer} fixed>
-    <Text>Copyright Â© {new Date().getFullYear()} AstroMap AI - Tecnologia de PrecisÃ£o AstrolÃ³gica</Text>
-    <Text render={({ pageNumber, totalPages }) => `Documento Confidencial | PÃ¡gina ${pageNumber} de ${totalPages}`} style={{ marginTop: 2 }} />
+    <Text>Copyright © {new Date().getFullYear()} AstroMap AI - Tecnologia de Precisão Astrológica</Text>
+    <Text render={({ pageNumber, totalPages }) => `Documento Confidencial | Página ${pageNumber} de ${totalPages}`} style={{ marginTop: 2 }} />
   </View>
 );
 
@@ -507,7 +507,7 @@ const MarkdownParagraphs = ({ text }: { text: string }) => {
           return <View key={i} style={styles.mdSeparator} />;
         }
         
-        // TÃ­tulos
+        // Títulos
         if (content.startsWith('###')) {
           const title = content.replace(/^###\s*/, '');
           return <Text key={i} style={styles.mdH3}>{title}</Text>;
@@ -528,7 +528,7 @@ const MarkdownParagraphs = ({ text }: { text: string }) => {
           
           return (
             <View key={i} style={styles.mdListItem}>
-              <Text style={styles.mdBullet}>{isOrdered ? content.split('.')[0] + '.' : 'â€¢'}</Text>
+              <Text style={styles.mdBullet}>{isOrdered ? content.split('.')[0] + '.' : '•'}</Text>
               <Text style={[styles.aiText, { flex: 1, marginBottom: 4 }]}>
                 {parseBoldText(itemText)}
               </Text>
@@ -536,7 +536,7 @@ const MarkdownParagraphs = ({ text }: { text: string }) => {
           );
         }
         
-        // ParÃ¡grafo Normal
+        // Parágrafo Normal
         return (
           <Text key={i} style={styles.aiText}>
             {parseBoldText(content)}
@@ -547,7 +547,7 @@ const MarkdownParagraphs = ({ text }: { text: string }) => {
   );
 };
 
-// FunÃ§Ã£o simples para detectar **bold** e retornar fragmentos formatados
+// Função simples para detectar **bold** e retornar fragmentos formatados
 function parseBoldText(text: string) {
   const parts = text.split(/(\*\*.*?\*\*)/g);
   return parts.map((part, i) => {
@@ -644,8 +644,8 @@ export const MyPDFDocument = ({
   const aspectRows = (chart.aspects || []).slice(0, 30).map(formatPdfAspectRow);
 
   return (
-    <Document title={`AstroMap - Dossier AstrolÃ³gico - ${data.name}`}>
-      {/* PÃGINA 1: CAPA PREMIUM INFINITY */}
+    <Document title={`AstroMap - Dossiê Astrológico - ${data.name}`}>
+      {/* PÁGINA 1: CAPA PREMIUM INFINITY */}
       <Page size="A4" style={[styles.page, { backgroundColor: '#0f172a', color: '#fff', justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
         <View style={{ 
           position: 'absolute', top: 20, left: 20, right: 20, bottom: 20, 
@@ -659,7 +659,7 @@ export const MyPDFDocument = ({
         </View>
 
         <View style={{ marginTop: 60, alignItems: 'center' }}>
-          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 10 }}>DossiÃª Exclusivo de</Text>
+          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 10 }}>Dossiê Exclusivo de</Text>
           <Text style={{ fontSize: 32, fontFamily: 'Helvetica-Bold', color: '#fff', textAlign: 'center' }}>{data.name}</Text>
           <View style={{ height: 1, width: 80, backgroundColor: '#d4af37', marginTop: 20 }} />
         </View>
@@ -670,7 +670,7 @@ export const MyPDFDocument = ({
         </View>
       </Page>
 
-      {/* PÃGINA 2: SUMÃRIO INTEGRADO */}
+      {/* PÁGINA 2: SUMÁRIO INTEGRADO */}
       <Page size="A4" style={styles.page}>
         <Header />
         <View style={{ paddingTop: 20, paddingHorizontal: 30 }}>
@@ -699,16 +699,16 @@ export const MyPDFDocument = ({
           {solarRevolution && (
             <View style={{ marginTop: 20 }}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>5. Mapa da RevoluÃ§Ã£o Solar ({solarYear})</Text>
+                <Text style={styles.summaryLabel}>5. Mapa da Revolução Solar ({solarYear})</Text>
                 <Text style={styles.summaryPage}>10</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>6. InterposiÃ§Ã£o e Dados TÃ©cnicos</Text>
+                <Text style={styles.summaryLabel}>6. Interposição e Dados Técnicos</Text>
                 <Text style={styles.summaryPage}>11</Text>
               </View>
               {solarReportText && (
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryLabel}>7. PrognÃ³stico Anual EstratÃ©gico (IA)</Text>
+                  <Text style={styles.summaryLabel}>7. Prognóstico Anual Estratégico (IA)</Text>
                   <Text style={styles.summaryPage}>12</Text>
                 </View>
               )}
@@ -718,7 +718,7 @@ export const MyPDFDocument = ({
         <Footer />
       </Page>
 
-      {/* PÃGINA 1: IDENTIDADE E RADIX */}
+      {/* PÁGINA 1: IDENTIDADE E RADIX */}
       <Page size="A4" style={styles.page}>
         <Header />
         <View style={styles.section}>
@@ -729,7 +729,7 @@ export const MyPDFDocument = ({
               <Text style={styles.infoValue}>{data.name}</Text>
             </View>
             <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>EncarnaÃ§Ã£o</Text>
+              <Text style={styles.infoLabel}>Encarnação</Text>
               <Text style={styles.infoValue}>{data.date} | {data.time}</Text>
             </View>
             <View style={styles.infoCard}>
@@ -740,15 +740,15 @@ export const MyPDFDocument = ({
         </View>
         <View style={styles.chartWrapper}>
           <ChartSimplePDF chart={chart} size={380} />
-          <Text style={{ fontSize: 7, marginTop: 8, color: '#94a3b8', textTransform: 'uppercase' }}>Mandala de Radix - DomificaÃ§Ã£o Placidus</Text>
+          <Text style={{ fontSize: 7, marginTop: 8, color: '#94a3b8', textTransform: 'uppercase' }}>Mandala de Radix - Domificação Placidus</Text>
         </View>
         <Footer />
       </Page>
 
-      {/* PÃGINA 4: PLANETAS E DIGNIDADES */}
+      {/* PÁGINA 4: PLANETAS E DIGNIDADES */}
       <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={styles.sectionTitle}>Geometria PlanetÃ¡ria e Dignidades</Text>
+          <Text style={styles.sectionTitle}>Geometria Planetária e Dignidades</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Corpo Celeste</Text>
@@ -759,14 +759,14 @@ export const MyPDFDocument = ({
             </View>
             {chart.planets.map((p, i) => (
               <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
-                <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>{p.name}{p.retrograde ? ' â„ž' : ''}</Text>
+                <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>{p.name}{p.retrograde ? ' ℞' : ''}</Text>
                 <Text style={[styles.tableCell, { flex: 1.5 }]}>{p.sign}</Text>
                 <Text style={styles.tableCell}>{formatDeg(p.degree)}</Text>
                 <Text style={[styles.tableCell, { flex: 0.5 }]}>{p.house}</Text>
                 <Text style={[styles.tableCell, { 
                   flex: 1.5, 
-                  color: getDignity(p.name, p.sign).includes('DomicÃ­lio') ? '#10b981' : (getDignity(p.name, p.sign).includes('ExÃ­lio') ? '#ef4444' : '#334155'),
-                  fontWeight: getDignity(p.name, p.sign).includes('DomicÃ­lio') || getDignity(p.name, p.sign).includes('ExÃ­lio') ? 'bold' : 'normal'
+                  color: getDignity(p.name, p.sign).includes('Domicílio') ? '#10b981' : (getDignity(p.name, p.sign).includes('Exílio') ? '#ef4444' : '#334155'),
+                  fontWeight: getDignity(p.name, p.sign).includes('Domicílio') || getDignity(p.name, p.sign).includes('Exílio') ? 'bold' : 'normal'
                 }]}>
                   {getDignity(p.name, p.sign)}
                 </Text>
@@ -776,11 +776,11 @@ export const MyPDFDocument = ({
           <Footer />
         </Page>
 
-      {/* PÃGINA 4: LOTES HERMÃ‰TICOS E PONTOS TRADICIONAIS */}
+      {/* PÁGINA 4: LOTES HERMÉTICOS E PONTOS TRADICIONAIS */}
       {!isAIRSOnly && (
         <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={styles.sectionTitle}>Lotes HermÃ©ticos e Pontos de Poder</Text>
+          <Text style={styles.sectionTitle}>Lotes Herméticos e Pontos de Poder</Text>
           
           {chart.traditionalPoints && (
             <View style={[styles.grid, { marginBottom: 20 }]}>
@@ -805,11 +805,11 @@ export const MyPDFDocument = ({
 
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Lote HermÃ©tico</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Lote Hermético</Text>
               <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Signo</Text>
               <Text style={styles.tableCellBold}>Grau</Text>
               <Text style={[styles.tableCellBold, { flex: 0.5 }]}>Casa</Text>
-              <Text style={[styles.tableCellBold, { flex: 2 }]}>EssÃªncia</Text>
+              <Text style={[styles.tableCellBold, { flex: 2 }]}>Essência</Text>
             </View>
             {chart.lots?.map((lot, i) => (
               <View key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]} wrap={false}>
@@ -825,23 +825,23 @@ export const MyPDFDocument = ({
         </Page>
       )}
 
-      {/* PÃGINA 6: CASAS ASTROLÃ“GICAS (SISTEMAS) */}
+      {/* PÁGINA 6: CASAS ASTROLÓGICAS (SISTEMAS) */}
       <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={styles.sectionTitle}>DomificaÃ§Ã£o Placidus: Arquitetura do Destino</Text>
+          <Text style={styles.sectionTitle}>Domificação Placidus: Arquitetura do Destino</Text>
           <View style={{ width: '100%' }}>
             <View style={styles.table}>
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableCellBold, { flex: 0.5 }]}>#</Text>
-                <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Casa / Ã‚ngulo</Text>
-                <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Signo na CÃºspide</Text>
+                <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Casa / Ângulo</Text>
+                <Text style={[styles.tableCellBold, { flex: 1.5 }]}>Signo na Cúspide</Text>
                 <Text style={styles.tableCellBold}>Grau Exato</Text>
               </View>
               {chart.housesPlacidus.map((h, i) => (
                 <View key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                   <Text style={{ fontSize: 8, flex: 0.5 }}>{h.number}</Text>
                   <Text style={{ fontSize: 8, flex: 1.5, fontWeight: h.number % 3 === 1 ? 'bold' : 'normal' }}>
-                    {h.number === 1 ? 'Ascendente' : h.number === 10 ? 'Meio do CÃ©u' : (h.number === 4 ? 'Fundo do CÃ©u' : (h.number === 7 ? 'Descendente' : `Casa ${h.number}`))}
+                    {h.number === 1 ? 'Ascendente' : h.number === 10 ? 'Meio do Céu' : (h.number === 4 ? 'Fundo do Céu' : (h.number === 7 ? 'Descendente' : `Casa ${h.number}`))}
                   </Text>
                   <Text style={{ fontSize: 8, flex: 1.5 }}>{h.sign}</Text>
                   <Text style={{ fontSize: 8, flex: 1 }}>{formatDeg(h.degree)}</Text>
@@ -853,24 +853,24 @@ export const MyPDFDocument = ({
           <Footer />
         </Page>
 
-      {/* PÃGINA 7: ASPECTOS NATAL */}
+      {/* PÁGINA 7: ASPECTOS NATAL */}
       <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={styles.sectionTitle}>DinÃ¢mica de Aspectos: Conversas do CÃ©u</Text>
+          <Text style={styles.sectionTitle}>Dinâmica de Aspectos: Conversas do Céu</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta A</Text>
               <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Aspecto</Text>
               <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta B</Text>
               <Text style={styles.tableCellBold}>Orbe</Text>
-              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>DinÃ¢mica</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Dinâmica</Text>
             </View>
             {aspectRows.map((a, i) => (
               <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
                 <Text style={[styles.tableCell, { flex: 1 }]}>{a.planet1}</Text>
                 <Text style={[styles.tableCell, { flex: 1.2, fontWeight: 'bold', color: '#1E1B4B' }]}>{a.aspect}</Text>
                 <Text style={[styles.tableCell, { flex: 1 }]}>{a.planet2}</Text>
-                <Text style={styles.tableCell}>{a.orb.toFixed(1)}Â°</Text>
+                <Text style={styles.tableCell}>{a.orb.toFixed(1)}°</Text>
                 <Text style={[styles.tableCell, { flex: 1.2, color: a.applying ? '#d4af37' : '#94a3b8', fontWeight: a.applying ? 'bold' : 'normal' }]}>
                   {a.applying ? 'Aplicativo' : 'Separativo'}
                 </Text>
@@ -880,7 +880,7 @@ export const MyPDFDocument = ({
           <Footer />
         </Page>
 
-      {/* PÃGINAS 7-10: TRATADO NATAL (IA) */}
+      {/* PÁGINAS 7-10: TRATADO NATAL (IA) */}
       <Page size="A4" style={styles.page}>
           <Header />
           <View style={{
@@ -892,10 +892,10 @@ export const MyPDFDocument = ({
             borderBottomColor: '#d4af37'
           }}>
             <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 2 }}>
-              Tratado de InterpretaÃ§Ã£o Natal Integral
+              Tratado de Interpretação Natal Integral
             </Text>
             <Text style={{ fontSize: 8, color: '#d4af37', textAlign: 'center', marginTop: 5, letterSpacing: 4, textTransform: 'uppercase' }}>
-              Codificado pela InteligÃªncia Artificial AstroMap
+              Codificado pela Inteligência Artificial AstroMap
             </Text>
           </View>
           {natalReportText ? (
@@ -903,14 +903,14 @@ export const MyPDFDocument = ({
           ) : (
             <View style={{ padding: 18, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc' }}>
               <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>
-                O relatÃ³rio de IA nÃ£o foi encontrado para este mapa. Gere o relatÃ³rio no app para incluÃ­-lo neste PDF.
+                O relatório de IA não foi encontrado para este mapa. Gere o relatório no app para incluí-lo neste PDF.
               </Text>
             </View>
           )}
           <Footer />
         </Page>
 
-      {/* PÃGINA 11-13: REVOLUÃ‡ÃƒO SOLAR (Se Houver) */}
+      {/* PÁGINA 11-13: REVOLUÇÃO SOLAR (Se Houver) */}
       {solarRevolution && solarYear && (
         <>
           <Page size="A4" style={styles.page}>
@@ -928,18 +928,18 @@ export const MyPDFDocument = ({
           <Page size="A4" style={styles.page}>
             <Header />
             <SolarAnalysisTables natal={chart} solar={solarRevolution} year={solarYear} />
-            <ChartTables chart={solarRevolution} title={`Dados TÃ©cnicos: RS ${solarYear}`} />
+            <ChartTables chart={solarRevolution} title={`Dados Técnicos: RS ${solarYear}`} />
             <Footer />
           </Page>
         </>
       )}
 
-      {/* PÃGINA 14-16: RELATÃ“RIO PREDITIVO (IA) */}
+      {/* PÁGINA 14-16: RELATÓRIO PREDITIVO (IA) */}
       {solarReportTextNormalized && (
         <Page size="A4" style={styles.page}>
           <Header />
           <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#d97706', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
-            ArquÃ©tipos e TendÃªncias do Ano ({solarYear})
+            Arquétipos e Tendências do Ano ({solarYear})
           </Text>
           <MarkdownParagraphs text={solarReportTextNormalized} />
           <Footer />
@@ -957,7 +957,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
 
   return (
     <Document title={`AstroMap - Tratado Tradicional - ${data.name}`}>
-      {/* CAPA CLÃSSICA */}
+      {/* CAPA CLÁSSICA */}
       <Page size="A4" style={[styles.page, { backgroundColor: '#020617', color: '#fff', justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
         {/* Border Decorativo Externo */}
         <View style={{ 
@@ -976,7 +976,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
           backgroundColor: '#020617',
           width: '100%'
         }}>
-          {/* SÃ­mbolo Decorativo Superior */}
+          {/* Símbolo Decorativo Superior */}
           <View style={{ width: 60, height: 1.5, backgroundColor: '#fbbf24', marginBottom: 20 }} />
           
           <View style={{ width: 40, height: 1, backgroundColor: '#fbbf24', marginBottom: 15 }} />
@@ -1021,7 +1021,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
               Codificado por AstroMap AI | {new Date().toLocaleDateString('pt-BR')}
             </Text>
             <Text style={{ fontSize: 8, color: '#444', marginTop: 5, letterSpacing: 1 }}>
-              BIBLIOTHECA ASTROMAPICA â€¢ MMXXVI
+              BIBLIOTHECA ASTROMAPICA • MMXXVI
             </Text>
           </View>
         </View>
@@ -1030,7 +1030,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
       {/* MANDALA TRADICIONAL */}
       <Page size="A4" style={styles.page}>
         <Header />
-        <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Radix Tradicional (O SeptenÃ¡rio)</Text>
+        <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Radix Tradicional (O Septenário)</Text>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 15 }}>
           <View style={[styles.infoCard, { borderLeftWidth: 4, borderLeftColor: isDay ? '#fbbf24' : '#1e1b4b' }]}>
             <Text style={styles.infoLabel}>Seita do Mapa</Text>
@@ -1039,15 +1039,15 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
         </View>
         <View style={styles.chartWrapper}>
           <TraditionalChartPDF chart={chart} size={380} />
-          <Text style={{ fontSize: 8, marginTop: 5, color: '#64748b' }}>Mandala Tradicional - 7 Planetas ClÃ¡ssicos e Lotes HermÃ©ticos</Text>
+          <Text style={{ fontSize: 8, marginTop: 5, color: '#64748b' }}>Mandala Tradicional - 7 Planetas Clássicos e Lotes Herméticos</Text>
         </View>
         <Footer />
       </Page>
 
-      {/* TABELA DE DIGNIDADES E FORÃ‡A (ALMUTEN) */}
+      {/* TABELA DE DIGNIDADES E FORÇA (ALMUTEN) */}
       <Page size="A4" style={styles.page}>
         <Header />
-        <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Dignidade Essencial e ForÃ§a Operacional</Text>
+        <Text style={[styles.sectionTitle, { color: '#b45309' }]}>Dignidade Essencial e Força Operacional</Text>
         
         {/* Bloco de Destaque para Pontos de Poder */}
         {chart.traditionalPoints && (
@@ -1119,7 +1119,7 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
           ))}
         </View>
 
-        <Text style={[styles.sectionTitle, { color: '#b45309', marginTop: 25 }]}>Lotes HermÃ©ticos (Pontos de Destino)</Text>
+        <Text style={[styles.sectionTitle, { color: '#b45309', marginTop: 25 }]}>Lotes Herméticos (Pontos de Destino)</Text>
         <View style={styles.table}>
           <View style={[styles.tableHeader, { backgroundColor: '#1e293b' }]}>
             <Text style={[styles.tableCellBold, { color: '#fff' }]}>Lote</Text>
@@ -1137,18 +1137,18 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
         <Footer />
       </Page>
 
-      {/* RELATÃ“RIO DE IA TRADICIONAL */}
+      {/* RELATÓRIO DE IA TRADICIONAL */}
       <Page size="A4" style={styles.page}>
         <Header />
         <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#0f172a', color: '#fbbf24', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
-          Tratado de InterpretaÃ§Ã£o ClÃ¡ssica
+          Tratado de Interpretação Clássica
         </Text>
         {traditionalReportText ? (
           <MarkdownParagraphs text={traditionalReportText} />
         ) : (
           <View style={{ padding: 18, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 8, backgroundColor: '#f8fafc' }}>
             <Text style={{ fontSize: 11, color: '#64748b', lineHeight: 1.6 }}>
-              O relatÃ³rio de IA tradicional nÃ£o foi encontrado para este mapa. Gere o tratado no app para incluÃ­-lo neste PDF.
+              O relatório de IA tradicional não foi encontrado para este mapa. Gere o tratado no app para incluí-lo neste PDF.
             </Text>
           </View>
         )}
@@ -1247,13 +1247,13 @@ export default function ExportPDF({
             }`}
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-            {loading ? 'Preparando DossiÃª...' : (isTraditional ? 'BAIXAR TRATADO TRADICIONAL' : 'BAIXAR LIVRO DA VIDA (PDF)')}
+            {loading ? 'Preparando Dossiê...' : (isTraditional ? 'BAIXAR TRATADO TRADICIONAL' : 'BAIXAR LIVRO DA VIDA (PDF)')}
           </button>
         )}
       </PDFDownloadLink>
       
       <p className="text-[10px] text-center text-slate-500 uppercase tracking-widest font-bold">
-        {isTraditional ? 'Inclui Mandala ClÃ¡ssica, Tabela de Dignidades e RelatÃ³rio de IA' : 'Inclui 2 Mapas, 6 Tabelas AnalÃ­ticas e RelatÃ³rios Profundos'}
+        {isTraditional ? 'Inclui Mandala Clássica, Tabela de Dignidades e Relatório de IA' : 'Inclui 2 Mapas, 6 Tabelas Analíticas e Relatórios Profundos'}
       </p>
     </div>
   );

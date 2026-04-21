@@ -31,16 +31,17 @@ const AVAILABLE_MODEL_IDS = new Set(AVAILABLE_MODELS.map((item) => item.id));
 
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
     const { 
       chart, 
-      model: requestedModel = DEFAULT_MODEL_ID, 
+      model: requestedModel,
       apiKey: clientApiKey, 
       reportMode,
       solarRevolution, 
       solarYear,
       isTraditional = false,
       assessments = []
-    } = await request.json();
+    } = body;
 
     if (!chart) {
       return NextResponse.json({ error: 'Dados do mapa astral não fornecidos' }, { status: 400 });
@@ -55,7 +56,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = AVAILABLE_MODEL_IDS.has(requestedModel) ? requestedModel : DEFAULT_MODEL_ID;
+    const hasRequestedModel = Object.prototype.hasOwnProperty.call(body, 'model');
+    if (hasRequestedModel && requestedModel !== undefined && !AVAILABLE_MODEL_IDS.has(requestedModel)) {
+      return NextResponse.json(
+        {
+          error: `Modelo não suportado: ${requestedModel}`,
+          availableModels: AVAILABLE_MODELS.map((item) => item.id),
+        },
+        { status: 400 }
+      );
+    }
+
+    const model = requestedModel ?? DEFAULT_MODEL_ID;
 
     const effectiveMode = reportMode ?? (isTraditional ? 'traditional' : solarRevolution && solarYear ? 'solar' : 'natal');
     const isSolar = effectiveMode === 'solar';
