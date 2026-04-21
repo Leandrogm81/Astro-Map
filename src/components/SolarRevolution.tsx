@@ -155,6 +155,7 @@ export default function SolarRevolution({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chart: natalChart,
+          reportMode: 'solar',
           solarRevolution: solarReturn,
           solarYear: year,
           apiKey: storedApiKey,

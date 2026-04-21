@@ -27,13 +27,22 @@ interface Model {
 
 interface AIReportProps {
   chart: NatalChart;
+  reportMode?: 'natal' | 'solar';
   solarRevolution?: NatalChart | null;
   solarYear?: number;
   onReportGenerated?: (report: AIReportType | null) => void;
   onReportUpdated?: (text: string) => void;
 }
 
-export default function AIReport({ chart, solarRevolution, solarYear, onReportGenerated, onReportUpdated }: AIReportProps) {
+export default function AIReport({
+  chart,
+  reportMode = 'natal',
+  solarRevolution,
+  solarYear,
+  onReportGenerated,
+  onReportUpdated,
+}: AIReportProps) {
+  const isSolarMode = reportMode === 'solar';
   const [reportText, setReportText] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -54,8 +63,8 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
     if (storedApiKey) setApiKey(storedApiKey);
     
     // Tentar carregar relatório salvo para este mapa
-    const reportKey = getReportKey(chart.birthData, !!solarRevolution, solarYear);
-    const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, !!solarRevolution, solarYear);
+    const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
+    const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
     const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
     if (savedReport) {
       setReportText(savedReport);
@@ -75,7 +84,7 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
         setModelsError('Erro de conexão ao carregar modelos');
       })
       .finally(() => setModelsLoading(false));
-  }, [chart, solarYear]);
+  }, [chart, isSolarMode, solarYear, onReportUpdated]);
 
   // Auto-scroll durante o streaming
   useEffect(() => {
@@ -103,8 +112,9 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           chart,
-          solarRevolution,
-          solarYear,
+          reportMode,
+          solarRevolution: isSolarMode ? solarRevolution : undefined,
+          solarYear: isSolarMode ? solarYear : undefined,
           model: selectedModel,
           apiKey: apiKey.trim(),
         }),
@@ -153,8 +163,8 @@ export default function AIReport({ chart, solarRevolution, solarYear, onReportGe
 
   const handleDeleteReport = () => {
     if (confirm('Tem certeza que deseja apagar permanentemente este relatório?')) {
-      const reportKey = getReportKey(chart.birthData, !!solarRevolution, solarYear);
-      const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, !!solarRevolution, solarYear);
+      const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
+      const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
       localStorage.removeItem(reportKey);
       localStorage.removeItem(legacyKey);
       setReportText('');

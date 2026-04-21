@@ -447,8 +447,7 @@ export default function Home() {
                   {activeTab === 'report' && (
                     <AIReport 
                       chart={chart} 
-                      solarRevolution={solarRevolution}
-                      solarYear={solarYear}
+                      reportMode="natal"
                       onReportGenerated={handleReportGenerated}
                       onReportUpdated={setNatalReportText}
                     />

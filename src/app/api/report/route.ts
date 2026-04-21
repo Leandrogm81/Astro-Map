@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       chart, 
       model = 'qwen/qwen3-32b', 
       apiKey: clientApiKey, 
+      reportMode,
       solarRevolution, 
       solarYear,
       isTraditional = false,
@@ -64,7 +65,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isSolar = !!(solarRevolution && solarYear);
+    const effectiveMode = reportMode ?? (isTraditional ? 'traditional' : solarRevolution && solarYear ? 'solar' : 'natal');
+    const isSolar = effectiveMode === 'solar';
     
     // Garantir dados tradicionais se necessário
     if (isTraditional && !chart.traditionalPoints) {
