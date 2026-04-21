@@ -29,6 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
+      <head>
+        <meta charSet="utf-8" />
+      </head>
       <body className={`${inter.variable} ${playfair.variable} ${lora.variable} font-sans min-h-screen text-slate-200`}>
         {children}
       </body>
