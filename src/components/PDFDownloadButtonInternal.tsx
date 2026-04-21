@@ -5,9 +5,9 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import { NatalChart } from '@/types';
 import { TraditionalAssessment } from '@/lib/traditional/types';
 import { Loader2, Download } from 'lucide-react';
-import { 
-  MyPDFDocument, 
-  TraditionalTreatisePDF 
+import {
+  MyPDFDocument,
+  TraditionalTreatisePDF
 } from './ExportPDF';
 
 interface PDFDownloadButtonInternalProps {
@@ -21,12 +21,12 @@ interface PDFDownloadButtonInternalProps {
   traditionalAssessments?: TraditionalAssessment[];
 }
 
-export default function PDFDownloadButtonInternal({ 
-  chart, 
-  solarRevolution, 
-  solarYear, 
-  reportText, 
-  solarReportText, 
+export default function PDFDownloadButtonInternal({
+  chart,
+  solarRevolution,
+  solarYear,
+  reportText,
+  solarReportText,
   variant = 'full',
   isTraditional = false,
   traditionalAssessments = []
@@ -34,23 +34,23 @@ export default function PDFDownloadButtonInternal({
   const isCompact = variant === 'compact';
 
   const document = isTraditional ? (
-    <TraditionalTreatisePDF 
-      chart={chart} 
-      reportText={reportText} 
+    <TraditionalTreatisePDF
+      chart={chart}
+      reportText={reportText}
       traditionalAssessments={traditionalAssessments}
       isTraditional={true}
     />
   ) : (
-    <MyPDFDocument 
-      chart={chart} 
-      solarRevolution={solarRevolution} 
+    <MyPDFDocument
+      chart={chart}
+      solarRevolution={solarRevolution}
       solarYear={solarYear}
       reportText={reportText}
       solarReportText={solarReportText}
     />
   );
 
-  const fileName = isTraditional 
+  const fileName = isTraditional
     ? `Tratado_Tradicional_${chart.birthData.name}.pdf`
     : `AstroMap_Exclusivo_${chart.birthData.name}.pdf`;
 
@@ -64,8 +64,8 @@ export default function PDFDownloadButtonInternal({
           <button
             disabled={loading}
             className={`px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-all ${
-              loading 
-                ? 'bg-slate-800 text-slate-500 cursor-wait' 
+              loading
+                ? 'bg-slate-800 text-slate-500 cursor-wait'
                 : 'bg-gold-500/10 text-gold-400 border border-gold-500/20 hover:bg-gold-500/20 shadow-lg shadow-gold-500/5 active:scale-95'
             }`}
           >
@@ -88,9 +88,9 @@ export default function PDFDownloadButtonInternal({
           <button
             disabled={loading}
             className={`w-full py-4 px-6 rounded-2xl flex items-center justify-center gap-3 font-bold transition-all text-sm ${
-              loading 
-                ? 'bg-slate-800 text-slate-500 cursor-wait' 
-                : isTraditional 
+              loading
+                ? 'bg-slate-800 text-slate-500 cursor-wait'
+                : isTraditional
                   ? 'bg-gradient-to-r from-amber-600 to-yellow-500 text-slate-950 hover:from-amber-500 hover:to-yellow-400'
                   : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-400 hover:to-purple-500 shadow-lg shadow-indigo-500/25 active:scale-95'
             }`}
@@ -100,7 +100,7 @@ export default function PDFDownloadButtonInternal({
           </button>
         )}
       </PDFDownloadLink>
-      
+
       <p className="text-[10px] text-center text-slate-500 uppercase tracking-widest font-bold">
         {isTraditional ? 'Inclui Mandala Clássica, Tabela de Dignidades e Relatório de IA' : 'Inclui 2 Mapas, 6 Tabelas Analíticas e Relatórios Profundos'}
       </p>

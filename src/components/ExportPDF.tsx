@@ -37,7 +37,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: {
     padding: 40,
-    paddingBottom: 112,
+    paddingBottom: 128,
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
     color: '#1e293b',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 20,
     left: 40,
     right: 40,
     textAlign: 'center',
@@ -335,9 +335,9 @@ const ChartTables = ({ chart, title }: { chart: NatalChart, title: string }) => 
       {title} - Dados Técnicos de Precisão
     </Text>
 
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', width: '100%' }}>
       {/* Tabela de Planetas */}
-      <View style={{ width: '58%' }}>
+      <View style={{ width: '58%', marginRight: 12 }}>
         <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>Planetas e Dignidades</Text>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
@@ -573,9 +573,9 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
         Análise Dinâmica: Revolução Solar {year}
       </Text>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', width: '100%' }}>
         {/* Ativação de Casas (Interposição) */}
-        <View style={{ width: '58%' }}>
+        <View style={{ width: '58%', marginRight: 12 }}>
           <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>Interposição: Planetas RS no seu Natal</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>

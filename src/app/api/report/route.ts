@@ -11,33 +11,29 @@ import { PlanetPosition, LotPosition } from '@/types';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const DEFAULT_MODEL_ID = 'google/gemini-2.5-flash-lite';
 
 export const AVAILABLE_MODELS = [
   {
-    id: 'google/gemini-2.5-flash-lite',
-    name: 'Padrão — Gemini 2.5 Flash Lite',
+    id: DEFAULT_MODEL_ID,
+    name: 'Padrão - Gemini 2.5 Flash Lite',
     description: 'Boa qualidade com baixo custo e excelente velocidade para relatórios do mapa natal.\nCusto: sob consulta na OpenRouter',
     cost: 'baixo'
   },
   {
-    id: 'qwen/qwen3-32b',
-    name: 'Barato — Qwen 3 32B',
-    description: 'Ótimo para PT-BR, custo baixo e boa fluidez textual para análises cotidianas.\nCusto: sob consulta na OpenRouter',
-    cost: 'baixo'
-  },
-  {
     id: 'deepseek/deepseek-chat-v3.1',
-    name: 'Análise Forte — DeepSeek V3.1',
+    name: 'Análise Forte - DeepSeek V3.1',
     description: 'Melhor para textos mais profundos, estruturados e análises mais longas.\nCusto: sob consulta na OpenRouter',
     cost: 'médio'
   },
 ];
+const AVAILABLE_MODEL_IDS = new Set(AVAILABLE_MODELS.map((item) => item.id));
 
 export async function POST(request: NextRequest) {
   try {
     const { 
       chart, 
-      model = 'google/gemini-2.5-flash-lite', 
+      model: requestedModel = DEFAULT_MODEL_ID, 
       apiKey: clientApiKey, 
       reportMode,
       solarRevolution, 
@@ -47,22 +43,24 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     if (!chart) {
-      return NextResponse.json({ error: 'Dados do mapa astral nÃ£o fornecidos' }, { status: 400 });
+      return NextResponse.json({ error: 'Dados do mapa astral não fornecidos' }, { status: 400 });
     }
 
     const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Chave API nÃ£o fornecida. Configure na interface ou no servidor.' },
+        { error: 'Chave API não fornecida. Configure na interface ou no servidor.' },
         { status: 401 }
       );
     }
 
+    const model = AVAILABLE_MODEL_IDS.has(requestedModel) ? requestedModel : DEFAULT_MODEL_ID;
+
     const effectiveMode = reportMode ?? (isTraditional ? 'traditional' : solarRevolution && solarYear ? 'solar' : 'natal');
     const isSolar = effectiveMode === 'solar';
     
-    // Garantir dados tradicionais se necessÃ¡rio
+    // Garantir dados tradicionais se necessário
     if (isTraditional && !chart.traditionalPoints) {
       try {
         chart.traditionalPoints = calculateTraditionalPoints(
@@ -76,7 +74,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // SeleÃ§Ã£o de Prompt do Sistema
+    // Seleção de Prompt do Sistema
     let systemPrompt = NATAL_PROMPT_SYSTEM;
     if (isTraditional) {
       systemPrompt = TRADITIONAL_PROMPT_SYSTEM;
@@ -84,14 +82,14 @@ export async function POST(request: NextRequest) {
       systemPrompt = SOLAR_RETURN_PROMPT_SYSTEM;
     }
     
-    // ConstruÃ§Ã£o da Mensagem do UsuÃ¡rio
+    // Construção da Mensagem do Usuário
     let userMessage = '';
     if (isTraditional) {
       const formatDeg = (lon: number | undefined) => {
-        if (typeof lon !== 'number') return '0Â°0\'';
+        if (typeof lon !== 'number') return '0°0\'';
         const deg = Math.floor(lon % 30);
         const min = Math.floor((lon % 1) * 60);
-        return `${deg}Â°${min}'`;
+        return `${deg}°${min}'`;
       };
 
       const planetData = (chart.planets || [])
@@ -103,16 +101,16 @@ export async function POST(request: NextRequest) {
         .map((l: LotPosition) => `- ${l.name || 'Lote'}: ${l.sign || '---'} ${formatDeg(l.degree)}`)
         .join('\n');
 
-userMessage = `Interprete meu Mapa sob a Ã³tica da ASTROLOGIA TRADICIONAL (ClÃ¡ssica/Medieval).
+userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval).
 
-DADOS EXATOS DE POSIÃ‡ÃƒO:
-PLANETAS CLÃSSICOS:
+DADOS EXATOS DE POSIÇÃO:
+PLANETAS CLÁSSICOS:
 ${planetData}
 
-LOTES HERMÃ‰TICOS:
+LOTES HERMÉTICOS:
 ${lotData}
 
-Use os dados tÃ©cnicos de DIGNIDADES e PONTUAÃ‡ÃƒO (Almuten) fornecidos abaixo para a anÃ¡lise profunda.\n\n${(() => {
+Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo para a análise profunda.\n\n${(() => {
   try {
     return formatTraditionalChartForAI(chart, assessments || []);
   } catch (e) {
@@ -121,9 +119,9 @@ Use os dados tÃ©cnicos de DIGNIDADES e PONTUAÃ‡ÃƒO (Almuten) fornecidos a
   }
 })()}`;
     } else if (isSolar) {
-      userMessage = `Analise minha RevoluÃ§Ã£o Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÃ‡ÃƒO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
+      userMessage = `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
     } else {
-      userMessage = `Por favor, interprete meu Mapa Natal com base nos seguintes dados tÃ©cnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÃ‡ÃƒO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
+      userMessage = `Por favor, interprete meu Mapa Natal com base nos seguintes dados técnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÇÃO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
     }
 
     const response = await fetch(OPENROUTER_API_URL, {
@@ -175,7 +173,7 @@ Use os dados tÃ©cnicos de DIGNIDADES e PONTUAÃ‡ÃƒO (Almuten) fornecidos a
             try {
               controller.close();
             } catch {
-              // JÃ¡ fechado ou erro inconsequente no encerramento
+              // Já fechado ou erro inconsequente no encerramento
             }
           }
         };
@@ -190,7 +188,7 @@ Use os dados tÃ©cnicos de DIGNIDADES e PONTUAÃ‡ÃƒO (Almuten) fornecidos a
 
             // Processar apenas linhas completas (terminadas em \n)
             const lines = buffer.split('\n');
-            // A Ãºltima parte (provavelmente incompleta) volta para o buffer
+            // A última parte (provavelmente incompleta) volta para o buffer
             buffer = lines.pop() || '';
 
             for (const line of lines) {
@@ -211,8 +209,8 @@ Use os dados tÃ©cnicos de DIGNIDADES e PONTUAÃ‡ÃƒO (Almuten) fornecidos a
                   controller.enqueue(encoder.encode(content));
                 }
               } catch {
-                // Linha SSE incompleta ou mal-formada neste chunk, ignorar com seguranÃ§a
-                // No prÃ³ximo chunk o buffer terÃ¡ a linha completa
+                // Linha SSE incompleta ou mal-formada neste chunk, ignorar com segurança
+                // No próximo chunk o buffer terá a linha completa
               }
             }
           }
