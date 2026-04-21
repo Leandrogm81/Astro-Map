@@ -11,6 +11,8 @@ export const TRADITIONAL_CLASSIC_PLANET_IDS = [
   'saturn',
 ] as const;
 
+const TRADITIONAL_CLASSIC_PLANET_SET = new Set<string>(TRADITIONAL_CLASSIC_PLANET_IDS);
+
 export const TRADITIONAL_ASPECT_LABELS_PT = {
   conjunction: 'Conjunção',
   sextile: 'Sextil',
@@ -46,7 +48,7 @@ export function getAspectLabelPt(type: string): string {
 
 export function isTraditionalPlanet(input: string): boolean {
   const planetId = normalizePlanetKey(input);
-  return !!planetId && TRADITIONAL_CLASSIC_PLANET_IDS.includes(planetId as PlanetId);
+  return !!planetId && TRADITIONAL_CLASSIC_PLANET_SET.has(planetId);
 }
 
 export function isTraditionalAspectType(type: string): type is TraditionalAspectType {
