@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart, AIReport as AIReportType } from '@/types';
@@ -47,7 +47,7 @@ export default function AIReport({
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-lite');
   const [models, setModels] = useState<Model[]>([]);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [modelsError, setModelsError] = useState<string | null>(null);
@@ -57,12 +57,12 @@ export default function AIReport({
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Carregar chave e modelos no início
+  // Carregar chave e modelos no inÃ­cio
   useEffect(() => {
     const storedApiKey = localStorage.getItem('openrouter_api_key');
     if (storedApiKey) setApiKey(storedApiKey);
     
-    // Tentar carregar relatório salvo para este mapa
+    // Tentar carregar relatÃ³rio salvo para este mapa
     const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
     const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
     const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
@@ -81,7 +81,7 @@ export default function AIReport({
       })
       .catch(err => {
         console.error('Erro ao carregar modelos:', err);
-        setModelsError('Erro de conexão ao carregar modelos');
+        setModelsError('Erro de conexÃ£o ao carregar modelos');
       })
       .finally(() => setModelsLoading(false));
   }, [chart, isSolarMode, solarYear, onReportUpdated]);
@@ -142,7 +142,7 @@ export default function AIReport({
       }
 
       // Salvar no localStorage ao finalizar
-      const reportKey = getReportKey(chart.birthData, !!solarRevolution, solarYear);
+      const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
       localStorage.setItem(reportKey, accumulatedText);
       
       if (onReportGenerated) {
@@ -154,7 +154,7 @@ export default function AIReport({
       }
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao gerar relatório');
+      setError(err instanceof Error ? err.message : 'Erro ao gerar relatÃ³rio');
     } finally {
       setLoading(false);
       setIsStreaming(false);
@@ -162,7 +162,7 @@ export default function AIReport({
   };
 
   const handleDeleteReport = () => {
-    if (confirm('Tem certeza que deseja apagar permanentemente este relatório?')) {
+    if (confirm('Tem certeza que deseja apagar permanentemente este relatÃ³rio?')) {
       const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
       const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
       localStorage.removeItem(reportKey);
@@ -191,10 +191,10 @@ export default function AIReport({
           <div>
             <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
-              {solarYear ? `Revolução Solar ${solarYear}` : 'Interpretação IA'}
+              {solarYear ? `RevoluÃ§Ã£o Solar ${solarYear}` : 'InterpretaÃ§Ã£o IA'}
             </h3>
             <p className="text-xs text-slate-400">
-              {reportText ? 'Relatório Astrológico Híbrido' : 'Pronto para analisar seu mapa'}
+              {reportText ? 'RelatÃ³rio AstrolÃ³gico HÃ­brido' : 'Pronto para analisar seu mapa'}
             </p>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function AIReport({
           <button 
             onClick={handleDeleteReport}
             className="p-2 text-slate-500 hover:text-red-400 transition-colors"
-            title="Apagar Relatório"
+            title="Apagar RelatÃ³rio"
           >
             <Trash2 className="w-5 h-5" />
           </button>
@@ -224,7 +224,7 @@ export default function AIReport({
             <div className="space-y-2">
               <h4 className="text-xl font-medium text-slate-200">Seu Mapa em Profundidade</h4>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Nossa IA combina astrologia psicológica e preditiva para criar um guia único sobre seu temperamento, desafios e o momento atual.
+                Nossa IA combina astrologia psicolÃ³gica e preditiva para criar um guia Ãºnico sobre seu temperamento, desafios e o momento atual.
               </p>
             </div>
 
@@ -291,7 +291,7 @@ export default function AIReport({
               className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-white font-bold shadow-lg shadow-purple-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-3"
             >
               <Sparkles className="w-5 h-5 animate-pulse" />
-              GERAR RELATÓRIO COM IA
+              GERAR RELATÃ“RIO COM IA
             </button>
           </div>
         )}
@@ -315,7 +315,7 @@ export default function AIReport({
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <div className="text-sm text-red-200/80">
-              <p className="font-bold">Houve uma interrupção cósmica</p>
+              <p className="font-bold">Houve uma interrupÃ§Ã£o cÃ³smica</p>
               <p className="mt-1">{error}</p>
             </div>
           </div>
@@ -324,9 +324,10 @@ export default function AIReport({
 
       {reportText && !isStreaming && (
         <div className="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-center gap-4">
-           <p className="text-[10px] text-slate-500 font-medium">Este relatório está salvo no seu dispositivo.</p>
+           <p className="text-[10px] text-slate-500 font-medium">Este relatÃ³rio estÃ¡ salvo no seu dispositivo.</p>
         </div>
       )}
     </div>
   );
 }
+

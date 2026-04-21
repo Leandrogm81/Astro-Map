@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { 
   formatChartForAI, 
   formatSolarComparisonForAI,
@@ -13,29 +13,23 @@ import { calculateTraditionalPoints } from '@/lib/traditional/points';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export const AVAILABLE_MODELS = [
-  { 
-    id: 'qwen/qwen3-32b', 
-    name: 'Econômico — Qwen 3 32B', 
-    description: 'Relatórios rápidos e eficientes. Perfeito para o dia a dia.\nCusto: R$ 0,0075 / relatório', 
-    cost: 'R$ 0,0075' 
+  {
+    id: 'google/gemini-2.5-flash-lite',
+    name: 'Padrão — Gemini 2.5 Flash Lite',
+    description: 'Boa qualidade com baixo custo e excelente velocidade para relatórios do mapa natal.\nCusto: sob consulta na OpenRouter',
+    cost: 'baixo'
   },
-  { 
-    id: 'deepseek/deepseek-chat-v3.1', 
-    name: 'Inteligente — DeepSeek V3.1', 
-    description: 'Análises profundas e inteligentes. A melhor escolha para textos estruturados.\nCusto: R$ 0,019 / relatório', 
-    cost: 'R$ 0,019' 
+  {
+    id: 'qwen/qwen3-32b',
+    name: 'Barato — Qwen 3 32B',
+    description: 'Ótimo para PT-BR, custo baixo e boa fluidez textual para análises cotidianas.\nCusto: sob consulta na OpenRouter',
+    cost: 'baixo'
   },
-  { 
-    id: 'google/gemini-2.0-flash-001', 
-    name: 'Premium — Gemini 2.0 Flash', 
-    description: 'Máxima sofisticação e escrita superior. Indicado para análises refinadas.\nCusto: R$ 0,055 / relatório', 
-    cost: 'R$ 0,055' 
-  },
-  { 
-    id: 'google/gemini-2.0-flash-lite:nitro', 
-    name: 'Contexto Longo — Gemini 2.0 Flash Lite Nitro', 
-    description: 'Ideal para grandes volumes de dados e relatórios muito extensos.\nCusto: R$ 0,011 / relatório', 
-    cost: 'R$ 0,011' 
+  {
+    id: 'deepseek/deepseek-chat-v3.1',
+    name: 'Análise Forte — DeepSeek V3.1',
+    description: 'Melhor para textos mais profundos, estruturados e análises mais longas.\nCusto: sob consulta na OpenRouter',
+    cost: 'médio'
   },
 ];
 
@@ -43,7 +37,7 @@ export async function POST(request: NextRequest) {
   try {
     const { 
       chart, 
-      model = 'qwen/qwen3-32b', 
+      model = 'google/gemini-2.5-flash-lite', 
       apiKey: clientApiKey, 
       reportMode,
       solarRevolution, 
@@ -53,14 +47,14 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     if (!chart) {
-      return NextResponse.json({ error: 'Dados do mapa astral não fornecidos' }, { status: 400 });
+      return NextResponse.json({ error: 'Dados do mapa astral nÃ£o fornecidos' }, { status: 400 });
     }
 
     const apiKey = clientApiKey || process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Chave API não fornecida. Configure na interface ou no servidor.' },
+        { error: 'Chave API nÃ£o fornecida. Configure na interface ou no servidor.' },
         { status: 401 }
       );
     }
@@ -68,7 +62,7 @@ export async function POST(request: NextRequest) {
     const effectiveMode = reportMode ?? (isTraditional ? 'traditional' : solarRevolution && solarYear ? 'solar' : 'natal');
     const isSolar = effectiveMode === 'solar';
     
-    // Garantir dados tradicionais se necessário
+    // Garantir dados tradicionais se necessÃ¡rio
     if (isTraditional && !chart.traditionalPoints) {
       try {
         chart.traditionalPoints = calculateTraditionalPoints(
@@ -82,7 +76,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Seleção de Prompt do Sistema
+    // SeleÃ§Ã£o de Prompt do Sistema
     let systemPrompt = NATAL_PROMPT_SYSTEM;
     if (isTraditional) {
       systemPrompt = TRADITIONAL_PROMPT_SYSTEM;
@@ -90,14 +84,14 @@ export async function POST(request: NextRequest) {
       systemPrompt = SOLAR_RETURN_PROMPT_SYSTEM;
     }
     
-    // Construção da Mensagem do Usuário
+    // ConstruÃ§Ã£o da Mensagem do UsuÃ¡rio
     let userMessage = '';
     if (isTraditional) {
       const formatDeg = (lon: number | undefined) => {
-        if (typeof lon !== 'number') return '0°0\'';
+        if (typeof lon !== 'number') return '0Â°0\'';
         const deg = Math.floor(lon % 30);
         const min = Math.floor((lon % 1) * 60);
-        return `${deg}°${min}'`;
+        return `${deg}Â°${min}'`;
       };
 
       const planetData = (chart.planets || [])
@@ -109,16 +103,16 @@ export async function POST(request: NextRequest) {
         .map((l: LotPosition) => `- ${l.name || 'Lote'}: ${l.sign || '---'} ${formatDeg(l.degree)}`)
         .join('\n');
 
-userMessage = `Interprete meu Mapa sob a ótica da ASTROLOGIA TRADICIONAL (Clássica/Medieval).
+userMessage = `Interprete meu Mapa sob a Ã³tica da ASTROLOGIA TRADICIONAL (ClÃ¡ssica/Medieval).
 
-DADOS EXATOS DE POSIÇÃO:
-PLANETAS CLÁSSICOS:
+DADOS EXATOS DE POSIÃ‡ÃƒO:
+PLANETAS CLÃSSICOS:
 ${planetData}
 
-LOTES HERMÉTICOS:
+LOTES HERMÃ‰TICOS:
 ${lotData}
 
-Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo para a análise profunda.\n\n${(() => {
+Use os dados tÃ©cnicos de DIGNIDADES e PONTUAÃ‡ÃƒO (Almuten) fornecidos abaixo para a anÃ¡lise profunda.\n\n${(() => {
   try {
     return formatTraditionalChartForAI(chart, assessments || []);
   } catch (e) {
@@ -127,9 +121,9 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
   }
 })()}`;
     } else if (isSolar) {
-      userMessage = `Analise minha Revolução Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
+      userMessage = `Analise minha RevoluÃ§Ã£o Solar para o ano ${solarYear} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÃ‡ÃƒO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarRevolution, solarYear)}`;
     } else {
-      userMessage = `Por favor, interprete meu Mapa Natal com base nos seguintes dados técnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÇÃO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
+      userMessage = `Por favor, interprete meu Mapa Natal com base nos seguintes dados tÃ©cnicos. Observe atentamente as DIGNIDADES, a CADEIA DE DISPOSIÃ‡ÃƒO e os SIGNOS INTERCEPTADOS.\n\n${formatChartForAI(chart)}`;
     }
 
     const response = await fetch(OPENROUTER_API_URL, {
@@ -181,7 +175,7 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
             try {
               controller.close();
             } catch {
-              // Já fechado ou erro inconsequente no encerramento
+              // JÃ¡ fechado ou erro inconsequente no encerramento
             }
           }
         };
@@ -196,7 +190,7 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
 
             // Processar apenas linhas completas (terminadas em \n)
             const lines = buffer.split('\n');
-            // A última parte (provavelmente incompleta) volta para o buffer
+            // A Ãºltima parte (provavelmente incompleta) volta para o buffer
             buffer = lines.pop() || '';
 
             for (const line of lines) {
@@ -217,8 +211,8 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
                   controller.enqueue(encoder.encode(content));
                 }
               } catch {
-                // Linha SSE incompleta ou mal-formada neste chunk, ignorar com segurança
-                // No próximo chunk o buffer terá a linha completa
+                // Linha SSE incompleta ou mal-formada neste chunk, ignorar com seguranÃ§a
+                // No prÃ³ximo chunk o buffer terÃ¡ a linha completa
               }
             }
           }
@@ -249,3 +243,4 @@ Use os dados técnicos de DIGNIDADES e PONTUAÇÃO (Almuten) fornecidos abaixo p
 export async function GET() {
   return NextResponse.json({ models: AVAILABLE_MODELS });
 }
+

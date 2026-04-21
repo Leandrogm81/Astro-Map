@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { NatalChart, PlanetPosition, Aspect } from '@/types';
@@ -12,17 +12,17 @@ import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
 
 
 const HOUSE_MEANINGS: Record<number, { title: string; area: string }> = {
-  1: { title: 'Identidade', area: 'Autoimagem, começos e vitalidade' },
-  2: { title: 'Recursos', area: 'Finanças, valores e segurança' },
-  3: { title: 'Comunicação', area: 'Estudos, viagens curtas e ambiente' },
-  4: { title: 'Raízes', area: 'Lar, família e base emocional' },
+  1: { title: 'Identidade', area: 'Autoimagem, comeÃ§os e vitalidade' },
+  2: { title: 'Recursos', area: 'FinanÃ§as, valores e seguranÃ§a' },
+  3: { title: 'ComunicaÃ§Ã£o', area: 'Estudos, viagens curtas e ambiente' },
+  4: { title: 'RaÃ­zes', area: 'Lar, famÃ­lia e base emocional' },
   5: { title: 'Criatividade', area: 'Prazer, romance e projetos' },
-  6: { title: 'Rotina', area: 'Saúde, trabalho e hábitos' },
+  6: { title: 'Rotina', area: 'SaÃºde, trabalho e hÃ¡bitos' },
   7: { title: 'Parcerias', area: 'Relacionamentos e contratos' },
-  8: { title: 'Transformação', area: 'Crises, intimidade e bens partilhados' },
-  9: { title: 'Expansão', area: 'Filosofia, estudos superiores e viagens' },
-  10: { title: 'Carreira', area: 'Status, metas e reputação' },
-  11: { title: 'Social', area: 'Amizades, grupos e esperanças' },
+  8: { title: 'TransformaÃ§Ã£o', area: 'Crises, intimidade e bens partilhados' },
+  9: { title: 'ExpansÃ£o', area: 'Filosofia, estudos superiores e viagens' },
+  10: { title: 'Carreira', area: 'Status, metas e reputaÃ§Ã£o' },
+  11: { title: 'Social', area: 'Amizades, grupos e esperanÃ§as' },
   12: { title: 'Inconsciente', area: 'Espiritualidade, isolamento e fim de ciclos' },
 };
 interface SolarRevolutionProps {
@@ -49,26 +49,26 @@ export default function SolarRevolution({
 
   const getAspectSymbol = (type: string): string => {
     const symbols: Record<string, string> = {
-      'conjunção': '☌', 'sextil': '⚹', 'quadratura': '□', 'trígono': '△', 'oposição': '☍',
-      'semisextil': '⚺', 'semiquadratura': '∠', 'sesquiquadratura': '⚼', 'quincúncio': '⚻',
+      'conjunÃ§Ã£o': 'â˜Œ', 'sextil': 'âš¹', 'quadratura': 'â–¡', 'trÃ­gono': 'â–³', 'oposiÃ§Ã£o': 'â˜',
+      'semisextil': 'âšº', 'semiquadratura': 'âˆ ', 'sesquiquadratura': 'âš¼', 'quincÃºncio': 'âš»',
     };
-    return symbols[type] || '◦';
+    return symbols[type] || 'â—¦';
   };
 
   const getAspectClass = (type: string): string => {
     const classes: Record<string, string> = {
-      'conjunção': 'aspect-conjuncao',
+      'conjunÃ§Ã£o': 'aspect-conjuncao',
       'sextil': 'aspect-sextil',
       'quadratura': 'aspect-quadratura',
-      'trígono': 'aspect-trigono',
-      'oposição': 'aspect-oposicao'
+      'trÃ­gono': 'aspect-trigono',
+      'oposiÃ§Ã£o': 'aspect-oposicao'
     };
     return classes[type] || 'aspect-neutral';
   };
 
-  // Funções de análise
+  // FunÃ§Ãµes de anÃ¡lise
   const crossAspects = solarReturn ? calculateCrossAspects(solarReturn.planets, natalChart.planets)
-    .filter(a => ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type))
+    .filter(a => ['conjunÃ§Ã£o', 'sextil', 'quadratura', 'trÃ­gono', 'oposiÃ§Ã£o'].includes(a.type))
     .sort((a, b) => a.orb - b.orb)
     .slice(0, 12) : [];
 
@@ -81,8 +81,8 @@ export default function SolarRevolution({
 
     if (srAsc === natalAsc) themes.push({ label: 'Retorno Profundo', icon: Target });
     if (srSunHouse === 10 || srSunHouse === 1) themes.push({ label: 'Destaque e Visibilidade', icon: Sun });
-    if (solarReturn.planets.find(p => p.name === 'Saturno')?.house === 10) themes.push({ label: 'Construção de Carreira', icon: Zap });
-    if (solarReturn.planets.find(p => p.name === 'Júpiter')?.house === 2) themes.push({ label: 'Expansão Financeira', icon: Sparkles });
+    if (solarReturn.planets.find(p => p.name === 'Saturno')?.house === 10) themes.push({ label: 'ConstruÃ§Ã£o de Carreira', icon: Zap });
+    if (solarReturn.planets.find(p => p.name === 'JÃºpiter')?.house === 2) themes.push({ label: 'ExpansÃ£o Financeira', icon: Sparkles });
     
     return themes.length > 0 ? themes : [{ label: 'Novo Ciclo', icon: Compass }];
   };
@@ -93,7 +93,7 @@ export default function SolarRevolution({
     if (initialSolarRevolution) setSolarReturn(initialSolarRevolution);
   }, [initialYear, initialSolarRevolution]);
 
-  // Carregar relatório salvo ao mudar de mapa/ano
+  // Carregar relatÃ³rio salvo ao mudar de mapa/ano
   useEffect(() => {
     if (natalChart && year) {
       const reportKey = getReportKey(natalChart.birthData, true, year);
@@ -103,7 +103,7 @@ export default function SolarRevolution({
     }
   }, [natalChart, year]);
 
-  // Propagar o texto do relatório para cima quando mudar
+  // Propagar o texto do relatÃ³rio para cima quando mudar
   useEffect(() => {
     if (onReportUpdated) {
       onReportUpdated(reportText);
@@ -122,13 +122,13 @@ export default function SolarRevolution({
         onRevolutionCalculated(result, calcYear);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao calcular revolução solar');
+      setError(err instanceof Error ? err.message : 'Erro ao calcular revoluÃ§Ã£o solar');
     } finally {
       setLoading(false);
     }
   }, [natalChart, year, onRevolutionCalculated]);
 
-  // Calcular automaticamente apenas se não tivermos um retorno solar inicial para este mapa/ano
+  // Calcular automaticamente apenas se nÃ£o tivermos um retorno solar inicial para este mapa/ano
   useEffect(() => {
     if (!solarReturn || (initialYear && year !== initialYear)) {
       calculateRevolution();
@@ -141,7 +141,7 @@ export default function SolarRevolution({
     
     const storedApiKey = localStorage.getItem('openrouter_api_key') || '';
     if (!storedApiKey) {
-      setError('Por favor, configure sua chave API na aba "Relatório IA" primeiro.');
+      setError('Por favor, configure sua chave API na aba "RelatÃ³rio IA" primeiro.');
       return;
     }
 
@@ -159,13 +159,13 @@ export default function SolarRevolution({
           solarRevolution: solarReturn,
           solarYear: year,
           apiKey: storedApiKey,
-          model: 'google/gemini-2.0-flash-001',
+          model: 'google/gemini-2.5-flash-lite',
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Erro ao gerar relatório');
+        throw new Error(data.error || 'Erro ao gerar relatÃ³rio');
       }
 
       const reader = response.body?.getReader();
@@ -187,14 +187,14 @@ export default function SolarRevolution({
       localStorage.setItem(reportKey, accumulated);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao gerar relatório');
+      setError(err instanceof Error ? err.message : 'Erro ao gerar relatÃ³rio');
     } finally {
       setGeneratingReport(false);
     }
   };
 
   const handleDeleteReport = () => {
-    if (confirm('Deseja apagar este relatório anual?')) {
+    if (confirm('Deseja apagar este relatÃ³rio anual?')) {
       const reportKey = getReportKey(natalChart.birthData, true, year);
       const legacyKey = getReportKeyLegacy(natalChart.birthData.name, natalChart.birthData.date, true, year);
       localStorage.removeItem(reportKey);
@@ -206,7 +206,7 @@ export default function SolarRevolution({
   const formatDegree = (degree: number): string => {
     const d = Math.floor(degree);
     const m = Math.floor((degree - d) * 60);
-    return `${d}°${m}'`;
+    return `${d}Â°${m}'`;
   };
 
   const natalAsc = natalChart.housesPlacidus?.[0]?.sign;
@@ -216,7 +216,7 @@ export default function SolarRevolution({
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2 font-serif">
           <Sun className="w-6 h-6 text-yellow-500 animate-pulse" />
-          Revolução Solar {year}
+          RevoluÃ§Ã£o Solar {year}
         </h3>
         
         <div className="flex items-center gap-1 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
@@ -225,7 +225,7 @@ export default function SolarRevolution({
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
-            ←
+            â†
           </button>
           <span className="px-4 py-2 text-slate-100 font-bold min-w-[80px] text-center font-mono">
             {year}
@@ -235,7 +235,7 @@ export default function SolarRevolution({
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
-            →
+            â†’
           </button>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function SolarRevolution({
       {loading && (
         <div className="p-20 text-center">
           <Loader2 className="w-10 h-10 mx-auto animate-spin text-purple-500" />
-          <p className="mt-4 text-slate-400 font-medium tracking-wide">Calculando alinhamentos astronômicos...</p>
+          <p className="mt-4 text-slate-400 font-medium tracking-wide">Calculando alinhamentos astronÃ´micos...</p>
         </div>
       )}
 
@@ -266,11 +266,11 @@ export default function SolarRevolution({
              ))}
           </div>
 
-          {/* Gráfico de Revolução (Sobreposição) */}
+          {/* GrÃ¡fico de RevoluÃ§Ã£o (SobreposiÃ§Ã£o) */}
           <div className="glass p-6 rounded-3xl shadow-inner relative overflow-hidden group">
              <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
-                   <h4 className="text-lg font-bold text-slate-200 font-serif">Sobreposição Natal vs Revolução</h4>
+                   <h4 className="text-lg font-bold text-slate-200 font-serif">SobreposiÃ§Ã£o Natal vs RevoluÃ§Ã£o</h4>
                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
                 </div>
              </div>
@@ -315,7 +315,7 @@ export default function SolarRevolution({
              <div className="glass p-6 rounded-3xl">
                 <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
                    <Zap className="w-5 h-5 text-gold-500" />
-                   Aspectos Cruzados (RS ↔ Natal)
+                   Aspectos Cruzados (RS â†” Natal)
                 </h4>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                    {crossAspects.map((aspect, i) => (
@@ -329,7 +329,7 @@ export default function SolarRevolution({
                          </div>
                          <div className="text-right">
                             <p className="text-[10px] font-bold text-slate-500 uppercase truncate">{aspect.type}</p>
-                            <p className="text-[9px] font-mono text-slate-600">órbita: {aspect.orb.toFixed(1)}°</p>
+                            <p className="text-[9px] font-mono text-slate-600">Ã³rbita: {aspect.orb.toFixed(1)}Â°</p>
                          </div>
                       </div>
                    ))}
@@ -364,7 +364,7 @@ export default function SolarRevolution({
           <div className="glass p-6 rounded-3xl">
              <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
                 <Compass className="w-5 h-5 text-purple-400" />
-                Estrutura de Casas da Revolução Solar
+                Estrutura de Casas da RevoluÃ§Ã£o Solar
              </h4>
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {solarReturn.housesPlacidus.map((house, i) => {
@@ -396,7 +396,7 @@ export default function SolarRevolution({
                   <h4 className="font-bold text-slate-100 font-serif">Guia Anual Inteligente</h4>
                 </div>
                 {reportText && !generatingReport && (
-                  <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors">
+                  <button onClick={handleDeleteReport} title="Apagar RelatÃ³rio" className="text-slate-500 hover:text-red-400 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
@@ -409,14 +409,14 @@ export default function SolarRevolution({
                         <ScrollText className="w-8 h-8 text-purple-400" />
                      </div>
                      <div className="max-w-xs mx-auto">
-                        <p className="text-slate-300 font-medium">Analise as tendências para o seu novo ciclo.</p>
-                        <p className="text-xs text-slate-500 mt-2">Nossa IA cruzará os dados da revolução com seu mapa natal para um diagnóstico completo.</p>
+                        <p className="text-slate-300 font-medium">Analise as tendÃªncias para o seu novo ciclo.</p>
+                        <p className="text-xs text-slate-500 mt-2">Nossa IA cruzarÃ¡ os dados da revoluÃ§Ã£o com seu mapa natal para um diagnÃ³stico completo.</p>
                      </div>
                      <button
                         onClick={handleGenerateReport}
                         className="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-bold transition-all transform active:scale-95 shadow-lg shadow-purple-500/20"
                      >
-                        GERAR ANÁLISE {year}
+                        GERAR ANÃLISE {year}
                      </button>
                   </div>
                 ) : (
@@ -439,3 +439,4 @@ export default function SolarRevolution({
     </div>
   );
 }
+

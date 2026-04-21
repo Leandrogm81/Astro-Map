@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart } from '@/types';
@@ -41,7 +41,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.0-flash-001');
+  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-2.5-flash-lite');
   const [models, setModels] = useState<Model[]>([]);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
@@ -76,7 +76,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
 
   const handleGenerateReport = async () => {
     if (!apiKey.trim()) {
-      setError('Por favor, insira sua chave API da OpenRouter nas configurações.');
+      setError('Por favor, insira sua chave API da OpenRouter nas configuraÃ§Ãµes.');
       return;
     }
 
@@ -142,7 +142,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
 
   return (
     <div className="flex flex-col gap-6 group/report">
-      {/* Header do Relatório */}
+      {/* Header do RelatÃ³rio */}
       <div className="bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-gold-500/20 p-6 shadow-2xl relative overflow-hidden transition-all duration-500 hover:border-gold-500/40">
         {/* User Requested Gold Glow Overlay */}
         <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/10 via-gold-400/5 to-transparent opacity-0 group-hover/report:opacity-100 transition-opacity duration-700 pointer-events-none" />
@@ -155,8 +155,8 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
                 Tratado de Astrologia Tradicional
               </h2>
               <p className="text-slate-400 max-w-2xl text-sm leading-relaxed">
-                Análise baseada em técnicas clássicas e medievais. Explore a operationalidade do seu mapa, 
-                as dignidades essenciais e a força do seu Almuten Figuris através de inteligência artificial especializada.
+                AnÃ¡lise baseada em tÃ©cnicas clÃ¡ssicas e medievais. Explore a operationalidade do seu mapa, 
+                as dignidades essenciais e a forÃ§a do seu Almuten Figuris atravÃ©s de inteligÃªncia artificial especializada.
               </p>
             </div>
 
@@ -243,7 +243,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
         </div>
       </div>
 
-      {/* Área do Relatório */}
+      {/* Ãrea do RelatÃ³rio */}
       <div className="relative min-h-[400px]">
         {error && (
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 mb-6">
@@ -295,7 +295,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
             </div>
             <h3 className="text-xl font-bold text-white mb-2">Nenhum tratado gerado</h3>
             <p className="text-slate-400 max-w-md text-center text-sm px-6">
-              Clique em &quot;Gerar Tratado&quot; para que a inteligência artificial analise suas dignidades tradicionais e lotes herméticos.
+              Clique em &quot;Gerar Tratado&quot; para que a inteligÃªncia artificial analise suas dignidades tradicionais e lotes hermÃ©ticos.
             </p>
           </div>
         )}
@@ -329,3 +329,4 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
     </div>
   );
 }
+
