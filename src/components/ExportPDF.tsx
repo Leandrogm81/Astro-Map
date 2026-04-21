@@ -468,14 +468,14 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
 
 const Header = () => (
   <View style={styles.header}>
-    <View style={styles.logoContainer}>
+    <View style={[styles.logoContainer, { flex: 1, paddingRight: 15 }]}>
       <PDFImage src="/assets/logo-premium.png" style={styles.logo} />
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={styles.title}>AstroMap</Text>
         <Text style={styles.subtitle}>O Livro de Destino e Autoconhecimento Astrológico</Text>
       </View>
     </View>
-    <View style={{ textAlign: 'right' }}>
+    <View style={{ textAlign: 'right', minWidth: 120 }}>
       <Text style={{ fontSize: 9, color: '#666666' }}>Dossiê exclusivo gerado em</Text>
       <Text style={{ fontSize: 10, fontWeight: 'bold' }}>{new Date().toLocaleDateString('pt-BR')}</Text>
     </View>
