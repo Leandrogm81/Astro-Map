@@ -31,7 +31,10 @@ import {
 
 Font.register({
   family: 'DejaVu Sans',
-  src: 'https://unpkg.com/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf'
+  fonts: [
+    { src: '/fonts/DejaVuSans.ttf', fontWeight: 'normal' },
+    { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 'bold' },
+  ],
 });
 
 const styles = StyleSheet.create({
@@ -39,7 +42,7 @@ const styles = StyleSheet.create({
     padding: 40,
     paddingBottom: 128,
     backgroundColor: '#ffffff',
-    fontFamily: 'Helvetica',
+    fontFamily: 'DejaVu Sans',
     color: '#1e293b',
   },
   header: {
@@ -66,7 +69,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1e1b4b',
     letterSpacing: 1,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DejaVu Sans',
   },
   subtitle: {
     fontSize: 9,
@@ -90,7 +93,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#d4af37',
     paddingBottom: 4,
     width: '100%',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DejaVu Sans',
   },
   grid: {
     flexDirection: 'row',
@@ -199,7 +202,7 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     backgroundColor: '#f8fafc',
     padding: 6,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DejaVu Sans',
   },
   aiText: {
     fontSize: 10,
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   mdBold: {
     fontWeight: 'bold',
     color: '#0f172a',
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DejaVu Sans',
   },
   mdListItem: {
     flexDirection: 'row',
@@ -242,7 +245,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 3,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'DejaVu Sans',
+    fontWeight: 'bold',
   },
   summaryItem: {
     flexDirection: 'row',
@@ -485,15 +489,17 @@ const Footer = () => (
   </View>
 );
 
-const stripEmojis = (text: string) => {
+const stripUnsupportedEmoji = (text: string) => {
   if (!text) return text;
-  return text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '');
+  return text
+    .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
+    .replace(/\uFE0F/g, '');
 };
 
 const MarkdownParagraphs = ({ text }: { text: string }) => {
   if (!text) return null;
   
-  const cleanFullText = stripEmojis(text);
+  const cleanFullText = stripUnsupportedEmoji(text);
   const lines = cleanFullText.split('\n');
   
   return (
@@ -654,13 +660,13 @@ export const MyPDFDocument = ({
         
         <View style={{ alignItems: 'center', width: '100%', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#d4af37', paddingVertical: 40 }}>
           <PDFImage src="/assets/logo-premium.png" style={{ width: 90, height: 90, marginBottom: 20 }} />
-          <Text style={{ fontSize: 36, fontFamily: 'Helvetica-Bold', color: '#d4af37', letterSpacing: 6, textTransform: 'uppercase' }}>ASTROMAP</Text>
+          <Text style={{ fontSize: 36, fontFamily: 'DejaVu Sans', fontWeight: 'bold', color: '#d4af37', letterSpacing: 6, textTransform: 'uppercase' }}>ASTROMAP</Text>
           <Text style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 8, marginTop: 12, color: '#94a3b8' }}>O Livro da Vida</Text>
         </View>
 
         <View style={{ marginTop: 60, alignItems: 'center' }}>
           <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 10 }}>Dossiê Exclusivo de</Text>
-          <Text style={{ fontSize: 32, fontFamily: 'Helvetica-Bold', color: '#fff', textAlign: 'center' }}>{data.name}</Text>
+          <Text style={{ fontSize: 32, fontFamily: 'DejaVu Sans', fontWeight: 'bold', color: '#fff', textAlign: 'center' }}>{data.name}</Text>
           <View style={{ height: 1, width: 80, backgroundColor: '#d4af37', marginTop: 20 }} />
         </View>
 
@@ -891,7 +897,7 @@ export const MyPDFDocument = ({
             borderBottomWidth: 4,
             borderBottomColor: '#d4af37'
           }}>
-            <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 2 }}>
+            <Text style={{ fontSize: 16, fontFamily: 'DejaVu Sans', fontWeight: 'bold', color: '#fff', textAlign: 'center', textTransform: 'uppercase', letterSpacing: 2 }}>
               Tratado de Interpretação Natal Integral
             </Text>
             <Text style={{ fontSize: 8, color: '#d4af37', textAlign: 'center', marginTop: 5, letterSpacing: 4, textTransform: 'uppercase' }}>
@@ -938,7 +944,7 @@ export const MyPDFDocument = ({
       {solarReportTextNormalized && (
         <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={[styles.sectionTitle, { fontSize: 18, backgroundColor: '#d97706', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
+          <Text style={[styles.sectionTitle, { fontSize: 16, letterSpacing: 1, backgroundColor: '#d97706', color: '#fff', padding: 12, borderRadius: 8, textAlign: 'center' }]}>
             Arquétipos e Tendências do Ano ({solarYear})
           </Text>
           <MarkdownParagraphs text={solarReportTextNormalized} />
@@ -983,7 +989,8 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
           
           <Text style={{ 
             fontSize: 24, 
-            fontFamily: 'Helvetica-Bold', 
+            fontFamily: 'DejaVu Sans',
+            fontWeight: 'bold',
             color: '#fbbf24', 
             letterSpacing: 2.5, 
             textAlign: 'center',
@@ -1010,7 +1017,8 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
             <Text style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 }}>Nativus</Text>
             <Text style={{ 
               fontSize: 36, 
-              fontFamily: 'Helvetica-Bold', 
+              fontFamily: 'DejaVu Sans',
+              fontWeight: 'bold',
               color: '#fff',
               letterSpacing: 1
             }}>{data.name}</Text>
