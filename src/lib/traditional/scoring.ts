@@ -61,8 +61,8 @@ export function calculateTraditionalAssessment(
   // Casas Angulares (Força Acidental)
   const angularHouses = [1, 4, 7, 10];
   const succedentHouses = [2, 5, 8, 11];
-  if (angularHouses.includes(planet.house || 0)) accidental['House Angular'] = 5;
-  else if (succedentHouses.includes(planet.house || 0)) accidental['House Sucedente'] = 3;
+  if (angularHouses.includes(planet.house || 0)) accidental['Casa Angular'] = 5;
+  else if (succedentHouses.includes(planet.house || 0)) accidental['Casa Sucedente'] = 3;
 
   // Recepção Mútua (Domicílio)
   const mutualReceptions: string[] = [];

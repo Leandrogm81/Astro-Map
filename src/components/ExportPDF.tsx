@@ -430,7 +430,7 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
 
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 8 }]}>Resumo Analítico e Din\u00e2micas de Força</Text>
+      <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 8 }]}>Resumo Analítico e Dinâmicas de Força</Text>
       
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         {/* Elementos */}
@@ -459,7 +459,7 @@ const AnalyticsSummary = ({ chart }: { chart: NatalChart }) => {
           </View>
           {intercepted.length > 0 && (
             <View style={{ marginTop: 5, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 3 }}>
-              <Text style={{ fontSize: 7, color: '#ef4444', fontWeight: 'bold' }}>Sinais Interceptados: {intercepted.join(', ')}</Text>
+              <Text style={{ fontSize: 7, color: '#ef4444', fontWeight: 'bold' }}>Signos Interceptados: {intercepted.join(', ')}</Text>
             </View>
           )}
         </View>
@@ -474,7 +474,7 @@ const Header = () => (
       <PDFImage src="/assets/logo-premium.png" style={styles.logo} />
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>AstroMap</Text>
-        <Text style={styles.subtitle}>O Livro de Destino e Autoconhecimento Astrol\u00f3gico</Text>
+        <Text style={styles.subtitle}>O Livro de Destino e Autoconhecimento Astrológico</Text>
       </View>
     </View>
     <View style={{ textAlign: 'right', minWidth: 100 }}>
@@ -578,13 +578,13 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
   return (
     <View style={{ marginBottom: 20 }}>
       <Text style={[styles.sectionTitle, { fontSize: 12, backgroundColor: '#f59e0b', color: '#fff', padding: 6, borderRadius: 4 }]}>
-        {"An\u00e1lise Din\u00e2mica: Revolu\u00e7\u00e3o Solar"} {year}
+        {"Análise Dinâmica: Revolução Solar"} {year}
       </Text>
 
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', width: '100%' }}>
-        {/* Ativação de Casas (Interposi\u00e7\u00e3o) */}
+        {/* Ativação de Casas (Interposição) */}
         <View style={{ width: '58%', marginRight: 12 }}>
-          <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>{"Interposi\u00e7\u00e3o: Planetas RS no seu Natal"}</Text>
+          <Text style={[styles.sectionTitle, { fontSize: 10, marginBottom: 5 }]}>{"Interposição: Planetas RS no seu Natal"}</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta (RS)</Text>
@@ -595,10 +595,10 @@ const SolarAnalysisTables = ({ natal, solar, year }: { natal: NatalChart, solar:
             {solar.planets.map((p, i) => {
               const natalHouse = getHouseForPlanet(p.longitude, natal.housesPlacidus);
               const areaLabels: Record<number, string> = {
-                1: 'Personalidade / Identidade', 2: 'Finan\u00e7as / Valores', 3: 'Comunica\u00e7\u00e3o / Aprendizado',
-                4: 'Fam\u00edlia / Intimidade', 5: 'Criatividade / Romance', 6: 'Sa\u00fade / Trabalho Di\u00e1rio',
-                7: 'Relacionamentos / Parcerias', 8: 'Transforma\u00e7\u00e3o / Crises', 9: 'Expans\u00e3o / Viagens',
-                10: 'Carreira / Status P\u00fablico', 11: 'Projetos / Amizades', 12: 'Espiritualidade / Retiro'
+                1: 'Personalidade / Identidade', 2: 'Finanças / Valores', 3: 'Comunicação / Aprendizado',
+                4: 'Família / Intimidade', 5: 'Criatividade / Romance', 6: 'Saúde / Trabalho Diário',
+                7: 'Relacionamentos / Parcerias', 8: 'Transformação / Crises', 9: 'Expansão / Viagens',
+                10: 'Carreira / Status Público', 11: 'Projetos / Amizades', 12: 'Espiritualidade / Retiro'
               };
               return (
                 <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
@@ -652,7 +652,7 @@ export const MyPDFDocument = ({
   const aspectRows = (chart.aspects || []).slice(0, 30).map(formatPdfAspectRow);
 
   return (
-    <Document title={`AstroMap - Dossi\u00ea Astrol\u00f3gico - ${data.name}`}>
+    <Document title={`AstroMap - Dossiê Astrológico - ${data.name}`}>
       {/* PÁGINA 1: CAPA PREMIUM INFINITY */}
       <Page size="A4" style={[styles.page, { backgroundColor: '#0f172a', color: '#fff', justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
         <View style={{ 
@@ -667,7 +667,7 @@ export const MyPDFDocument = ({
         </View>
 
         <View style={{ marginTop: 60, alignItems: 'center' }}>
-          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 24 }}>Dossi\u00ea Exclusivo de</Text>
+          <Text style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 3, color: '#d4af37', marginBottom: 24 }}>Dossiê Exclusivo de</Text>
           <Text style={{ fontSize: 32, fontFamily: 'DejaVu Sans', fontWeight: 'bold', color: '#fff', textAlign: 'center' }}>{data.name}</Text>
           <View style={{ height: 1, width: 80, backgroundColor: '#d4af37', marginTop: 20 }} />
         </View>
@@ -682,7 +682,7 @@ export const MyPDFDocument = ({
       <Page size="A4" style={styles.page}>
         <Header />
         <View style={{ paddingTop: 20, paddingHorizontal: 30 }}>
-          <Text style={styles.summaryTitle}>Conte\u00fado do Dossi\u00ea</Text>
+          <Text style={styles.summaryTitle}>Conteúdo do Dossiê</Text>
           
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>1. O Mapa do Nascimento (Radix)</Text>
@@ -707,11 +707,11 @@ export const MyPDFDocument = ({
           {solarRevolution && (
             <View style={{ marginTop: 20 }}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>5. Mapa da Revolu\u00e7\u00e3o Solar ({solarYear})</Text>
+                <Text style={styles.summaryLabel}>5. Mapa da Revolução Solar ({solarYear})</Text>
                 <Text style={styles.summaryPage}>10</Text>
               </View>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryLabel}>6. Interposi\u00e7\u00e3o e Dados Técnicos</Text>
+                <Text style={styles.summaryLabel}>6. Interposição e Dados Técnicos</Text>
                 <Text style={styles.summaryPage}>11</Text>
               </View>
               {solarReportText && (
@@ -864,14 +864,14 @@ export const MyPDFDocument = ({
       {/* PÁGINA 7: ASPECTOS NATAL */}
       <Page size="A4" style={styles.page}>
           <Header />
-          <Text style={styles.sectionTitle}>Din\u00e2mica de Aspectos: Conversas do Céu</Text>
+          <Text style={styles.sectionTitle}>Dinâmica de Aspectos: Conversas do Céu</Text>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta A</Text>
               <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Aspecto</Text>
               <Text style={[styles.tableCellBold, { flex: 1 }]}>Planeta B</Text>
               <Text style={styles.tableCellBold}>Orbe</Text>
-              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Din\u00e2mica</Text>
+              <Text style={[styles.tableCellBold, { flex: 1.2 }]}>Dinâmica</Text>
             </View>
             {aspectRows.map((a, i) => (
               <View wrap={false} key={i} style={[styles.tableRow, i % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]}>
@@ -1257,7 +1257,7 @@ export default function ExportPDF({
             }`}
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-            {loading ? 'Preparando Dossi\u00ea...' : (isTraditional ? 'BAIXAR TRATADO TRADICIONAL' : 'BAIXAR LIVRO DA VIDA (PDF)')}
+            {loading ? 'Preparando Dossiê...' : (isTraditional ? 'BAIXAR TRATADO TRADICIONAL' : 'BAIXAR LIVRO DA VIDA (PDF)')}
           </button>
         )}
       </PDFDownloadLink>

@@ -12,17 +12,17 @@ import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
 
 
 const HOUSE_MEANINGS: Record<number, { title: string; area: string }> = {
-  1: { title: 'Identidade', area: 'Autoimagem, come\u00e7os e vitalidade' },
-  2: { title: 'Recursos', area: 'Finan\u00e7as, valores e seguran\u00e7a' },
-  3: { title: 'Comunica\u00e7\u00e3o', area: 'Estudos, viagens curtas e ambiente' },
-  4: { title: 'Ra\u00edzes', area: 'Lar, fam\u00edlia e base emocional' },
+  1: { title: 'Identidade', area: 'Autoimagem, começos e vitalidade' },
+  2: { title: 'Recursos', area: 'Finanças, valores e segurança' },
+  3: { title: 'Comunicação', area: 'Estudos, viagens curtas e ambiente' },
+  4: { title: 'Raízes', area: 'Lar, família e base emocional' },
   5: { title: 'Criatividade', area: 'Prazer, romance e projetos' },
-  6: { title: 'Rotina', area: 'Sa\u00fade, trabalho e h\u00e1bitos' },
+  6: { title: 'Rotina', area: 'Saúde, trabalho e hábitos' },
   7: { title: 'Parcerias', area: 'Relacionamentos e contratos' },
-  8: { title: 'Transforma\u00e7\u00e3o', area: 'Crises, intimidade e bens partilhados' },
-  9: { title: 'Expans\u00e3o', area: 'Filosofia, estudos superiores e viagens' },
-  10: { title: 'Carreira', area: 'Status, metas e reputa\u00e7\u00e3o' },
-  11: { title: 'Social', area: 'Amizades, grupos e esperan\u00e7as' },
+  8: { title: 'Transformação', area: 'Crises, intimidade e bens partilhados' },
+  9: { title: 'Expansão', area: 'Filosofia, estudos superiores e viagens' },
+  10: { title: 'Carreira', area: 'Status, metas e reputação' },
+  11: { title: 'Social', area: 'Amizades, grupos e esperanças' },
   12: { title: 'Inconsciente', area: 'Espiritualidade, isolamento e fim de ciclos' },
 };
 interface SolarRevolutionProps {
@@ -49,26 +49,26 @@ export default function SolarRevolution({
 
   const getAspectSymbol = (type: string): string => {
     const symbols: Record<string, string> = {
-      'conjun\u00e7\u00e3o': '\u260c', 'sextil': '\u26b9', 'quadratura': '\u25fb', 'tr\u00edgono': '\u25b3', 'oposi\u00e7\u00e3o': '\u260d',
-      'semisextil': '\u26ba', 'semiquadratura': '\u2220', 'sesquiquadratura': '\u26bc', 'quinc\u00fancio': '\u26bb',
+      'conjunção': '☌', 'sextil': '⚹', 'quadratura': '◻', 'trígono': '△', 'oposição': '☍',
+      'semisextil': '⚺', 'semiquadratura': '∠', 'sesquiquadratura': '⚼', 'quincúncio': '⚻',
     };
-    return symbols[type] || '\u25e6';
+    return symbols[type] || '◦';
   };
 
   const getAspectClass = (type: string): string => {
     const classes: Record<string, string> = {
-      'conjun\u00e7\u00e3o': 'aspect-conjuncao',
+      'conjunção': 'aspect-conjuncao',
       'sextil': 'aspect-sextil',
       'quadratura': 'aspect-quadratura',
-      'tr\u00edgono': 'aspect-trigono',
-      'oposi\u00e7\u00e3o': 'aspect-oposicao'
+      'trígono': 'aspect-trigono',
+      'oposição': 'aspect-oposicao'
     };
     return classes[type] || 'aspect-neutral';
   };
 
   // Funções de análise
   const crossAspects = solarReturn ? calculateCrossAspects(solarReturn.planets, natalChart.planets)
-    .filter(a => ['conjun\u00e7\u00e3o', 'sextil', 'quadratura', 'tr\u00edgono', 'oposi\u00e7\u00e3o'].includes(a.type))
+    .filter(a => ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type))
     .sort((a, b) => a.orb - b.orb)
     .slice(0, 12) : [];
 
@@ -81,8 +81,8 @@ export default function SolarRevolution({
 
     if (srAsc === natalAsc) themes.push({ label: 'Retorno Profundo', icon: Target });
     if (srSunHouse === 10 || srSunHouse === 1) themes.push({ label: 'Destaque e Visibilidade', icon: Sun });
-    if (solarReturn.planets.find(p => p.name === 'Saturno')?.house === 10) themes.push({ label: 'Constru\u00e7\u00e3o de Carreira', icon: Zap });
-    if (solarReturn.planets.find(p => p.name === 'J\u00fapiter')?.house === 2) themes.push({ label: 'Expans\u00e3o Financeira', icon: Sparkles });
+    if (solarReturn.planets.find(p => p.name === 'Saturno')?.house === 10) themes.push({ label: 'Construção de Carreira', icon: Zap });
+    if (solarReturn.planets.find(p => p.name === 'Júpiter')?.house === 2) themes.push({ label: 'Expansão Financeira', icon: Sparkles });
     
     return themes.length > 0 ? themes : [{ label: 'Novo Ciclo', icon: Compass }];
   };
@@ -122,7 +122,7 @@ export default function SolarRevolution({
         onRevolutionCalculated(result, calcYear);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao calcular revolu\u00e7\u00e3o solar');
+      setError(err instanceof Error ? err.message : 'Erro ao calcular revolução solar');
     } finally {
       setLoading(false);
     }
@@ -216,7 +216,7 @@ export default function SolarRevolution({
       <div className="flex items-center justify-between flex-wrap gap-4">
         <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2 font-serif">
           <Sun className="w-6 h-6 text-yellow-500 animate-pulse" />
-          {"Revolu\u00e7\u00e3o Solar"} {year}
+          Revolução Solar {year}
         </h3>
         
         <div className="flex items-center gap-1 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
@@ -225,7 +225,7 @@ export default function SolarRevolution({
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
-            {"\u2190"}
+            ←
           </button>
           <span className="px-4 py-2 text-slate-100 font-bold min-w-[80px] text-center font-mono">
             {year}
@@ -235,7 +235,7 @@ export default function SolarRevolution({
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors"
             disabled={loading}
           >
-            {"\u2192"}
+            →
           </button>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function SolarRevolution({
       {loading && (
         <div className="p-20 text-center">
           <Loader2 className="w-10 h-10 mx-auto animate-spin text-purple-500" />
-          <p className="mt-4 text-slate-400 font-medium tracking-wide">Calculando alinhamentos astron\u00f4micos...</p>
+          <p className="mt-4 text-slate-400 font-medium tracking-wide">Calculando alinhamentos astronômicos...</p>
         </div>
       )}
 
@@ -270,7 +270,7 @@ export default function SolarRevolution({
           <div className="glass p-6 rounded-3xl shadow-inner relative overflow-hidden group">
              <div className="flex items-center justify-between mb-6 relative z-10">
                 <div>
-                   <h4 className="text-lg font-bold text-slate-200 font-serif">{"Sobreposi\u00e7\u00e3o Natal vs Revolu\u00e7\u00e3o"}</h4>
+                   <h4 className="text-lg font-bold text-slate-200 font-serif">Sobreposição Natal vs Revolução</h4>
                    <p className="text-[10px] text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
                 </div>
              </div>
@@ -364,7 +364,7 @@ export default function SolarRevolution({
           <div className="glass p-6 rounded-3xl">
              <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
                 <Compass className="w-5 h-5 text-purple-400" />
-                 Estrutura de Casas da Revolu\u00e7\u00e3o Solar
+                Estrutura de Casas da Revolução Solar
              </h4>
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {solarReturn.housesPlacidus.map((house, i) => {
