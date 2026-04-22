@@ -1,0 +1,26 @@
+# Force all text files to be checked in with LF line endings and UTF-8 encoding
+# This prevents CRLF/LF conversion issues that can corrupt multi-byte UTF-8 characters
+
+* text=auto eol=lf
+
+# Explicitly mark source files as text
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.mjs text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
