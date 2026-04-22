@@ -156,10 +156,10 @@ export default function SolarRevolution({
         body: JSON.stringify({
           chart: natalChart,
           reportMode: 'solar',
-          solarRevolution: solarReturn,
+          solarChart: solarReturn,
           solarYear: year,
           apiKey: storedApiKey,
-        model: 'google/gemini-2.5-flash-lite',
+          model: 'google/gemini-2.5-flash-lite',
         }),
       });
 

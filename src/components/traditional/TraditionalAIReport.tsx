@@ -94,7 +94,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
         body: JSON.stringify({ 
           chart,
           assessments,
-          isTraditional: true,
+          reportMode: 'traditional',
           model: selectedModel,
           apiKey: apiKey.trim(),
         }),

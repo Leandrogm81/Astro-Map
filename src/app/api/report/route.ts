@@ -15,6 +15,12 @@ const DEFAULT_MODEL_ID = 'google/gemini-flash-1.5';
 
 export const AVAILABLE_MODELS = [
   {
+    id: 'google/gemini-2.5-flash-lite',
+    name: 'Rápido - Gemini 2.5 Flash Lite',
+    description: 'Modelo mais rápido e econômico do Google, ideal para análises ágeis.\nCusto: muito baixo',
+    cost: 'muito baixo'
+  },
+  {
     id: DEFAULT_MODEL_ID,
     name: 'Padrão - Gemini 1.5 Flash',
     description: 'Boa qualidade com baixo custo e excelente velocidade para relatórios do mapa natal.\nCusto: baixo',
