@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:safe": "next dev",
-    "build": "echo \"LANG=$LANG LC_ALL=$LC_ALL\" && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",

@@ -290,8 +290,7 @@ const getPlanetSymbol = (name: string) => {
     'Sol': '☉', 'Lua': '☽', 'Mercúrio': '☿', 'Vênus': '♀',
     'Marte': '♂', 'Júpiter': '♃', 'Saturno': '♄', 'Urano': '♅',
     'Netuno': '♆', 'Plutão': '♇', 'Nodo Norte': '☊', 'Quíron': '⚷',
-    'Lilith': '⚸', 'Roda da Fortuna': '⊗',
-    'North Node': '☊', 'Chiron': '⚷'
+    'Lilith': '⚸', 'Roda da Fortuna': '⊗'
   };
   return symbols[name] || name[0];
 };
@@ -299,7 +298,10 @@ const getPlanetSymbol = (name: string) => {
 const getPlanetLabel = (id: string): string => {
   const map: Record<string, string> = {
     sun: 'Sol', moon: 'Lua', mercury: 'Mercúrio',
-    venus: 'Vênus', mars: 'Marte', jupiter: 'Júpiter', saturn: 'Saturno'
+    venus: 'Vênus', mars: 'Marte', jupiter: 'Júpiter', saturn: 'Saturno',
+    uranus: 'Urano', neptune: 'Netuno', pluto: 'Plutão',
+    node: 'Nodo Norte', chiron: 'Quíron', lilith: 'Lilith',
+    partOfFortune: 'Roda da Fortuna'
   };
   return map[id] || id;
 };
