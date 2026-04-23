@@ -17,8 +17,8 @@ const DEFAULT_MODEL_ID = 'google/gemini-flash-1.5';
 
 export const AVAILABLE_MODELS = [
   {
-    id: 'google/gemini-2.5-flash-lite',
-    name: 'Rápido - Gemini 2.5 Flash Lite',
+    id: 'google/gemini-2.0-flash-lite-preview-02-05',
+    name: 'Rápido - Gemini 2.0 Flash Lite',
     description: 'Modelo mais rápido e econômico do Google, ideal para análises ágeis.\nCusto: muito baixo',
     cost: 'muito baixo'
   },
@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
     } else if (reportMode === 'elective_magic') {
       systemPrompt = ELECTIVE_MAGIC_PROMPT_SYSTEM;
       const { veredict } = body;
-      if (!veredict) {
-        return NextResponse.json({ error: 'Dados do veredito são obrigatórios para magia.' }, { status: 400 });
+      if (!veredict || !veredict.planetHour || !veredict.lunarMansion) {
+        return NextResponse.json({ error: 'Dados do veredito incompletos para a análise mágica.' }, { status: 400 });
       }
       userMessage = formatElectiveForAI(veredict, chart);
     } else {

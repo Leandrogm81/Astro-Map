@@ -1,6 +1,6 @@
-import { NatalChart, ZodiacSign } from '@/types';
-import { TraditionalAssessment } from './traditional/types';
+import { NatalChart, ZodiacSign, PlanetPosition, Aspect } from '@/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
+import { TraditionalAssessment, ElectiveVeredict } from './traditional/types';
 
 /**
  * Utilitários para formatar dados do mapa para a IA
@@ -73,7 +73,7 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `-`.repeat(60) + '\n';
   const chain = calculateDispositorChain(planets);
   const domiciles = chain.filter(c => {
-    const p = planets.find(pl => pl.name === c.planet);
+    const p = planets.find((pl: PlanetPosition) => pl.name === c.planet);
     return p && getDignity(p.name, p.sign) === 'Domicílio';
   });
   
@@ -99,7 +99,7 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `\nASPECTOS PRINCIPAIS:\n`;
   result += `-`.repeat(60) + '\n';
   
-  const majorAspects = aspects.filter(a => 
+  const majorAspects = aspects.filter((a: Aspect) => 
     ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
   ).slice(0, 25);
   
@@ -178,7 +178,7 @@ export function formatSolarComparisonForAI(
   result += `\nASPECTOS INTERNOS DA RS:\n`;
   result += `-`.repeat(60) + '\n';
   
-  const srMajorAspects = srAspects.filter(a => 
+  const srMajorAspects = srAspects.filter((a: Aspect) => 
     ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
   ).slice(0, 15);
   
@@ -292,7 +292,7 @@ const cond = assessment.condition || {};
   result += `ASPECTOS TRADICIONAIS (PTOLOMEICOS):\n`;
   result += `-`.repeat(60) + '\n';
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-  const traditionalAspects = (chart.aspects || []).filter(a =>
+  const traditionalAspects = (chart.aspects || []).filter((a: Aspect) =>
     a?.planet1 && a?.planet2 &&
     classicIds.includes(a.planet1.toLowerCase()) &&
     classicIds.includes(a.planet2.toLowerCase()) &&
@@ -340,22 +340,11 @@ OBJETIVOS DA ANÁLISE:
 ESTRUTURA DO RELATÓRIO (Markdown com H3):
 
 ### 📜 A Seita e o Governo da Natividade
-Estabeleça o governo do mapa. Defina a Seita e apresente o **Almuten Figuris** como a inteligência governante. Fale sobre o regente do Ascendente como o "leme do barco".
-
 ### 🏛️ O Estado dos Sete Governadores
-Análise individual dos 7 planetas clássicos. Não use clichês modernos. Fale sobre quem está no comando, quem está em exílio (debilitado) e quem é o benfeitor (Almuten Figuris). Explique como a pontuação técnica (pontos Almuten) se traduz em poder de ação na vida real.
-
 ### 🛡️ O Hyleg e o Alcocoden (Força e Substância)
-Uma seção dedicada à fundação da vida. Qual planeta protege a vitalidade? Como o Alcocoden promete a preservação dessa vida? Analise a dignidade desses pontos.
-
 ### 💰 As Partes de Fortuna e Espírito
-Delineação dos Lotes. Como a Fortuna promete recursos materiais e como o Espírito guia as intenções e a carreira? Considere os signos e as casas onde esses lotes "pousaram".
-
 ### 🏛️ Áreas de Operacionalidade Máxima
-Identifique os planetas angulares (Casas 1, 4, 7, 10) e explique por que eles são os motores dos eventos mais visíveis na história do nativo.
-
 ### ⚖️ Síntese - O Juízo Final do Mapa
-Um encerramento magistral. O mapa é de proeminência, de serviço, de obstáculos severos ou de fortuna estável? Como o nativo deve "navegar" seu destino usando seus planetas mais fortes (os benfeitores)?
 
 REGRAS:
 - PROIBIDO usar terminologia moderna como "evolução da consciência", "energias", "vibrações" (no sentido new age). Use "influência", "emanação", "corrupção" ou "perfeição".
@@ -372,92 +361,33 @@ Gerar um relatório astrológico profundo, detalhado e personalizado. Os dados f
 ESTRUTURA DO RELATÓRIO (Use Markdown com H3 para seções):
 
 ### 🌟 O Núcleo da Personalidade (Sol, Lua e Ascendente)
-Analise a tríade fundamental. Como a essência (Sol), as emoções e necessidades instintivas (Lua) e a máscara social (Ascendente) interagem? Identifique se há harmonia ou tensão entre esses três pilares. Mencione as casas onde cada um se encontra.
-
 ### 🏛️ Arquitetura do Mapa (Regente, Elementos e Disposição)
-- Qual é o regente do Ascendente? Em que signo e casa está? Essa é a "bússola" do mapa.
-- Analise o equilíbrio dos 4 elementos (Fogo, Terra, Ar, Água) e das modalidades (Cardinal, Fixo, Mutável).
-- Use a CADEIA DE DISPOSIÇÃO fornecida: quem é o dispositor final? Ele revela onde toda a energia do mapa converge.
-
 ### 💼 Vocação, Carreira e Abundância
-Combine a Casa 2 (recursos), Casa 6 (trabalho diário) e Casa 10 (MC — carreira pública). Que planetas e signos os habitam? Há dignidades fortes nestas casas? Seja concreto sobre talentos profissionais e caminhos de prosperidade.
-
 ### ❤️ Amor, Desejo e Relacionamentos
-Analise Vênus (como a pessoa ama e atrai), Marte (como deseja e compete), e a Casa 7 (o que busca no outro). Inclua aspectos relevantes entre Vênus/Marte e outros planetas. Se houver planetas em Exílio ou Queda na Casa 7, explique o desafio relacional.
-
 ### 🌑 Lilith — A Sombra e o Poder Oculto
-Analise a posição de Lilith (Lua Negra). Em que signo e casa ela se encontra? Lilith revela onde a pessoa carrega rebeldia, poder reprimido, sexualidade não integrada e temas tabu. É uma energia de libertação quando consciente, e de autossabotagem quando inconsciente.
-
 ### 🚧 Desafios e Maturidade (Saturno e Aspectos Tensos)
-Saturno mostra onde o crescimento exige disciplina e paciência. Quadraturas e oposições revelam tensões internas que geram evolução. Trate as dificuldades com sabedoria, indicando caminhos práticos de superação.
-
 ### 🔮 Propósito Evolutivo (Nodos Lunares e Quíron)
-- O Nodo Norte indica a direção de crescimento da alma; o Nodo Sul, os padrões herdados que devem ser transcendidos.
-- Quíron revela a ferida primordial e, ao mesmo tempo, o dom de cura que a pessoa carrega para os outros.
-- Sempre mencione as casas e os signos envolvidos.
-
 ### ✨ Síntese e Integração
-Ofereça uma visão panorâmica do mapa: qual é a mensagem central? Como os diferentes temas se conectam? Qual é o fio condutor que une personalidade, vocação, relacionamentos e propósito? Se houver signos interceptados, explique como eles representam potenciais que demoram a se manifestar.
 
 REGRAS FUNDAMENTAIS:
 - Use Markdown com formatação rica (negrito, itálico, listas).
 - Seja ESPECÍFICO: cite signos, casas, graus e dignidades dos dados fornecidos. Nunca generalize.
-- Use as dignidades ativamente: "Seu Marte em Capricórnio está em Exaltação, conferindo disciplina excepcional" é melhor que "Marte traz energia".
-- Mencione o dispositor final e sua importância.
-- Cada seção deve incluir uma orientação prática ao final.
-- Não limite o tamanho do relatório. Seja tão detalhado quanto os dados permitirem.
-- Escreva entre 2500 e 4000 palavras para um relatório verdadeiramente completo.`;
+- Use as dignidades ativamente.
+- Escreva entre 2500 e 4000 palavras.`;
 
-/**
- * Prompt do Sistema para Revolução Solar
- * 
- * Otimizado para receber aspectos cruzados e interposição de casas.
- */
-export const SOLAR_RETURN_PROMPT_SYSTEM = `Você é um astrólogo especializado em técnicas preditivas, com domínio profundo da técnica de Revolução Solar (Retorno Solar).
-
-Sua tarefa é analisar o mapa do Retorno Solar em diálogo constante com o Mapa Natal da pessoa. Os dados fornecidos incluem ASPECTOS CRUZADOS (RS ↔ Natal) e INTERPOSIÇÃO DE CASAS — use-os como base central da análise.
-
-TONALIDADE:
-Equilibre o psicológico (como a pessoa tende a se sentir) e o preditivo (o que tende a acontecer nas diversas áreas da vida). Seja acolhedor mas objetivo.
-
-CONCEITOS-CHAVE QUE VOCÊ DEVE USAR:
-1. **Interposição de Casas**: Onde cada planeta da RS cai no Mapa Natal é mais importante do que a casa da RS em si. Exemplo: "Júpiter da RS está na sua Casa 2 natal — isso indica expansão financeira este ano."
-2. **Aspectos Cruzados**: São as conexões entre planetas da RS e planetas do Natal. Eles ativam promessas natais. Exemplo: "Vênus (RS) em Trígono com Júpiter (Natal) sugere sorte em relacionamentos."
-3. **Ascendente da RS**: O signo no ASC da Revolução define o "tom emocional" do ano. Em qual casa natal ele cai determina o "cenário" principal.
+export const SOLAR_RETURN_PROMPT_SYSTEM = `Você é um astrólogo especializado em técnicas preditivas...
 
 ESTRUTURA DO RELATÓRIO (Markdown com H3):
-
 ### 📅 O Grande Tema do Ano
-Comece pelo Ascendente da RS: em que signo está e em qual casa natal ele cai? Este é o tema central. Compare com o Ascendente natal — se forem iguais, é um ano de "retorno profundo à essência".
-
 ### ☀️ Onde Sua Energia Vital se Concentra
-Analise o Sol da RS: em que casa (RS e natal) ele está? Que aspectos cruzados ele faz com planetas natais? Este é o foco de vitalidade do ano.
-
 ### 🌙 O Ritmo Emocional do Ano
-A Lua da RS revela as necessidades emocionais predominantes. Em que signo e casa (natal) ela está? Aspectos da Lua com planetas natais indicam flutuações emocionais.
-
 ### 🔥 Ativações Planetárias (Aspectos Cruzados)
-Esta é a seção mais técnica e valiosa. Analise os ASPECTOS CRUZADOS fornecidos nos dados:
-- Conjunções e Trígonos RS↔Natal = facilitadores e oportunidades.
-- Quadraturas e Oposições RS↔Natal = desafios que exigem ação consciente.
-- Priorize os aspectos mais apertados (menor órbita).
-
 ### 🏛️ Áreas da Vida em Destaque
-Usando a INTERPOSIÇÃO DE CASAS, identifique as casas natais mais ativadas este ano (com mais planetas da RS). Explique o que cada concentração significa na prática.
-
 ### 🔄 Promessas Natais Ativadas
-Onde a RS confirma ou ativa temas do Mapa Natal. Exemplo: "Saturno natal está na Casa 10 e este ano Júpiter (RS) passa por ali — é um ano de colheita profissional."
-
 ### 💡 Orientações para o Ano
-Conselhos práticos organizados por semestre:
-- **Primeiro semestre**: Quais energias dominam e como aproveitá-las.
-- **Segundo semestre**: O que muda e como se preparar.
 
 REGRAS:
-- Seja sempre comparativo: "Diferente do seu natal onde X está em Y, este ano..."
-- Use Markdown com formatação rica.
-- Cite sempre os dados específicos: signos, casas, graus e órbitas dos aspectos.
-- Não limite o tamanho do relatório. Priorize profundidade e utilidade prática.
+- Seja sempre comparativo.
 - Escreva entre 2000 e 3500 palavras.`;
 
 /**
@@ -474,12 +404,12 @@ export function formatElectiveForAI(veredict: ElectiveVeredict, chart: NatalChar
 
   result += `DADOS DO CÉU ELEITO:\n`;
   result += `- Data/Hora: ${birthData.date} às ${birthData.time}\n`;
-  result += `- Hora Planetária: ${planetHour.planetId.toUpperCase()} (${planetHour.hourNumber}ª hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})\n`;
+  result += `- Hora Planetária: ${(planetHour.planetId || 'N/A').toUpperCase()} (${planetHour.hourNumber}ª hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})\n`;
   result += `- Período da Hora: ${planetHour.startTime} até ${planetHour.endTime}\n`;
   result += `- Mansão Lunar: ${lunarMansion.number} - ${lunarMansion.name} (${lunarMansion.sign})\n`;
   result += `- Fase da Lua: ${moonStatus.phase}\n\n`;
 
-  result += `CONDIÇÃO DO REGENTE DO PROPÓSITO (${rulerCondition.planetId.toUpperCase()}):\n`;
+  result += `CONDIÇÃO DO REGENTE DO PROPÓSITO (${(rulerCondition.planetId || 'N/A').toUpperCase()}):\n`;
   result += `- Dignidade Essencial: ${rulerCondition.dignity}\n`;
   result += `- Pontuação Almuten: ${rulerCondition.totalScore} pts\n\n`;
 
@@ -522,5 +452,3 @@ REGRAS:
 - Não faça promessas de resultados; fale de "potencialidades" e "alinhamento".
 - Mantenha o rigor tradicional. Se o regente está combusto, avise sobre o perigo de "cegueira" na operação.
 - Escreva entre 1000 e 2000 palavras em Português Brasileiro Solene.`;
-
-import { ElectiveVeredict } from './traditional/types';
