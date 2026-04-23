@@ -5,7 +5,9 @@ import {
   formatTraditionalChartForAI,
   NATAL_PROMPT_SYSTEM, 
   SOLAR_RETURN_PROMPT_SYSTEM,
-  TRADITIONAL_PROMPT_SYSTEM
+  TRADITIONAL_PROMPT_SYSTEM,
+  ELECTIVE_MAGIC_PROMPT_SYSTEM,
+  formatElectiveForAI
 } from '@/lib/aiPrompts';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
 
@@ -115,6 +117,13 @@ export async function POST(request: NextRequest) {
       }
       
       userMessage = formatTraditionalChartForAI(chart, assessments || []);
+    } else if (reportMode === 'elective_magic') {
+      systemPrompt = ELECTIVE_MAGIC_PROMPT_SYSTEM;
+      const { veredict } = body;
+      if (!veredict) {
+        return NextResponse.json({ error: 'Dados do veredito são obrigatórios para magia.' }, { status: 400 });
+      }
+      userMessage = formatElectiveForAI(veredict, chart);
     } else {
       // Padrão: Natal Moderno
       systemPrompt = NATAL_PROMPT_SYSTEM;

@@ -90,6 +90,12 @@ graph TD
 4. Reviewer revisa → Pode rejeitar com feedback específico
 5. Documenter atualiza docs → Commit final com Conventional Commits
 
+## 🧠 Kernel de Comportamento
+
+- Use `MAESTRO` como referência-base quando houver ambiguidade de escopo, risco ou precedência.
+- Prefira a skill `$astromap-maestro` quando quiser aplicar esse kernel de forma explícita no Codex.
+- Não duplique em `AGENTS.md` as regras já mantidas no MAESTRO; mantenha aqui apenas a orientação de uso.
+
 ---
 
 ## 🔮 Domínio Astrológico — Conceitos Críticos (SPEC.md §7)
@@ -246,18 +252,17 @@ Aguardando análise.
 
 ## 🔗 Referências Rápidas
 
-| Documento             | Conteúdo                           | Quando Consultar                             |
-| :-------------------- | :--------------------------------- | :------------------------------------------- |
-| `CLAUDE.md`           | Guidelines behaviorais             | Sempre (Think Before Coding)                 |
-| `GEMINI.MD`           | Regras projeto, segurança, commits | Antes de codar, antes de commitar            |
-| `SPEC.md`             | Especificação técnica completa     | Planejamento, implementação, review          |
-| `DEBUGGER.md`         | Guia de correção e depuração       | Durante bugs, erros de build ou regressões   |
-| `docs/architecture.md`| Diagramas, estrutura               | Arquitetura, fluxos de dados                 |
-| `docs/api-reference.md`| Contrato API                      | Implementação de endpoints                   |
-| `docs/extensibility.md`| Como estender                     | Adicionar novas features                     |
-| `workflows/deploy-seguro.md` | Deploy Seguro e Validação       | Antes de cada commit e push                  |
-
+| Documento                   | Conteúdo                           | Quando Consultar                             |
+| :-------------------------- | :--------------------------------- | :------------------------------------------- |
+| `CLAUDE.md`                 | Guidelines behaviorais             | Sempre (Think Before coding)                 |
+| `GEMINI.MD`                 | Regras projeto, segurança, commits | Antes de codar, antes de commitar            |
+| `SPEC.md`                   | Especificação técnica completa     | Planejamento, implementação, review          |
+| `DEBUGGER.md`               | Guia de correção e depuração       | Durante bugs, erros de build ou regressões   |
+| `docs/architecture.md`      | Diagramas, estrutura               | Arquitetura, fluxos de dados                 |
+| `docs/api-reference.md`     | Contrato API                       | Implementação de endpoints                   |
+| `docs/extensibility.md`     | Como estender                      | Adicionar novas features                     |
+| `workflows/deploy-seguro.md`| Deploy Seguro e Validação          | Antes de cada commit e push                  |
 
 ---
 
-###### *AGENTS.md versão 2.0 | AstroMap | Integra CLAUDE.md + GEMINI.MD + SPEC.md*
+### *AGENTS.md versão 2.0 | AstroMap | Integra CLAUDE.md + GEMINI.MD + SPEC.md*

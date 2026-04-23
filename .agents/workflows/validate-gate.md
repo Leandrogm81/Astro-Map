@@ -1,152 +1,194 @@
 ---
-description: Meta-harness validation and promotion workflow for AstroMap. Optimized for reproducibility, scoped promotion, and low-risk delivery.
+description: Workflow para validar se uma mudança no AstroMap está tecnicamente pronta para promoção, sem confundir validação com release.
 ---
 
-# Validate and Promote Workflow — AstroMap
+# VALIDATE GATE - AstroMap
 
-## Purpose
+**Descrição:**  
+Use este workflow quando a mudança já foi implementada e precisa provar prontidão técnica antes de seguir para `Release / Rollback`.  
+O objetivo é confirmar que a alteração passou pelas verificações corretas, no nível proporcional ao seu risco.
 
-Use this workflow before commit, push, or deployment.
+---
 
-Goal:
+## 🎯 Missão
 
-- prove the change is ready
-- validate the correct level of risk
-- separate validation from promotion
-- avoid accidental staging and noisy process
+Separar “mudança implementada” de “mudança tecnicamente pronta para promoção”.
 
-This workflow follows the MAESTRO philosophy:
+---
 
-- smaller runtime rules
-- stronger verification
-- no ritual steps without value
-- controlled records, not bureaucratic logs
+## 🧭 Princípios
 
-## Core Rules
+- **Validar não é publicar.**
+- **Nem toda mudança exige a mesma profundidade de checagem.**
+- **A validação deve seguir o risco.**
+- **Diferença entre parecer pronto e estar pronto importa.**
+- **Se falta evidência crítica, a mudança ainda não passou pelo gate.**
 
-- Validation comes before promotion.
-- Reproducibility beats convenience.
-- Stage only intended files.
-- Risk determines depth of checks.
-- Not every change needs the same ceremony.
+---
 
-## Change Classes
+## 📥 Quando Acionar
 
-Classify the change first:
+Acione este workflow depois de:
 
-- `trivial`: docs, text, low-risk cosmetic copy
-- `standard`: isolated code change with limited blast radius
-- `risky`: touches shared contracts, calculations, exports, config, or key UX
-- `structural`: broad architecture, migrations, or deploy-affecting behavior
+- `BUILD FLOW`
+- `DEBUG TRACE`
+- `Refactor / Debt Controller`
 
-## Workflow
+e após quaisquer revisões auxiliares necessárias, como:
 
-### Step 1 — Preflight
+- `Contract Guardian`
+- `Domain Verifier`
+- `UI / Accessibility Review`
+- `Test / Regression Harness`
 
-Check:
+---
 
-- current branch is correct
-- working tree state is understood
-- changed files match intended scope
-- no secrets, temp files, or accidental artifacts are present
+## 📥 Entradas Esperadas
 
-If scope is messy, stop and clean the change before validation.
+- descrição da mudança
+- risco (`trivial`, `standard`, `risky`, `structural`)
+- arquivos alterados
+- validação esperada
+- evidências já obtidas
+- workflows auxiliares acionados
+- área principal afetada
 
-### Step 2 — Dependency Discipline
+---
 
-Do not run install commands by habit.
+## 📤 Saídas Obrigatórias
 
-Use deterministic dependency flow appropriate to the project state.
-Only refresh dependencies when the change actually requires it.
+- status de validação
+- evidências presentes
+- evidências faltantes
+- blockers para promoção
+- conclusão: `pass`, `pass with conditions` ou `fail`
 
-### Step 3 — Validation Plan
+---
 
-Pick checks based on risk:
+## 🛠️ Protocolo de Execução
 
-- `trivial` -> minimal relevant checks
-- `standard` -> lint + targeted tests or build as needed
-- `risky` -> lint + tests + build + targeted smoke
-- `structural` -> full validation + explicit review of blast radius
+### Passo 1: Identificar a Classe da Mudança
 
-State the chosen validation path before executing it.
+Definir:
 
-### Step 4 — Static and Test Validation
+- `feature`
+- `bugfix`
+- `refactor`
+- `contract`
+- `domain`
+- `ui`
+- `deploy/config`
 
-Run the applicable checks:
+Se tocar mais de uma classe, registrar a principal e as secundárias.
+
+---
+
+### Passo 2: Ler o Risco
+
+Usar a classificação do Triage:
+
+- `trivial`
+- `standard`
+- `risky`
+- `structural`
+
+A profundidade da validação deve seguir essa classificação.
+
+---
+
+### Passo 3: Conferir Evidência Obrigatória
+
+Checar o que era esperado:
 
 - lint
-- tests
 - build
+- teste dirigido
+- smoke do fluxo principal
+- contract review
+- domain verification
+- UI review
+- outras evidências específicas
 
-Do not treat all three as blind ritual if the change class clearly does not require them, but any risky or structural change must pass the full set.
+Nada deve ser tratado como “feito” sem alguma confirmação real.
 
-### Step 5 — Targeted Smoke
+---
 
-Run targeted smoke validation when the change touches:
+### Passo 4: Identificar Lacunas
 
-- visual flows
-- API contracts
-- PDF/export
-- routing/navigation
-- data loading states
-- astrological calculations
-- platform/deploy configuration
+Perguntar:
 
-Smoke must be scoped to the affected critical path, not generic wandering.
+- ainda falta alguma validação obrigatória?
+- há área sensível sem revisão?
+- a mudança toca contrato, domínio ou UI crítica sem evidência correspondente?
+- o risco real parece maior do que o inicialmente classificado?
 
-### Step 6 — Diff Review
+Se sim, o gate não passa limpo.
 
-Review the diff before staging.
+---
 
-Confirm:
+### Passo 5: Classificar o Resultado
 
-- every changed file belongs to the task
-- naming/contracts stayed correct
-- no unrelated churn entered the diff
-- no generated noise is being promoted accidentally
+### `pass`
 
-### Step 7 — Record Only What Matters
+Quando toda a validação mínima foi cumprida.
 
-Create an update note only if one of these is true:
+### `pass with conditions`
 
-- the change is risky or structural
-- the change introduces a reusable pattern
-- the change affects deployment behavior
-- the change would benefit future triage
+Quando a mudança está quase pronta, mas ainda depende de item pequeno e explícito antes da promoção.
 
-Suggested path:
+### `fail`
 
-- `log/updates/update_YYYY_MM_DD_HH.md`
+Quando falta evidência crítica ou há inconsistência relevante.
 
-Minimum note structure:
+---
 
-- what changed
-- why it changed
-- validation performed
-- risks or follow-ups
+### Passo 6: Preparar a Transição
 
-### Step 8 — Promotion
+Se o resultado for `pass` ou `pass with conditions`, indicar se pode seguir para:
 
-Promotion is separate from validation.
+- `Release / Rollback`
 
-When promoting:
+Se for `fail`, indicar para qual workflow deve retornar.
 
-- stage files selectively
-- use a scoped commit message
-- push only after diff review and validation are complete
+---
 
-Never use blanket staging as the default behavior.
+## 🚫 Fronteiras
 
-## Exit Criteria
+Este workflow:
 
-The workflow is complete only when:
+- **não publica**
+- **não faz commit/push por si**
+- **não corrige o código**
+- **não substitui os workflows especialistas**
+- **não atualiza MAESTRO**
+- **não cria log por reflexo**
 
-- validation depth matched risk
-- intended files were reviewed
-- promotion was selective
-- no accidental artifacts were included
-- records were created only if justified
+---
 
-## Trigger Command
+## ✅ Checklist Final
 
-`Run Validate and Promote Workflow. Scope: [description]. Risk: [trivial|standard|risky|structural].`
+- [ ] A classe da mudança foi identificada?
+- [ ] O risco foi respeitado?
+- [ ] A evidência obrigatória foi conferida?
+- [ ] As lacunas foram registradas?
+- [ ] O resultado foi classificado com clareza?
+- [ ] A próxima rota foi definida?
+
+---
+
+## 📌 Formato de Saída Recomendado
+
+```markdown
+**VALIDATE GATE Result**
+- Classe principal: `feature`
+- Risco: `standard`
+- Evidências presentes:
+  - lint
+  - build
+  - smoke do fluxo principal
+- Evidências faltantes:
+  - UI / Accessibility Review
+- Status: `pass with conditions`
+- Próxima rota:
+  - corrigir revisão de UI
+  - depois seguir para Release / Rollback

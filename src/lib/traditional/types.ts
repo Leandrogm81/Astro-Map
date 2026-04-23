@@ -52,3 +52,49 @@ export interface TraditionalStatus {
   hyleg?: 'ready' | 'partial' | 'none';
   alcocoden?: 'ready' | 'partial' | 'none';
 }
+
+export type MagicPurpose = 
+  | 'authority'    // Sol
+  | 'emotion'      // Lua
+  | 'communication' // Mercúrio
+  | 'love'         // Vênus
+  | 'conflict'     // Marte
+  | 'expansion'    // Júpiter
+  | 'structure';   // Saturno
+
+export interface PlanetHour {
+  planetId: string;
+  isDaytime: boolean;
+  hourNumber: number; // 1-12
+  startTime: string;
+  endTime: string;
+}
+
+export interface LunarMansion {
+  number: number; // 1-28
+  name: string;
+  sign: string;
+  degreeRange: string;
+  summary: string;
+}
+
+export type ElectiveScore = 'propitious' | 'neutral' | 'challenging';
+
+export interface ElectiveVeredict {
+  score: ElectiveScore;
+  purpose: MagicPurpose;
+  planetHour: PlanetHour;
+  lunarMansion: LunarMansion;
+  moonStatus: {
+    phase: string;
+    isVoidOfCourse: boolean;
+    aspects: string[];
+  };
+  rulerCondition: {
+    planetId: string;
+    totalScore: number;
+    dignity: string;
+  };
+}
+
+export type ElectiveMode = 'sky_only' | 'sky_plus_natal';

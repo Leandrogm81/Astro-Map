@@ -1,185 +1,184 @@
 ---
-description: Meta-harness feature workflow for AstroMap. Optimized for scoped delivery, reuse, and controlled learning.
+description:  Workflow para implementar novas funcionalidades no AstroMap com escopo mínimo, risco controlado e validação proporcional.
 ---
 
-# Feature Workflow — AstroMap
+# BUILD FLOW - AstroMap
 
-## Purpose
+**Descrição:**  
+Use este workflow quando a demanda principal for construir uma nova funcionalidade, ampliar comportamento existente ou implementar uma melhoria funcional.  
+O objetivo é entregar a menor solução útil, sem over-engineering, sem escopo oculto e sem contaminar o sistema com mudanças paralelas.
 
-Use this workflow for new components, pages, APIs, business logic, exports, and domain features.
+---
 
-Goal:
+## 🎯 Missão
 
-- define scope clearly
-- reuse existing patterns
-- implement the smallest complete feature
-- verify by feature type
-- capture lessons without inflating MAESTRO
+Implementar mudanças funcionais com o menor escopo válido, preservando clareza, consistência e segurança de evolução.
 
-This workflow follows the MAESTRO philosophy:
+---
 
-- no speculative engineering
-- no rule inflation
-- low context cost
-- learning by compression and admission filtering
+## 🧭 Princípios
 
-## Core Rules
+- **Construir só o que foi pedido.**
+- **Evitar feature creep.**
+- **Não esconder refactor dentro de feature.**
+- **Priorizar integração nativa ao projeto.**
+- **A menor solução útil é preferível à solução “mais flexível”.**
 
-- Scope before solution.
-- Reuse before abstraction.
-- Smallest complete feature wins.
-- Validation must match feature type.
-- MAESTRO is a kernel, not a dumping ground for every lesson.
+---
 
-## Feature Classes
+## 📥 Quando Acionar
 
-Classify the feature before planning:
+Acione este workflow quando a demanda for:
 
-- `micro`: small local enhancement with low blast radius
-- `standard`: normal feature touching one main area
-- `risky`: touches shared contracts, domain logic, exports, config, or critical UX
-- `structural`: broad feature affecting architecture, data flow, or multiple subsystems
+- nova funcionalidade
+- melhoria funcional
+- ampliação de fluxo existente
+- novo componente com comportamento
+- nova rota, página ou endpoint
+- alteração de comportamento pedida explicitamente
 
-## Workflow
+Normalmente **não** é o workflow correto para:
 
-### Step 1 — Scope Definition
+- bugfix puro
+- refactor estrutural
+- revisão de incidente
+- promoção/release
 
-Write:
+---
 
-- goal
-- non-goals
-- user-visible outcome
-- affected areas
-- risk class
+## 📥 Entradas Esperadas
 
-If non-goals are unclear, the scope is not ready.
+- objetivo da funcionalidade
+- escopo esperado
+- risco vindo do Triage
+- restrições conhecidas
+- impacto em `UI`, `API`, `domain`, `data` ou `export`
+- não-objetivos, quando disponíveis
+- plano vindo de `Spec / Change Design`, quando aplicável
 
-### Step 2 — Reuse Check
+---
 
-Before designing anything new, check for:
+## 📤 Saídas Obrigatórias
 
-- existing components to extend
-- existing types/contracts to reuse
-- existing patterns in UI, API, hooks, exports, and domain logic
+- funcionalidade implementada
+- escopo real da mudança
+- arquivos principais alterados
+- riscos residuais
+- validação mínima necessária
+- workflows auxiliares a acionar, se preciso
 
-The default is integration with current patterns, not invention.
+---
 
-### Step 3 — Design Delta
+## 🛠️ Protocolo de Execução
 
-Describe only the delta being added:
+### Passo 1: Confirmar Escopo
 
-- new or changed UI
-- new or changed logic
-- API/data contract impact
-- export/PDF impact
-- domain-calculation impact
-- validation strategy
+Antes de implementar, responder:
 
-For `micro` changes, keep this brief.
-For `risky` and `structural` changes, make it explicit.
+- o que esta feature faz?
+- o que ela não faz?
+- qual o menor resultado aceitável?
+- há risco de tocar contrato, domínio, UI crítica ou export?
 
-### Step 4 — Quality Gates by Feature Type
+Se a resposta ainda estiver vaga, voltar para `Spec / Change Design`.
 
-Apply only the gates that match the feature.
+---
 
-If the feature touches API:
+### Passo 2: Preservar Fronteiras
 
-- contracts must stay canonical
-- error paths must stay structured
-- payload names must match shared types
+Verificar se a mudança exige workflows auxiliares:
 
-If the feature touches UI:
+- `Contract Guardian` se tocar contratos, payloads, shared types ou integrações
+- `Domain Verifier` se tocar lógica astrológica ou output canônico
+- `UI / Accessibility Review` se tocar interface relevante
+- `Test / Regression Harness` para definir a blindagem mínima
 
-- loading/error/empty states must be handled
-- accessibility must be preserved
-- Infinity constraints must remain intact unless redesign is requested
+---
 
-If the feature touches calculations:
+### Passo 3: Escolher a Implementação Mínima
 
-- domain logic must be verified with canonical examples or fixtures
+Preferir:
 
-If the feature touches PDF/export:
+- reaproveitar padrões existentes
+- tocar o menor número possível de arquivos
+- usar abstrações já consolidadas
+- manter a solução local quando isso for suficiente
 
-- typed fields must remain canonical
-- output structure must be checked on the affected scenario
+Evitar:
 
-If the feature touches config/deploy behavior:
+- abstração nova sem necessidade
+- generalização prematura
+- refactor transversal não pedido
+- reescrita de áreas adjacentes
 
-- verify against the real source of truth, not memory
+---
 
-### Step 5 — Implementation
+### Passo 4: Implementar
 
-Implement the smallest version that satisfies the stated goal.
+Durante a implementação:
 
-Rules:
+- manter nomes coerentes com o projeto
+- respeitar tipos compartilhados
+- evitar aliases desnecessários
+- manter o comportamento fora do escopo intacto
+- registrar qualquer risco residual real
 
-- no speculative flexibility
-- no broad refactor hidden inside feature work
-- no new abstraction without repeated need
-- avoid `any`; if unavoidable, isolate and justify it
+---
 
-### Step 6 — Verification
+### Passo 5: Definir Blindagem
 
-Choose verification by feature class and type.
+Antes de encerrar, declarar:
 
-Typical checks:
+- o que precisa ser validado
+- se há smoke do fluxo principal
+- se há teste dirigido
+- se há revisão de contrato, domínio ou UI
 
-- lint
-- targeted tests
-- build
-- scoped smoke validation
-- domain or export verification where applicable
+Se a mudança for `risky` ou `structural`, acionar os workflows auxiliares necessários antes de promoção.
 
-Any risky or structural feature must pass full validation.
+---
 
-### Step 7 — Delivery Record
+## 🚫 Fronteiras
 
-Create an update note only if the feature is:
+Este workflow:
 
-- risky
-- structural
-- likely to affect future debugging
-- introducing a reusable pattern worth remembering
+- **não é para bugfix puro**
+- **não é para refactor estrutural disfarçado**
+- **não promove release**
+- **não atualiza MAESTRO**
+- **não gera log por reflexo**
 
-Suggested path:
+---
 
-- `log/updates/update_YYYY_MM_DD_HH.md`
+## ✅ Checklist Final
 
-Minimum note structure:
+- [ ] O objetivo da feature está claro?
+- [ ] Os não-objetivos estão claros?
+- [ ] A implementação ficou no menor escopo útil?
+- [ ] Não houve refactor escondido?
+- [ ] Os workflows auxiliares corretos foram acionados, se necessário?
+- [ ] A validação mínima foi declarada?
 
-- feature summary
-- files/areas affected
-- validation performed
-- known limits or follow-ups
+---
 
-### Step 8 — Learning Filter
+## 📌 Formato de Saída Recomendado
 
-Do not update MAESTRO by default.
-
-If the feature revealed a reusable lesson, classify it first:
-
-- local only
-- compressed memory candidate
-- active-rule candidate
-- kernel candidate
-
-Only propose a MAESTRO change if the lesson passes the admission test:
-
-- recurrent enough
-- general enough
-- short enough
-- worth always-on cost
-
-## Exit Criteria
-
-The workflow is complete only when:
-
-- scope and non-goals are clear
-- reuse was considered first
-- implementation stayed within stated scope
-- validation matched the feature type
-- MAESTRO inflation was avoided
-
-## Trigger Command
-
-`Run Feature Workflow. Goal: [description]. Constraints: [constraints].`
+```markdown
+**BUILD FLOW Result**
+- Objetivo: adicionar configuração de API com validação básica
+- Escopo implementado:
+  - novo formulário
+  - persistência local
+  - feedback de erro simples
+- Fora de escopo:
+  - redesign completo da tela
+  - integração com múltiplos provedores
+- Riscos residuais:
+  - revisão de acessibilidade ainda necessária
+- Workflows auxiliares:
+  - UI / Accessibility Review
+  - Test / Regression Harness
+- Validação mínima:
+  - smoke do fluxo
+  - lint
+  - build

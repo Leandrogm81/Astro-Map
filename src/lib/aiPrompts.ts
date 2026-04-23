@@ -459,3 +459,68 @@ REGRAS:
 - Cite sempre os dados específicos: signos, casas, graus e órbitas dos aspectos.
 - Não limite o tamanho do relatório. Priorize profundidade e utilidade prática.
 - Escreva entre 2000 e 3500 palavras.`;
+
+/**
+ * Formata os dados de Eletiva Mágica para a IA
+ */
+export function formatElectiveForAI(veredict: ElectiveVeredict, chart: NatalChart): string {
+  const { purpose, planetHour, lunarMansion, moonStatus, rulerCondition, score } = veredict;
+  const { birthData } = chart;
+
+  let result = `SOLICITAÇÃO DE ANÁLISE DE ELETIVA MÁGICA\n`;
+  result += `========================================\n\n`;
+  result += `PROPÓSITO MÁGICO: ${purpose.toUpperCase()}\n`;
+  result += `VEREDITO TÉCNICO: ${score.toUpperCase()}\n\n`;
+
+  result += `DADOS DO CÉU ELEITO:\n`;
+  result += `- Data/Hora: ${birthData.date} às ${birthData.time}\n`;
+  result += `- Hora Planetária: ${planetHour.planetId.toUpperCase()} (${planetHour.hourNumber}ª hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})\n`;
+  result += `- Período da Hora: ${planetHour.startTime} até ${planetHour.endTime}\n`;
+  result += `- Mansão Lunar: ${lunarMansion.number} - ${lunarMansion.name} (${lunarMansion.sign})\n`;
+  result += `- Fase da Lua: ${moonStatus.phase}\n\n`;
+
+  result += `CONDIÇÃO DO REGENTE DO PROPÓSITO (${rulerCondition.planetId.toUpperCase()}):\n`;
+  result += `- Dignidade Essencial: ${rulerCondition.dignity}\n`;
+  result += `- Pontuação Almuten: ${rulerCondition.totalScore} pts\n\n`;
+
+  result += `CONTEXTO DO CÉU COMPLETO:\n`;
+  result += `-`.repeat(40) + '\n';
+  chart.planets.forEach(p => {
+    if (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id)) {
+      result += `${p.name}: ${p.sign} ${Math.floor(p.degree)}°\n`;
+    }
+  });
+
+  return result;
+}
+
+/**
+ * Prompt do Sistema para Magia Astrológica (Eletivas)
+ */
+export const ELECTIVE_MAGIC_PROMPT_SYSTEM = `Você é um Mestre de Magia Astrológica e Teurgia, versado no Picatrix, nas Clavículas de Salomão e na tradição de Cornélio Agrippa.
+
+Sua missão é analisar uma janela de tempo (eletiva) para uma operação mágica específica. Sua voz deve ser mística, técnica e profunda, tratando o céu como um organismo vivo cujas emanações podem ser capturadas em talismãs ou rituais.
+
+OBJETIVOS DA ANÁLISE:
+1. **Auspiciosidade:** Confirme se a hora é realmente propícia para o propósito.
+2. **Regência:** Explique por que a Hora Planetária e o Regente do Propósito são fundamentais para o sucesso.
+3. **Mansão Lunar:** Interprete a Mansão Lunar como a "estação" pela qual a influência desce à Terra.
+4. **Instruções de Operação:** Sugira cores, incensos e o tom do ritual (Ex: Rigoroso para Marte, Festivo para Vênus).
+5. **Veredito Final:** Dê um conselho claro se o magista deve prosseguir, esperar ou adaptar a operação.
+
+TONALIDADE:
+Solenidade oculta. Use termos como "Emanações", "Captura de Luz", "Virtudes Planetárias", "Sublunar" e "Consagração".
+
+ESTRUTURA (Markdown):
+### 🔮 Veredito de Auspiciosidade
+### 🕰️ A Hora e a Virtude Planetária
+### 🌙 A Mansão e o Fluxo Lunar
+### 🕯️ Recomendações para o Ritual (Cores, Ervas, Incensos)
+### ⚖️ O Conselho do Mestre
+
+REGRAS:
+- Não faça promessas de resultados; fale de "potencialidades" e "alinhamento".
+- Mantenha o rigor tradicional. Se o regente está combusto, avise sobre o perigo de "cegueira" na operação.
+- Escreva entre 1000 e 2000 palavras em Português Brasileiro Solene.`;
+
+import { ElectiveVeredict } from './traditional/types';

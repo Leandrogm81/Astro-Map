@@ -1,196 +1,204 @@
 ---
-description: Meta-harness debugger workflow for AstroMap. Optimized for root-cause accuracy, low ceremony, and controlled learning.
+description: Workflow para diagnosticar causa raiz e aplicar correção mínima no AstroMap com validação proporcional.
 ---
 
-# Debugger Workflow — AstroMap
+# DEBUG TRACE - AstroMap
 
-## Purpose
+**Descrição:**  
+Use este workflow quando houver bug, regressão, quebra visual, falha de teste, erro de API, erro de cálculo, falha de export ou comportamento inesperado.  
+O objetivo é encontrar a causa raiz antes de alterar o código e aplicar a menor correção útil com evidência suficiente.
 
-Use this workflow for bugs, failing tests, broken UI, API faults, PDF/export failures, build breaks, and domain-calculation regressions.
+---
 
-Goal:
+## 🎯 Missão
 
-- isolate the failure quickly
-- fix the smallest possible surface
-- verify by bug class
-- record only reusable lessons
+Corrigir falhas com precisão, mínimo blast radius e validação compatível com o risco do problema.
 
-This workflow follows the MAESTRO philosophy:
+---
 
-- runtime stays lean
-- evidence beats ritual
-- learning happens by classification, compression, and promotion
-- not every incident deserves a permanent rule
+## 🧭 Princípios
 
-## Core Rules
+- **Entender antes de corrigir.**
+- **Não adivinhar remédio sem causa raiz.**
+- **Corrigir o menor necessário.**
+- **Não usar bug como desculpa para refactor amplo.**
+- **Validar de acordo com o tipo de falha.**
 
-- Root cause before remedy.
-- Reproduce before rewriting.
-- Smallest safe fix wins.
-- Verification must match the bug class.
-- Logs are consulted when relevant, not by superstition.
-- Incident notes are created only when the failure is important or reusable.
+---
 
-## Severity Classes
+## 📥 Quando Acionar
 
-Classify the issue before changing code:
+Acione este workflow quando houver:
 
-- `blocker`: build broken, production unusable, domain output invalid
-- `high`: core flow degraded, major API/UI/PDF issue, likely regression
-- `medium`: important but contained defect
-- `low`: cosmetic or narrowly scoped issue
+- bug funcional
+- regressão
+- erro em produção
+- falha de teste
+- quebra de UI
+- erro de API
+- erro de cálculo
+- falha em export/PDF
+- comportamento inesperado em fluxo existente
 
-## Bug Classes
+---
 
-Tag the issue with one primary class:
+## 📥 Entradas Esperadas
 
+- descrição do erro
+- área afetada
+- contexto (`logs`, `prints`, `arquivos`, `diff recente`)
+- ambiente (`local`, `preview`, `produção`)
+- comportamento esperado
+- comportamento atual
+- repro steps, se houver
+
+---
+
+## 📤 Saídas Obrigatórias
+
+- hipótese de causa raiz
+- correção mínima proposta ou aplicada
+- área de impacto
+- validação adequada ao bug
+- incident note, apenas se justificado
+
+---
+
+## 🛠️ Protocolo de Execução
+
+### Passo 1: Normalizar a Falha
+
+Descrever o problema em uma frase objetiva:
+
+> “Quando [ação], o sistema faz [resultado atual] em vez de [resultado esperado].”
+
+Se isso não estiver claro, pedir apenas a informação mínima faltante.
+
+---
+
+### Passo 2: Classificar o Bug
+
+Identificar o tipo principal:
+
+- `ui`
+- `api`
+- `contract`
+- `domain`
+- `export`
 - `build`
 - `runtime`
-- `api`
-- `ui`
-- `pdf`
-- `calc`
 - `regression`
 - `intermittent`
 
-## Workflow
+Isso ajuda a escolher a validação correta depois.
 
-### Step 1 — Intake
+---
 
-Collect the minimum useful input:
+### Passo 3: Buscar Evidência Útil
 
-- symptom
-- expected behavior
-- actual behavior
-- affected area
-- environment
-- reproducibility
-- recent related change, if known
+Sempre que possível, reunir:
 
-If the issue is vague, ask for a minimal repro instead of broad context dumping.
+- repro mínima
+- erro observado
+- logs úteis
+- área tocada recentemente
+- se é regressão ou não
+- se ocorre sempre ou de forma intermitente
 
-### Step 2 — Context Check
+Consultar logs/incidentes recentes **apenas se houver sinal real de correlação**, não por ritual.
 
-Consult recent logs only if at least one of these is true:
+---
 
-- this looks like a regression
-- the same subsystem changed recently
-- the issue resembles a known prior failure
-- the issue is `blocker` or `high`
+### Passo 4: Formular Causa Raiz
 
-Otherwise, proceed without historical lookup.
+Responder:
 
-### Step 3 — Reproduction
+- onde a falha nasce?
+- em que ponto o comportamento desvia?
+- o problema é de contrato, lógica, renderização, dados ou ambiente?
+- existe falso culpado óbvio que precisa ser descartado?
 
-Choose one path:
+Se ainda for hipótese, deixar isso explícito.
 
-- reproducible now -> create or isolate the failing scenario
-- not reproducible but observable -> gather stronger evidence
-- intermittent -> identify trigger conditions before editing
+---
 
-If useful, add or identify a failing test before the fix.
+### Passo 5: Definir Correção Mínima
 
-### Step 4 — Root Cause
+A correção deve:
 
-State:
+- atacar a causa raiz
+- tocar o menor número possível de arquivos
+- evitar mudança paralela de comportamento
+- deixar claro o blast radius
 
-- primary cause hypothesis
-- evidence supporting it
-- alternative causes considered and rejected
-- blast radius of the defect
+Se a correção tocar contrato, domínio ou UI relevante, acionar os workflows auxiliares adequados.
 
-Do not change code before naming the likely cause.
+---
 
-### Step 5 — Fix Plan
+### Passo 6: Validar a Correção
 
-Define:
+Escolher validação proporcional:
 
-- smallest viable fix
-- files to touch
-- what will not be changed
-- verification plan
+- bug local: repro + validação local
+- API/contract: shape + consumidor
+- domain: fixture/caso canônico
+- UI: smoke visual dirigido
+- build/runtime: lint/build/teste direcionado
+- regressão: evidência de que o cenário falho agora passa
 
-Request approval only when the fix changes:
+---
 
-- domain behavior
-- public contracts
-- canonical exports/PDF output
-- core UX behavior
+### Passo 7: Decidir se Vale Registro
 
-### Step 6 — Implementation
+Criar note/log apenas se houver valor claro para:
 
-Apply the narrowest fix that resolves the issue.
+- rastreabilidade futura
+- regressão relevante
+- incidente importante
+- aprendizado reaproveitável
 
-Rules:
+Se não houver, não registrar por reflexo.
 
-- no opportunistic refactor
-- no adjacent cleanup unless created by the fix
-- no speculative hardening without evidence
+---
 
-### Step 7 — Verification
+## 🚫 Fronteiras
 
-Verify according to bug class:
+Este workflow:
 
-- `build` -> lint + build
-- `api` -> contract, error path, payload shape
-- `ui` -> targeted visual/interaction smoke
-- `pdf` -> export/render validation on affected scenario
-- `calc` -> domain fixture or canonical output comparison
-- `regression` -> confirm old failure no longer occurs
-- `runtime` -> reproduce fixed flow end-to-end if feasible
+- **não implementa feature nova**
+- **não faz redesign por oportunidade**
+- **não promove release**
+- **não atualiza MAESTRO**
+- **não gera log por padrão**
 
-Use `npm run test` when tests exist or when a regression test should be added.
+---
 
-### Step 8 — Incident Recording
+## ✅ Checklist Final
 
-Create a debug note only if one of these is true:
+- [ ] O erro foi descrito de forma objetiva?
+- [ ] O tipo de bug foi classificado?
+- [ ] A causa raiz foi identificada ou delimitada honestamente?
+- [ ] A correção foi mínima?
+- [ ] A validação foi proporcional ao bug?
+- [ ] O registro formal foi tratado como opcional e justificado?
 
-- severity is `blocker` or `high`
-- issue was a regression
-- issue exposed a reusable failure pattern
-- issue suggests a MAESTRO-worthy lesson candidate
+---
 
-Suggested path:
+## 📌 Formato de Saída Recomendado
 
-- `log/debugger/debuglog_YYYY_MM_DD_HH.md`
-
-Minimum note structure:
-
-- symptom
-- root cause
-- files changed
-- verification performed
-- reusable lesson, if any
-
-### Step 9 — Learning Filter
-
-After the fix, classify the lesson as one of:
-
-- ignore
-- local memory only
-- compressed memory candidate
-- active-rule candidate
-- kernel candidate
-
-Default is **not** to update MAESTRO.
-
-Only propose a MAESTRO change if the lesson is:
-
-- likely to recur
-- general enough to matter again
-- short enough for always-on cost
-- more useful than the context it consumes
-
-## Exit Criteria
-
-The workflow is complete only when:
-
-- the root cause is named
-- the fix is minimal
-- the affected path is verified
-- the blast radius is checked
-- unnecessary learning inflation was avoided
-
-## Trigger Command
-
-`Run Debugger Workflow. Issue: [description]. Context: [files/logs/repro].`
+```markdown
+**DEBUG TRACE Result**
+- Tipo de bug: `contract`
+- Área: export/PDF
+- Causa raiz: consumidor ainda usava alias local em vez do campo canônico
+- Correção mínima:
+  - alinhar consumidor ao shared type
+- Blast radius:
+  - export
+  - tipagem do fluxo
+- Validação mínima:
+  - Contract Guardian
+  - build
+  - smoke do export
+- Registro formal:
+  - não necessário
