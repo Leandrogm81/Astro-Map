@@ -273,15 +273,17 @@ export default function Home() {
                   Calcular Novo Mapa
                 </button>
               )}
-              <a
-                href="https://openrouter.ai/keys"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-slate-400 hover:text-gold-400 transition-colors"
-                title="Configurar chave para relatórios de IA"
+              <button
+                onClick={async () => {
+                  await fetch('/api/auth/logout', { method: 'POST' });
+                  window.location.href = '/login';
+                }}
+                className="text-xs font-bold text-red-400/70 hover:text-red-400 transition-colors flex items-center gap-1.5"
+                title="Sair do AstroMap"
               >
-                Chave da API
-              </a>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Sair
+              </button>
             </div>
           </div>
         </div>
