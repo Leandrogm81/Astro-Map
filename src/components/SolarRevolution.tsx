@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NatalChart, PlanetPosition, Aspect } from '@/types';
 import { calculateSolarReturn } from '@/lib/ephemeris';
-import { Sun, Loader2, Sparkles, ScrollText, Trash2, Home, Compass, Zap, Target } from 'lucide-react';
+import { Sun, Loader2, Sparkles, ScrollText, Trash2, Home, Compass, Zap, Target, LucideIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TransitWheel from './TransitWheel';
@@ -33,12 +33,12 @@ interface SolarRevolutionProps {
   onReportUpdated?: (reportText: string) => void;
 }
 
-export default function SolarRevolution({ 
-  natalChart, 
-  initialYear, 
-  initialSolarRevolution, 
-  onRevolutionCalculated, 
-  onReportUpdated 
+export default function SolarRevolution({
+  natalChart,
+  initialYear,
+  initialSolarRevolution,
+  onRevolutionCalculated,
+  onReportUpdated
 }: SolarRevolutionProps) {
   const [year, setYear] = useState(initialYear || new Date().getFullYear());
   const [solarReturn, setSolarReturn] = useState<NatalChart | null>(initialSolarRevolution || null);
@@ -74,7 +74,7 @@ export default function SolarRevolution({
 
   const getYearThemes = () => {
     if (!solarReturn) return [];
-    const themes: { label: string; icon: any }[] = [];
+    const themes: { label: string; icon: LucideIcon }[] = [];
     const srAsc = solarReturn.housesPlacidus?.[0]?.sign;
     const natalAsc = natalChart.housesPlacidus?.[0]?.sign;
     const srSunHouse = solarReturn.planets.find(p => p.name === 'Sol')?.house;
@@ -83,7 +83,7 @@ export default function SolarRevolution({
     if (srSunHouse === 10 || srSunHouse === 1) themes.push({ label: 'Destaque e Visibilidade', icon: Sun });
     if (solarReturn.planets.find(p => p.name === 'Saturno')?.house === 10) themes.push({ label: 'Construção de Carreira', icon: Zap });
     if (solarReturn.planets.find(p => p.name === 'Júpiter')?.house === 2) themes.push({ label: 'Expansão Financeira', icon: Sparkles });
-    
+
     return themes.length > 0 ? themes : [{ label: 'Novo Ciclo', icon: Compass }];
   };
 
@@ -133,12 +133,12 @@ export default function SolarRevolution({
     if (!solarReturn || (initialYear && year !== initialYear)) {
       calculateRevolution();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [natalChart]);
 
   const handleGenerateReport = async () => {
     if (!solarReturn) return;
-    
+
     const storedApiKey = localStorage.getItem('openrouter_api_key') || '';
     if (!storedApiKey) {
       setError('Por favor, configure sua chave API na aba "Relatório IA" primeiro.');
@@ -159,7 +159,7 @@ export default function SolarRevolution({
           solarChart: solarReturn,
           solarYear: year,
           apiKey: storedApiKey,
-          model: 'google/gemini-2.5-flash-lite',
+          model: 'qwen/qwen-2.5-7b-instruct',
         }),
       });
 
@@ -218,7 +218,7 @@ export default function SolarRevolution({
           <Sun className="w-6 h-6 text-yellow-500 animate-pulse" />
           Revolução Solar {year}
         </h3>
-        
+
         <div className="flex items-center gap-1 bg-slate-800/50 p-1 rounded-xl border border-slate-700">
           <button
             onClick={() => { const newYear = year - 1; setYear(newYear); calculateRevolution(newYear); }}
@@ -255,26 +255,26 @@ export default function SolarRevolution({
 
       {solarReturn && !loading && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
+
           {/* Painel de Temas */}
           <div className="flex flex-wrap gap-3">
-             {getYearThemes().map((theme, i) => (
-                <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/20 text-gold-400 text-xs font-bold uppercase tracking-widest shadow-lg shadow-gold-500/5">
-                   <theme.icon className="w-3.5 h-3.5" />
-                   {theme.label}
-                </div>
-             ))}
+            {getYearThemes().map((theme, i) => (
+              <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-gold-500/10 border border-gold-500/20 text-gold-400 text-xs font-bold uppercase tracking-widest shadow-lg shadow-gold-500/5">
+                <theme.icon className="w-3.5 h-3.5" />
+                {theme.label}
+              </div>
+            ))}
           </div>
 
           {/* Gráfico de Revolu\u00e7\u00e3o (Sobreposi\u00e7\u00e3o) */}
           <div className="glass p-6 rounded-3xl shadow-inner relative overflow-hidden group">
-             <div className="flex items-center justify-between mb-6 relative z-10">
-                <div>
-                   <h4 className="text-lg font-bold text-slate-200 font-serif">Sobreposição Natal vs Revolução</h4>
-                   <p className="text-[10px] text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
-                </div>
-             </div>
-             <TransitWheel natalChart={natalChart} transitChart={solarReturn} />
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div>
+                <h4 className="text-lg font-bold text-slate-200 font-serif">Sobreposição Natal vs Revolução</h4>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest">Externo: {year} | Interno: Natal</p>
+              </div>
+            </div>
+            <TransitWheel natalChart={natalChart} transitChart={solarReturn} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -305,134 +305,134 @@ export default function SolarRevolution({
             <div className="glass-gold p-4 rounded-2xl">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tema Central</span>
               <div className="text-sm font-bold text-purple-300 mt-2 leading-tight font-serif">
-                 {solarReturn.housesPlacidus?.[0]?.sign === natalAsc ? 'Retorno Profundo' : 'Nova Abordagem'}
+                {solarReturn.housesPlacidus?.[0]?.sign === natalAsc ? 'Retorno Profundo' : 'Nova Abordagem'}
               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-             {/* Aspectos Cruzados */}
-             <div className="glass p-6 rounded-3xl">
-                <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
-                   <Zap className="w-5 h-5 text-gold-500" />
-                   Aspectos Cruzados (RS ↔ Natal)
-                </h4>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                   {crossAspects.map((aspect, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                         <div className="flex items-center gap-4">
-                            <span className="text-sm font-bold text-white min-w-[70px]">{aspect.planet1} (RS)</span>
-                            <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border border-white/5 ${getAspectClass(aspect.type)}`}>
-                               <span className="text-xl">{getAspectSymbol(aspect.type)}</span>
-                            </div>
-                            <span className="text-sm font-bold text-slate-300 min-w-[70px]">{aspect.planet2} (Natal)</span>
-                         </div>
-                         <div className="text-right">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase truncate">{aspect.type}</p>
-                       <p className="text-[9px] font-mono text-slate-600">órbita: {aspect.orb.toFixed(1)}°</p>
-                         </div>
+            {/* Aspectos Cruzados */}
+            <div className="glass p-6 rounded-3xl">
+              <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
+                <Zap className="w-5 h-5 text-gold-500" />
+                Aspectos Cruzados (RS ↔ Natal)
+              </h4>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {crossAspects.map((aspect, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-bold text-white min-w-[70px]">{aspect.planet1} (RS)</span>
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border border-white/5 ${getAspectClass(aspect.type)}`}>
+                        <span className="text-xl">{getAspectSymbol(aspect.type)}</span>
                       </div>
-                   ))}
-                </div>
-             </div>
+                      <span className="text-sm font-bold text-slate-300 min-w-[70px]">{aspect.planet2} (Natal)</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase truncate">{aspect.type}</p>
+                      <p className="text-[9px] font-mono text-slate-600">órbita: {aspect.orb.toFixed(1)}°</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-             {/* Planetas RS nas Casas Natais */}
-             <div className="glass p-6 rounded-3xl">
-                <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
-                   <Home className="w-5 h-5 text-indigo-400" />
-                   Foco Vital (RS nas Casas Natais)
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                   {solarReturn.planets.slice(0, 10).map((p, i) => {
-                      const natalHouse = getHouseForPlanet(p.longitude, natalChart.housesPlacidus);
-                      return (
-                         <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/10">
-                            <div className="flex items-center justify-between">
-                               <span className="text-lg">{p.symbol}</span>
-                               <span className="text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">CASA {natalHouse} NATAL</span>
-                            </div>
-                            <p className="text-xs font-bold text-white mt-2">{p.name}</p>
-                            <p className="text-[10px] text-slate-500 leading-tight mt-1">{HOUSE_MEANINGS[natalHouse].title}</p>
-                         </div>
-                      );
-                   })}
-                </div>
-             </div>
+            {/* Planetas RS nas Casas Natais */}
+            <div className="glass p-6 rounded-3xl">
+              <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
+                <Home className="w-5 h-5 text-indigo-400" />
+                Foco Vital (RS nas Casas Natais)
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                {solarReturn.planets.slice(0, 10).map((p, i) => {
+                  const natalHouse = getHouseForPlanet(p.longitude, natalChart.housesPlacidus);
+                  return (
+                    <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg">{p.symbol}</span>
+                        <span className="text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">CASA {natalHouse} NATAL</span>
+                      </div>
+                      <p className="text-xs font-bold text-white mt-2">{p.name}</p>
+                      <p className="text-[10px] text-slate-500 leading-tight mt-1">{HOUSE_MEANINGS[natalHouse].title}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Grid de Casas da RS */}
           <div className="glass p-6 rounded-3xl">
-             <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
-                <Compass className="w-5 h-5 text-purple-400" />
-                Estrutura de Casas da Revolução Solar
-             </h4>
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {solarReturn.housesPlacidus.map((house, i) => {
-                   const planetInHouse = solarReturn.planets.filter(p => p.house === house.number);
-                   return (
-                      <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all min-h-[140px] flex flex-col overflow-hidden">
-                         <div className="mb-2 overflow-hidden">
-                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">Casa {house.number}</span>
-                            <span className="text-sm font-bold text-purple-300 block truncate">{house.sign}</span>
-                         </div>
-                         <p className="text-sm font-bold text-white mb-1 font-serif truncate">{HOUSE_MEANINGS[house.number].title}</p>
-                         <div className="flex flex-wrap gap-1 mt-auto py-2 max-h-[2.5rem] overflow-hidden">
-                            {planetInHouse.map(p => (
-                               <span key={p.name} title={p.name} className="text-xl leading-none">{p.symbol}</span>
-                            ))}
-                         </div>
-                         <p className="text-[11px] text-slate-400 mt-2 leading-snug uppercase tracking-normal line-clamp-2">{HOUSE_MEANINGS[house.number].area}</p>
-                      </div>
-                   );
-                })}
-             </div>
+            <h4 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2 font-serif">
+              <Compass className="w-5 h-5 text-purple-400" />
+              Estrutura de Casas da Revolução Solar
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {solarReturn.housesPlacidus.map((house, i) => {
+                const planetInHouse = solarReturn.planets.filter(p => p.house === house.number);
+                return (
+                  <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/30 transition-all min-h-[140px] flex flex-col overflow-hidden">
+                    <div className="mb-2 overflow-hidden">
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">Casa {house.number}</span>
+                      <span className="text-sm font-bold text-purple-300 block truncate">{house.sign}</span>
+                    </div>
+                    <p className="text-sm font-bold text-white mb-1 font-serif truncate">{HOUSE_MEANINGS[house.number].title}</p>
+                    <div className="flex flex-wrap gap-1 mt-auto py-2 max-h-[2.5rem] overflow-hidden">
+                      {planetInHouse.map(p => (
+                        <span key={p.name} title={p.name} className="text-xl leading-none">{p.symbol}</span>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-2 leading-snug uppercase tracking-normal line-clamp-2">{HOUSE_MEANINGS[house.number].area}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* AI Report Section for Solar Return */}
           <div className="glass-gold rounded-3xl overflow-hidden shadow-2xl relative">
-              <div className="p-4 bg-slate-800/20 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-purple-400" />
-                  <h4 className="font-bold text-slate-100 font-serif">Guia Anual Inteligente</h4>
-                </div>
-                {reportText && !generatingReport && (
-                  <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+            <div className="p-4 bg-slate-800/20 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <h4 className="font-bold text-slate-100 font-serif">Guia Anual Inteligente</h4>
               </div>
+              {reportText && !generatingReport && (
+                <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-              <div className="p-6 md:p-8">
-                {!reportText && !generatingReport ? (
-                  <div className="text-center py-10 space-y-4">
-                     <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center justify-center mx-auto">
-                        <ScrollText className="w-8 h-8 text-purple-400" />
-                     </div>
-                     <div className="max-w-xs mx-auto">
-                         <p className="text-slate-300 font-medium">Analise as tendências para o seu novo ciclo.</p>
-                         <p className="text-xs text-slate-500 mt-2">Nossa IA cruzará os dados da revolução com seu mapa natal para um diagnóstico completo.</p>
-                     </div>
-                     <button
-                        onClick={handleGenerateReport}
-                        className="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-bold transition-all transform active:scale-95 shadow-lg shadow-purple-500/20"
-                     >
-                         GERAR ANÁLISE {year}
-                     </button>
+            <div className="p-6 md:p-8">
+              {!reportText && !generatingReport ? (
+                <div className="text-center py-10 space-y-4">
+                  <div className="w-16 h-16 bg-purple-500/10 border border-purple-500/20 rounded-full flex items-center justify-center mx-auto">
+                    <ScrollText className="w-8 h-8 text-purple-400" />
                   </div>
-                ) : (
-                  <article className="prose prose-invert prose-slate max-w-none prose-p:text-slate-400 prose-p:leading-relaxed prose-headings:text-purple-300 prose-strong:text-purple-200">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {reportText}
-                    </ReactMarkdown>
-                    {generatingReport && (
-                      <div className="flex items-center gap-2 mt-6 text-purple-400 animate-pulse">
-                         <Loader2 className="w-4 h-4 animate-spin" />
-                         <span className="text-[10px] font-black uppercase tracking-widest leading-none">Consultando as Estrelas de {year}...</span>
-                      </div>
-                    )}
-                  </article>
-                )}
-              </div>
+                  <div className="max-w-xs mx-auto">
+                    <p className="text-slate-300 font-medium">Analise as tendências para o seu novo ciclo.</p>
+                    <p className="text-xs text-slate-500 mt-2">Nossa IA cruzará os dados da revolução com seu mapa natal para um diagnóstico completo.</p>
+                  </div>
+                  <button
+                    onClick={handleGenerateReport}
+                    className="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-bold transition-all transform active:scale-95 shadow-lg shadow-purple-500/20"
+                  >
+                    GERAR ANÁLISE {year}
+                  </button>
+                </div>
+              ) : (
+                <article className="prose prose-invert prose-slate max-w-none prose-p:text-slate-400 prose-p:leading-relaxed prose-headings:text-purple-300 prose-strong:text-purple-200">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {reportText}
+                  </ReactMarkdown>
+                  {generatingReport && (
+                    <div className="flex items-center gap-2 mt-6 text-purple-400 animate-pulse">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-[10px] font-black uppercase tracking-widest leading-none">Consultando as Estrelas de {year}...</span>
+                    </div>
+                  )}
+                </article>
+              )}
+            </div>
           </div>
         </div>
       )}

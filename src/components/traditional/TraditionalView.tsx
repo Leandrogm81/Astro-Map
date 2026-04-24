@@ -12,7 +12,6 @@ import TraditionalAspectList from '@/components/traditional/TraditionalAspectLis
 import ExportPDF from '@/components/ExportPDF';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
 import TraditionalPositionsTable from '@/components/traditional/TraditionalPositionsTable';
-import TraditionalElectivePanel from '@/components/traditional/TraditionalElectivePanel';
 import {
   getTraditionalReportStorageKey,
   loadTraditionalReportFromStorage,
@@ -174,9 +173,6 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
 
       {/* Análise de Aspectos Tradicionais - Tabela Completa */}
       <TraditionalAspectList chart={chart} />
-
-      {/* Eletiva Mágica */}
-      <TraditionalElectivePanel chart={chart} />
 
       {/* Relatório de IA Tradicional */}
       <div className="mt-12">

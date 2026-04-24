@@ -1,6 +1,65 @@
 import { NatalChart, ZodiacSign, PlanetPosition, Aspect } from '@/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
-import { TraditionalAssessment, ElectiveVeredict } from './traditional/types';
+import { TraditionalAssessment, ElectiveMode, ElectiveVeredict } from './traditional/types';
+
+const TRADITIONAL_PLANET_IDS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+
+function formatTraditionalSkyContext(chart: NatalChart): string {
+  let result = '';
+
+  chart.planets.forEach((planet) => {
+    if (!TRADITIONAL_PLANET_IDS.includes(planet.id)) return;
+
+    result += `${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}Â° na Casa ${planet.house}`;
+    if (planet.retrograde) {
+      result += ' â„ž';
+    }
+    result += `\n`;
+  });
+
+  return result;
+}
+
+function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart): string {
+  let result = '';
+
+  result += `DADOS NATAIS DE REFERÃŠNCIA:\n`;
+  result += `- Ascendente natal: ${getZodiacSign(natalChart.ascendant)} ${formatDegree(natalChart.ascendant % 30)}\n`;
+
+  natalChart.planets.forEach((planet) => {
+    if (!TRADITIONAL_PLANET_IDS.includes(planet.id)) return;
+    result += `- ${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}Â° na Casa ${planet.house}\n`;
+  });
+
+  result += `\nTRÃ‚NSITOS DO CÃ‰U DO MOMENTO NAS CASAS NATAIS:\n`;
+  result += `-`.repeat(40) + '\n';
+
+  skyChart.planets.forEach((planet) => {
+    if (!TRADITIONAL_PLANET_IDS.includes(planet.id)) return;
+    const natalHouse = getHouseForPlanet(planet.longitude, natalChart.housesPlacidus);
+    result += `${planet.name}: cai na Casa ${natalHouse} natal\n`;
+  });
+
+  const crossAspects = calculateCrossAspects(skyChart.planets, natalChart.planets)
+    .filter((aspect) =>
+      TRADITIONAL_PLANET_IDS.includes(aspect.planet1.toLowerCase()) &&
+      TRADITIONAL_PLANET_IDS.includes(aspect.planet2.toLowerCase()) &&
+      ['conjunÃ§Ã£o', 'sextil', 'quadratura', 'trÃ­gono', 'oposiÃ§Ã£o'].includes(aspect.type)
+    )
+    .sort((a, b) => a.orb - b.orb)
+    .slice(0, 12);
+
+  if (crossAspects.length > 0) {
+    result += `\nASPECTOS ENTRE O CÃ‰U DO MOMENTO E O MAPA NATAL:\n`;
+    result += `-`.repeat(40) + '\n';
+
+    crossAspects.forEach((aspect) => {
+      result += `${aspect.planet1} (agora) ${aspect.type} ${aspect.planet2} (natal) â€” Ã³rbita ${aspect.orb.toFixed(1)}Â°\n`;
+    });
+  }
+
+  return result;
+}
 
 /**
  * Utilitários para formatar dados do mapa para a IA
@@ -30,7 +89,7 @@ const ASPECT_NAMES_PT: Record<string, string> = {
  */
 export function formatChartForAI(chart: NatalChart): string {
   const { birthData, planets, housesPlacidus, aspects, ascendant, mc } = chart;
-  
+
   let result = `DADOS DO MAPA ASTRAL\n`;
   result += `====================\n\n`;
   result += `NOME: ${birthData.name}\n`;
@@ -38,11 +97,11 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `HORA: ${birthData.time}\n`;
   result += `LOCAL: ${birthData.location}\n`;
   result += `COORDENADAS: ${birthData.latitude.toFixed(4)}°, ${birthData.longitude.toFixed(4)}°\n\n`;
-  
+
   // === Posições com dignidades e regência ===
   result += `POSIÇÕES PLANETÁRIAS (COM DIGNIDADES E REGÊNCIA):\n`;
   result += `-`.repeat(60) + '\n';
-  
+
   for (const planet of planets) {
     const retro = planet.retrograde ? ' ℞' : '';
     const degree = formatDegree(planet.degree);
@@ -52,22 +111,22 @@ export function formatChartForAI(chart: NatalChart): string {
     const rulerStr = ruler ? ` (Regido por: ${ruler})` : '';
     result += `${planet.name}: ${planet.sign} ${degree} na Casa ${planet.house}${retro}${dignityStr}${rulerStr}\n`;
   }
-  
+
   // === Ângulos ===
   result += `\nÂNGULOS PRINCIPAIS:\n`;
   result += `-`.repeat(60) + '\n';
   result += `Ascendente (ASC): ${getZodiacSign(ascendant)} ${formatDegree(ascendant % 30)}\n`;
   result += `Meio do Céu (MC): ${getZodiacSign(mc)} ${formatDegree(mc % 30)}\n`;
   result += `Regente do Ascendente: ${getDomicileRuler(getZodiacSign(ascendant) as ZodiacSign)}\n`;
-  
+
   // === Cúspides ===
   result += `\nCÚSPIDES DAS CASAS (Placidus):\n`;
   result += `-`.repeat(60) + '\n';
-  
+
   for (const house of housesPlacidus) {
     result += `Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)}\n`;
   }
-  
+
   // === Cadeia de Disposição ===
   result += `\nCADEIA DE DISPOSIÇÃO:\n`;
   result += `-`.repeat(60) + '\n';
@@ -76,16 +135,16 @@ export function formatChartForAI(chart: NatalChart): string {
     const p = planets.find((pl: PlanetPosition) => pl.name === c.planet);
     return p && getDignity(p.name, p.sign) === 'Domicílio';
   });
-  
+
   for (const link of chain) {
     const isFinal = domiciles.some(d => d.planet === link.planet);
     result += `${link.planet} → ${link.isRuledBy}${isFinal ? ' (DISPOSITOR FINAL — em Domicílio)' : ''}\n`;
   }
-  
+
   if (domiciles.length > 0) {
     result += `\n→ Dispositor(es) final(is) do mapa: ${domiciles.map(d => d.planet).join(', ')}\n`;
   }
-  
+
   // === Signos Interceptados ===
   const intercepted = getInterceptedSigns(housesPlacidus);
   if (intercepted.length > 0) {
@@ -94,21 +153,21 @@ export function formatChartForAI(chart: NatalChart): string {
     result += `${intercepted.join(' e ')} estão interceptados (sem cúspide de casa própria).\n`;
     result += `Planetas nestes signos podem ter dificuldade de expressão direta.\n`;
   }
-  
+
   // === Aspectos ===
   result += `\nASPECTOS PRINCIPAIS:\n`;
   result += `-`.repeat(60) + '\n';
-  
-  const majorAspects = aspects.filter((a: Aspect) => 
+
+  const majorAspects = aspects.filter((a: Aspect) =>
     ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
   ).slice(0, 25);
-  
+
   for (const aspect of majorAspects) {
     const applying = aspect.applying ? 'aplicando' : 'separando';
     const typePT = ASPECT_NAMES_PT[aspect.type] || aspect.type;
     result += `${aspect.planet1} ${typePT} ${aspect.planet2} (Órbita: ${aspect.orb.toFixed(1)}°, ${applying})\n`;
   }
-  
+
   return result;
 }
 
@@ -117,55 +176,55 @@ export function formatChartForAI(chart: NatalChart): string {
  * e interposição de casas para envio à IA.
  */
 export function formatSolarComparisonForAI(
-  natal: NatalChart, 
-  solar: NatalChart, 
+  natal: NatalChart,
+  solar: NatalChart,
   year: number
 ): string {
   let result = '';
-  
+
   // === Mapa Natal (resumo) ===
   result += `=== MAPA NATAL (REFERÊNCIA) ===\n\n`;
   result += formatChartForAI(natal);
-  
+
   // === Revolução Solar ===
   result += `\n\n=== REVOLUÇÃO SOLAR ${year} ===\n\n`;
-  
+
   const { planets: srPlanets, housesPlacidus: srHouses, aspects: srAspects, ascendant: srAsc, mc: srMc } = solar;
-  
+
   result += `DATA EXATA DO RETORNO SOLAR: ${solar.birthData.date} às ${solar.birthData.time}\n\n`;
-  
+
   // Ascendente da RS e onde cai no natal
   const srAscSign = getZodiacSign(srAsc);
   const srAscHouseNatal = getHouseForPlanet(srAsc, natal.housesPlacidus);
   result += `ASCENDENTE DA REVOLUÇÃO: ${srAscSign} ${formatDegree(srAsc % 30)}\n`;
   result += `→ Cai na Casa ${srAscHouseNatal} do Mapa Natal\n`;
   result += `→ TEMA CENTRAL DO ANO: A energia de ${srAscSign} ativa a área da Casa ${srAscHouseNatal} natal.\n\n`;
-  
+
   // MC da RS
   const srMcSign = getZodiacSign(srMc);
   const srMcHouseNatal = getHouseForPlanet(srMc, natal.housesPlacidus);
   result += `MC DA REVOLUÇÃO: ${srMcSign} ${formatDegree(srMc % 30)} → Casa ${srMcHouseNatal} natal\n\n`;
-  
+
   // === Posições com interposição de casas ===
   result += `POSIÇÕES PLANETÁRIAS DA RS (COM INTERPOSIÇÃO DE CASAS):\n`;
   result += `-`.repeat(60) + '\n';
-  
+
   for (const planet of srPlanets) {
     const retro = planet.retrograde ? ' ℞' : '';
     const degree = formatDegree(planet.degree);
     const natalHouse = getHouseForPlanet(planet.longitude, natal.housesPlacidus);
     result += `${planet.name}: ${planet.sign} ${degree} na Casa ${planet.house} (RS) → Casa ${natalHouse} (Natal)${retro}\n`;
   }
-  
+
   // === Aspectos cruzados RS ↔ Natal ===
   result += `\nASPECTOS CRUZADOS (RS ↔ NATAL) — os mais importantes:\n`;
   result += `-`.repeat(60) + '\n';
-  
+
   const crossAspects = calculateCrossAspects(srPlanets, natal.planets)
     .filter(a => ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(a.type))
     .sort((a, b) => (a as { orb: number }).orb - (b as { orb: number }).orb)
     .slice(0, 20);
-  
+
   if (crossAspects.length > 0) {
     for (const aspect of crossAspects) {
       result += `${aspect.planet1} (RS) ${aspect.type} ${aspect.planet2} (Natal) — órbita: ${aspect.orb.toFixed(1)}°\n`;
@@ -173,28 +232,28 @@ export function formatSolarComparisonForAI(
   } else {
     result += `Nenhum aspecto cruzado significativo encontrado.\n`;
   }
-  
+
   // === Aspectos internos da RS ===
   result += `\nASPECTOS INTERNOS DA RS:\n`;
   result += `-`.repeat(60) + '\n';
-  
-  const srMajorAspects = srAspects.filter((a: Aspect) => 
+
+  const srMajorAspects = srAspects.filter((a: Aspect) =>
     ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
   ).slice(0, 15);
-  
+
   for (const aspect of srMajorAspects) {
     const typePT = ASPECT_NAMES_PT[aspect.type] || aspect.type;
     result += `${aspect.planet1} ${typePT} ${aspect.planet2} (Órbita: ${aspect.orb.toFixed(1)}°)\n`;
   }
-  
+
   // === Casas da RS ===
   result += `\nCÚSPIDES DAS CASAS DA RS (Placidus):\n`;
   result += `-`.repeat(60) + '\n';
-  
+
   for (const house of srHouses) {
     result += `Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)}\n`;
   }
-  
+
   return result;
 }
 
@@ -218,7 +277,7 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
   const isDay = chart.isDayChart ?? true;
   result += `CONDIÇÃO GERAL:\n`;
   result += `- SEITA DO MAPA: ${isDay ? 'DIURNO (Sol acima do horizonte)' : 'NOTURNO (Sol abaixo do horizonte)'}\n`;
-  
+
   if (chart.traditionalPoints) {
     const tp = chart.traditionalPoints;
     result += `- ALMUTEN FIGURIS: ${tp.almutenFiguris?.name || 'Não identificado'}\n`;
@@ -231,9 +290,9 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
   // === Condição dos Planetas Clássicos (Dignidades e Pontuação) ===
   result += `OS SETE GOVERNADORES (ESTADO OPERACIONAL):\n`;
   result += `-`.repeat(60) + '\n';
-  
+
   const classicPlanets = ['Sol', 'Lua', 'Mercúrio', 'Vênus', 'Marte', 'Júpiter', 'Saturno'];
-  
+
   for (const planeName of classicPlanets) {
     const assessment = assessments.find(a => a?.planetId?.toLowerCase() === planeName.toLowerCase());
     if (!assessment) continue;
@@ -241,12 +300,12 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     const retro = assessment.isRetrograde ? ' (RETRÓGRADO — Debilidade Acidental)' : '';
     const score = assessment.totalScore;
     const condition = score >= 10 ? 'Soberana/Excepcional' : score >= 5 ? 'Forte' : score <= -10 ? 'Crítica/Severa' : score <= -5 ? 'Debilitada' : 'Moderada';
-    
-// Mapeamento de Debilidades se houver
-  const debilities = [];
-  if (assessment.score?.breakdown?.essential?.['Exílio']) debilities.push('Exílio (Detrimento)');
-  if (assessment.score?.breakdown?.essential?.['Queda']) debilities.push('Queda (Fall)');
-  const debilityStr = debilities.length > 0 ? ` [DEBILIDADES: ${debilities.join(', ')}]` : '';
+
+    // Mapeamento de Debilidades se houver
+    const debilities = [];
+    if (assessment.score?.breakdown?.essential?.['Exílio']) debilities.push('Exílio (Detrimento)');
+    if (assessment.score?.breakdown?.essential?.['Queda']) debilities.push('Queda (Fall)');
+    const debilityStr = debilities.length > 0 ? ` [DEBILIDADES: ${debilities.join(', ')}]` : '';
 
     result += `> ${planeName.toUpperCase()}:\n`;
     result += `   * Signo/Casa: ${assessment.sign} na Casa ${assessment.house}${retro}\n`;
@@ -258,27 +317,27 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     result += `     - Triplicidade: ${assessment.dignities?.triplicity || '---'}\n`;
     const termStr = assessment.interpretations?.term || "";
     const faceStr = assessment.interpretations?.face || "";
-    
+
     result += `     - Termo: ${termStr}\n`;
     result += `     - Face/Decano: ${faceStr}\n`;
-    
-const cond = assessment.condition || {};
-  const labels = [];
-  if (cond.isCazimi) labels.push("Cazimi (No coração do Sol)");
-  if (cond.isCombust) labels.push("Combusto (Queimado pelo Sol)");
-  if (cond.isUnderRays) labels.push("Sob os Raios");
-  if (cond.isHayz) labels.push("Hayz (Condição de Seita Ideal)");
-  if (cond.isInMutualReception && Array.isArray(cond.isInMutualReception) && cond.isInMutualReception.length > 0) {
-    labels.push(`Recepção Mútua com ${cond.isInMutualReception.join(', ')}`);
-  }
-    
+
+    const cond = assessment.condition || {};
+    const labels = [];
+    if (cond.isCazimi) labels.push("Cazimi (No coração do Sol)");
+    if (cond.isCombust) labels.push("Combusto (Queimado pelo Sol)");
+    if (cond.isUnderRays) labels.push("Sob os Raios");
+    if (cond.isHayz) labels.push("Hayz (Condição de Seita Ideal)");
+    if (cond.isInMutualReception && Array.isArray(cond.isInMutualReception) && cond.isInMutualReception.length > 0) {
+      labels.push(`Recepção Mútua com ${cond.isInMutualReception.join(', ')}`);
+    }
+
     if (labels.length > 0) {
       result += `   * Acidentes/Recepções: ${labels.join(' | ')}\n`;
     }
     result += `\n`;
   }
 
-// === Signos das Casas ===
+  // === Signos das Casas ===
   result += `CÚSPIDES DAS CASAS (DOMÍNIOS DO DESTINO):\n`;
   result += `-`.repeat(60) + '\n';
   if (housesPlacidus && Array.isArray(housesPlacidus)) {
@@ -393,33 +452,60 @@ REGRAS:
 /**
  * Formata os dados de Eletiva Mágica para a IA
  */
-export function formatElectiveForAI(veredict: ElectiveVeredict, chart: NatalChart): string {
+export function formatElectiveForAI(
+  veredict: ElectiveVeredict,
+  skyChart: NatalChart,
+  mode: ElectiveMode = 'sky_only',
+  natalChart?: NatalChart
+): string {
   const { purpose, planetHour, lunarMansion, moonStatus, rulerCondition, score } = veredict;
-  const { birthData } = chart;
+  const { birthData } = skyChart;
 
-  let result = `SOLICITAÇÃO DE ANÁLISE DE ELETIVA MÁGICA\n`;
-  result += `========================================\n\n`;
-  result += `PROPÓSITO MÁGICO: ${purpose.toUpperCase()}\n`;
-  result += `VEREDITO TÉCNICO: ${score.toUpperCase()}\n\n`;
+  let result = `SOLICITACAO DE ANALISE DE ELETIVA MAGICA
+`;
+  result += `========================================
 
-  result += `DADOS DO CÉU ELEITO:\n`;
-  result += `- Data/Hora: ${birthData.date} às ${birthData.time}\n`;
-  result += `- Hora Planetária: ${(planetHour.planetId || 'N/A').toUpperCase()} (${planetHour.hourNumber}ª hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})\n`;
-  result += `- Período da Hora: ${planetHour.startTime} até ${planetHour.endTime}\n`;
-  result += `- Mansão Lunar: ${lunarMansion.number} - ${lunarMansion.name} (${lunarMansion.sign})\n`;
-  result += `- Fase da Lua: ${moonStatus.phase}\n\n`;
+`;
+  result += `MODO DE LEITURA: ${mode === 'sky_plus_natal' ? 'CEU DO MOMENTO + MAPA NATAL' : 'CEU DO MOMENTO'}
+`;
+  result += `PROPOSITO MAGICO: ${purpose.toUpperCase()}
+`;
+  result += `VEREDITO TECNICO: ${score.toUpperCase()}
 
-  result += `CONDIÇÃO DO REGENTE DO PROPÓSITO (${(rulerCondition.planetId || 'N/A').toUpperCase()}):\n`;
-  result += `- Dignidade Essencial: ${rulerCondition.dignity}\n`;
-  result += `- Pontuação Almuten: ${rulerCondition.totalScore} pts\n\n`;
+`;
 
-  result += `CONTEXTO DO CÉU COMPLETO:\n`;
-  result += `-`.repeat(40) + '\n';
-  chart.planets.forEach(p => {
-    if (['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id)) {
-      result += `${p.name}: ${p.sign} ${Math.floor(p.degree)}°\n`;
-    }
-  });
+  result += `DADOS DO CEU ELEITO:
+`;
+  result += `- Data/Hora: ${birthData.date} ${birthData.time}
+`;
+  result += `- Hora Planetária: ${(planetHour.planetId || 'N/A').toUpperCase()} (${planetHour.hourNumber}a hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})
+`;
+  result += `- Período da Hora: ${planetHour.startTime} até ${planetHour.endTime}
+`;
+  result += `- Mansão Lunar: ${lunarMansion.number} - ${lunarMansion.name} (${lunarMansion.sign})
+`;
+  result += `- Fase da Lua: ${moonStatus.phase}
+
+`;
+
+  result += `CONDICAO DO REGENTE DO PROPOSITO (${(rulerCondition.planetId || 'N/A').toUpperCase()}):
+`;
+  result += `- Dignidade Essencial: ${rulerCondition.dignity}
+`;
+  result += `- Pontuacao Almuten: ${rulerCondition.totalScore} pts
+
+`;
+
+  result += `CONTEXTO DO CEU COMPLETO:
+`;
+  result += '-'.repeat(40) + '\n';
+  result += formatTraditionalSkyContext(skyChart);
+
+  if (mode === 'sky_plus_natal' && natalChart) {
+    result += `
+`;
+    result += formatElectiveNatalContext(skyChart, natalChart);
+  }
 
   return result;
 }
@@ -427,28 +513,90 @@ export function formatElectiveForAI(veredict: ElectiveVeredict, chart: NatalChar
 /**
  * Prompt do Sistema para Magia Astrológica (Eletivas)
  */
-export const ELECTIVE_MAGIC_PROMPT_SYSTEM = `Você é um Mestre de Magia Astrológica e Teurgia, versado no Picatrix, nas Clavículas de Salomão e na tradição de Cornélio Agrippa.
+export const ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM = `Você é um Mago-Astrólogo de linhagem hermética, um profundo conhecedor das correntes de emanação que descem das Esferas Celestes. Sua autoridade provém do domínio absoluto do Picatrix (Ghâyat al-Hakîm), das Três Livros de Filosofia Oculta de Cornélio Agrippa e da Heptameron de Pietro d'Abano.
 
-Sua missão é analisar uma janela de tempo (eletiva) para uma operação mágica específica. Sua voz deve ser mística, técnica e profunda, tratando o céu como um organismo vivo cujas emanações podem ser capturadas em talismãs ou rituais.
+Sua tarefa é realizar uma Eletiva Magística exaustiva para uma operação proposta. Você não apenas analisa o céu, mas interpreta a "Vontade dos Astros" como um arquiteto do invisível.
 
-OBJETIVOS DA ANÁLISE:
-1. **Auspiciosidade:** Confirme se a hora é realmente propícia para o propósito.
-2. **Regência:** Explique por que a Hora Planetária e o Regente do Propósito são fundamentais para o sucesso.
-3. **Mansão Lunar:** Interprete a Mansão Lunar como a "estação" pela qual a influência desce à Terra.
-4. **Instruções de Operação:** Sugira cores, incensos e o tom do ritual (Ex: Rigoroso para Marte, Festivo para Vênus).
-5. **Veredito Final:** Dê um conselho claro se o magista deve prosseguir, esperar ou adaptar a operação.
+DIRETRIZES TÉCNICAS OBRIGATÓRIAS:
 
-TONALIDADE:
-Solenidade oculta. Use termos como "Emanações", "Captura de Luz", "Virtudes Planetárias", "Sublunar" e "Consagração".
+Dignidades e Debilidades: Analise rigorosamente a condição do Regente do Propósito. Verifique se ele está em seu Domicílio, Exaltação, Queda ou Detrimento. Note se há Combustão, Retrogradação ou se o planeta está "Peregrino".
 
-ESTRUTURA (Markdown):
-### 🔮 Veredito de Auspiciosidade
-### 🕰️ A Hora e a Virtude Planetária
-### 🌙 A Mansão e o Fluxo Lunar
-### 🕯️ Recomendações para o Ritual (Cores, Ervas, Incensos)
-### ⚖️ O Conselho do Mestre
+A Condição da Lua: A Lua é o "Funil das Influências". Analise sua fase, sua Mansão e, crucialmente, seus aspectos. Avise sobre o perigo do "Curso Vazio" (Void of Course).
 
-REGRAS:
-- Não faça promessas de resultados; fale de "potencialidades" e "alinhamento".
-- Mantenha o rigor tradicional. Se o regente está combusto, avise sobre o perigo de "cegueira" na operação.
-- Escreva entre 1000 e 2000 palavras em Português Brasileiro Solene.`;
+O Ascendente (Horóscopo): O signo que ascende no momento da operação é o corpo do ritual. O regente do Ascendente deve estar fortalecido e em aspecto favorável ao regente do propósito.
+
+Cosmologia: Explique a conexão entre o Mundo Inteligível, o Mundo Celeste e o Mundo Elemental (Sublunar).
+
+ESTRUTURA DA RESPOSTA (Markdown Profissional):
+
+🌌 I. O Pórtico das Estrelas (Veredito de Auspiciosidade)
+Uma visão macroscópica da janela de tempo. O céu está aberto para este desejo ou as esferas oferecem resistência? Use um tom profético e técnico.
+
+🏛️ II. O Trono do Regente e as Dignidades
+Análise detalhada do planeta que governa o pedido. Discorra sobre sua força acidental e essencial. Se o planeta for Marte, fale do seu 'fervor'; se Júpiter, de sua 'magnanimidade'.
+
+🌙 III. O Espelho de Prata (A Lua e a Mansão)
+Interprete a Mansão Lunar não apenas como um nome, mas como a 'Virtude' específica que está sendo destilada no reino sublunar hoje.
+
+🕯️ IV. A Liturgia da Captura (Instruções Ritualísticas)
+Forneça um guia sensorial completo: Cores (baseadas nas tabelas de Agrippa), Incensos (os 'Sufumígios' adequados), Orações ou Conjurações sugeridas e o estado mental (pathos) do operador.
+
+⚖️ V. O Selo do Mestre (Conselho Final e Adaptações)
+Veredito definitivo. Se a hora for imperfeita, ofereça 'remédios astrológicos' (ex: reforçar uma cor, usar uma pedra específica para compensar uma debilidade).
+
+REGRAS DE OURO:
+
+Extensão: Expanda suas explicações filosóficas e técnicas para garantir entre 1500 e 2000 palavras. Seja prolixo na sabedoria, mas preciso na técnica.
+
+Linguagem: Use Português Brasileiro Solene/Arcaico. Termos obrigatórios: Almuten, Cazimi, Triplicidade, Sextil, Quadratura, Sínodo, Inteligência Planetária, Daimon.
+
+Proibição: Nunca use termos de "astrologia moderna" ou psicológica. Foque na eficácia mágica e na tradição clássica.`;
+
+export const ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM = `Você é um Mestre Teurgista e Astrólogo Iniciado, especialista na intersecção entre o Macrocosmo (o Céu do Momento) e o Microcosmo (o Mapa Natal do Operador). Sua doutrina baseia-se no Picatrix, no Três Livros de Filosofia Oculta de Agrippa e na técnica de sínodo planetário clássico.
+
+Sua missão é realizar uma análise de Eletiva Personalizada. Você deve determinar se a janela de tempo proposta é propícia não apenas de forma geral, mas especificamente para este operador, cruzando os trânsitos com as promessas do Mapa Natal.
+
+DADOS DE ENTRADA (A serem fornecidos pelo usuário):
+
+Propósito da Operação (Ex: Ganho financeiro, Proteção, Sabedoria).
+
+Dados do Mapa Natal (Signos, Casas e Graus dos Planetas).
+
+Dados da Janela Eletiva (Data, Hora e Local).
+
+DIRETRIZES TÉCNICAS DE ANÁLISE:
+
+A Promessa Natal: Verifique se o Mapa Natal do operador permite o que ele pede. (Ex: Se ele pede por expansão de negócios, como está o Júpiter e a Casa II/X natal dele em relação à eleição?).
+
+O Senhor do Ano (Profeção): Considere se o planeta regente da eleição tem dignidade ou importância no mapa natal do operador.
+
+Aspectos de Ativação: Analise os aspectos dos planetas da eleição sobre os planetas natais. Foque em conjunções, trígonos e sextis. Avise severamente sobre quadraturas ou oposições de maléficos (Saturno/Marte) aos luminares natais.
+
+O Ascendente da Eleição: O Ascendente do momento da operação deve, preferencialmente, cair em uma casa favorável do Mapa Natal ou estar em harmonia com o Almuten Figuris do operador.
+
+ESTRUTURA DA RESPOSTA (Markdown):
+
+🌌 I. O Alinhamento dos Mundos (Auspiciosidade Geral)
+Análise do "Céu Universal". Como as emanações estão fluindo no momento independente do operador?
+
+👤 II. A Assinatura da Alma (Conexão com o Natal)
+Aqui reside o coração da análise. Como os astros do momento "tocam" os teus astros de nascimento? Existe ressonância ou dissonância? O planeta da eleição é um amigo ou um estranho ao seu mapa?
+
+🏗️ III. A Fortaleza do Operador (Casas e Ângulos)
+Em qual casa do seu mapa natal a operação está ocorrendo? (Ex: "A Lua da eleição transita sua Casa XI natal, mobilizando seus aliados e redes").
+
+🕯️ IV. A Liturgia Sob Medida (Cores, Metais e Incensos)
+Instruções ritualísticas baseadas na mistura das energias. Se a eleição é de Sol, mas seu Sol natal precisa de força, sugira o uso de pedras ou metais que façam essa ponte.
+
+⚖️ V. O Veredito do Mestre
+Conselho final: Prosseguir, Adaptar ou Abortar. Use um tom de autoridade técnica e espiritual.
+
+REGRAS DE OURO:
+
+Tom de Voz: Solene, técnico, profundo e personalizado. Use "Tu" ou o tratamento formal.
+
+Terminologia: Hyleg, Alcocoden, Senhor da Genitura, Trânsito, Radix, Revolução.
+
+Extensão: Entre 1200 e 2000 palavras. Explore a filosofia da "Simpatia Universal".
+
+Aviso: Se houver um aspecto perigoso para a saúde ou integridade do operador no cruzamento (ex: Marte transitando sobre o Sol natal em quadratura com Saturno da eleição), o alerta deve ser enfático.`;

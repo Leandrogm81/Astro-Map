@@ -6,39 +6,34 @@ import {
   NATAL_PROMPT_SYSTEM, 
   SOLAR_RETURN_PROMPT_SYSTEM,
   TRADITIONAL_PROMPT_SYSTEM,
-  ELECTIVE_MAGIC_PROMPT_SYSTEM,
+  ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM,
+  ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM,
   formatElectiveForAI
 } from '@/lib/aiPrompts';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
 
 // Configurações da OpenRouter
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL_ID = 'google/gemini-flash-1.5';
+const DEFAULT_MODEL_ID = 'openai/gpt-oss-120b';
 
 export const AVAILABLE_MODELS = [
   {
-    id: 'google/gemini-2.0-flash-lite-preview-02-05',
-    name: 'Rápido - Gemini 2.0 Flash Lite',
-    description: 'Modelo mais rápido e econômico do Google, ideal para análises ágeis.\nCusto: muito baixo',
-    cost: 'muito baixo'
+    id: 'openai/gpt-oss-120b',
+    name: 'GPT OSS 120B',
+    description: 'Modelo OpenAI GPT OSS 120B.\nCusto: variável',
+    cost: 'variável'
   },
   {
-    id: DEFAULT_MODEL_ID,
-    name: 'Padrão - Gemini 1.5 Flash',
-    description: 'Boa qualidade com baixo custo e excelente velocidade para relatórios do mapa natal.\nCusto: baixo',
-    cost: 'baixo'
+    id: 'z-ai/glm-4.5-air',
+    name: 'GLM 4.5 Air',
+    description: 'Modelo Z-AI GLM 4.5 Air.\nCusto: variável',
+    cost: 'variável'
   },
   {
-    id: 'deepseek/deepseek-chat',
-    name: 'Análise Forte - DeepSeek V3',
-    description: 'Melhor para textos mais profundos, estruturados e análises mais longas.\nCusto: médio',
-    cost: 'médio'
-  },
-  {
-    id: 'qwen/qwen-2.5-72b-instruct',
-    name: 'Alternativo - Qwen 2.5 72B',
-    description: 'Modelo potente da Alibaba, excelente para estruturação lógica e detalhes técnicos.',
-    cost: 'médio'
+    id: 'qwen/qwen-2.5-7b-instruct',
+    name: 'Qwen 2.5 7B Instruct',
+    description: 'Modelo versátil da série Qwen.\nCusto: variável',
+    cost: 'variável'
   }
 ];
 
@@ -59,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     const { 
       chart, 
+      natalChart,
       model: requestedModel, 
       reportMode, 
       assessments, 
@@ -118,12 +114,27 @@ export async function POST(request: NextRequest) {
       
       userMessage = formatTraditionalChartForAI(chart, assessments || []);
     } else if (reportMode === 'elective_magic') {
-      systemPrompt = ELECTIVE_MAGIC_PROMPT_SYSTEM;
-      const { veredict } = body;
+      const { veredict, targetDate, targetTime, electiveMode = 'sky_only' } = body;
+      systemPrompt = electiveMode === 'sky_plus_natal' 
+        ? ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM 
+        : ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM;
+
       if (!veredict || !veredict.planetHour || !veredict.lunarMansion) {
         return NextResponse.json({ error: 'Dados do veredito incompletos para a análise mágica.' }, { status: 400 });
       }
-      userMessage = formatElectiveForAI(veredict, chart);
+      
+      // Usa a data/hora enviada pelo frontend (momento do céu eleito).
+      // Fallback para o relógio do servidor se o frontend não enviar.
+      const contextChart = {
+        ...chart,
+        birthData: {
+          ...chart.birthData,
+          date: targetDate || chart.birthData.date,
+          time: targetTime || chart.birthData.time
+        }
+      };
+
+      userMessage = formatElectiveForAI(veredict, contextChart, electiveMode, natalChart);
     } else {
       // Padrão: Natal Moderno
       systemPrompt = NATAL_PROMPT_SYSTEM;

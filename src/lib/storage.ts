@@ -144,3 +144,70 @@ export function getReportKeyLegacy(name: string, date: string, isSolar: boolean 
   }
   return `report_${name}_${date}`;
 }
+
+// ─── Elective Storage (Frente 2) ───
+
+import { ElectiveMode } from './traditional/types';
+import { PlanetKey } from './traditional/magic-correspondences';
+
+const ELECTIVE_STORAGE_KEY = 'astromap_electives';
+const MAX_ELECTIVES = 20;
+
+export interface SavedElective {
+  id: string;
+  savedAt: string;
+  label: string;
+  dateStr: string;
+  timeStr: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  intentionId: string;
+  electiveMode: ElectiveMode;
+  planetaryDay: string;
+  score: 'propitious' | 'neutral' | 'adverse';
+  rulerPlanet: PlanetKey;
+  magicInsight: string | null;
+}
+
+export function getSavedElectives(): SavedElective[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const data = localStorage.getItem(ELECTIVE_STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveElective(elective: Omit<SavedElective, 'id' | 'savedAt'>): SavedElective {
+  const saved: SavedElective = {
+    ...elective,
+    id: generateId(),
+    savedAt: new Date().toISOString(),
+  };
+
+  const electives = getSavedElectives();
+  electives.unshift(saved); // newest first
+
+  // Enforce limit
+  const trimmed = electives.slice(0, MAX_ELECTIVES);
+  localStorage.setItem(ELECTIVE_STORAGE_KEY, JSON.stringify(trimmed));
+
+  return saved;
+}
+
+export function deleteElective(id: string): boolean {
+  const electives = getSavedElectives();
+  const filtered = electives.filter(e => e.id !== id);
+  if (filtered.length < electives.length) {
+    localStorage.setItem(ELECTIVE_STORAGE_KEY, JSON.stringify(filtered));
+    return true;
+  }
+  return false;
+}
+
+export function getElectiveCount(): number {
+  return getSavedElectives().length;
+}

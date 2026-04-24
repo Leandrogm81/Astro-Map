@@ -14,9 +14,31 @@ import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
 import ExportPDF from '@/components/ExportPDF';
 import TraditionalView from '@/components/traditional/TraditionalView';
+import TraditionalElectivePanel from '@/components/traditional/TraditionalElectivePanel';
 import UnifiedMenu from '@/components/UnifiedMenu';
 import Image from 'next/image';
-import { Sparkles, Moon, Sun, Star, ChevronDown, ChevronUp, Save, Loader2 } from 'lucide-react';
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Navigation,
+  Globe,
+  Star,
+  Moon,
+  Sun,
+  Sparkles,
+  ChevronRight,
+  Menu,
+  ChevronDown,
+  X,
+  Plus,
+  Trash2,
+  List,
+  Zap,
+  ChevronUp,
+  Save,
+  Loader2
+} from 'lucide-react';
 import { hydrateNatalChart } from '@/lib/chartHydration';
 
 function isValidChart(chart: unknown): chart is NatalChart {
@@ -43,7 +65,7 @@ export default function Home() {
   const [savedChartId, setSavedChartId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'houses' | 'aspects' | 'report' | 'revolution'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'houses' | 'aspects' | 'report' | 'revolution' | 'elective'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
@@ -388,6 +410,7 @@ export default function Home() {
                   {[
                     { id: 'traditional', label: 'Tradicional', icon: Sparkles },
                     { id: 'revolution', label: 'Revolu\u00e7\u00e3o Solar', icon: Sun },
+                    { id: 'elective', label: 'Eletiva Mag\u00edstica', icon: Zap },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -461,6 +484,10 @@ export default function Home() {
                       onRevolutionCalculated={handleRevolutionCalculated}
                       onReportUpdated={setSolarReportText}
                     />
+                  )}
+
+                  {activeTab === 'elective' && (
+                    <TraditionalElectivePanel chart={chart} />
                   )}
                 </div>
 

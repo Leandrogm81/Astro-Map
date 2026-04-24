@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { formatChartForAI, formatSolarComparisonForAI } from '../lib/aiPrompts';
-import { NatalChart } from '../types';
+import { formatChartForAI, formatElectiveForAI, formatSolarComparisonForAI } from '../lib/aiPrompts';
+import { ElectiveVeredict } from '../lib/traditional/types';
+import { NatalChart, ZodiacSign } from '../types';
 
 // Mock minimal NatalChart for testing
 const mockChart: NatalChart = {
@@ -25,14 +26,14 @@ const mockChart: NatalChart = {
     number: i + 1,
     longitude: (i * 30 + 110) % 360,
     sign: ['Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio',
-           'Aquário', 'Peixes', 'Áries', 'Touro', 'Gêmeos', 'Câncer'][i] as any,
+           'Aquário', 'Peixes', 'Áries', 'Touro', 'Gêmeos', 'Câncer'][i] as ZodiacSign,
     degree: 10 + i,
   })),
   housesWhole: Array.from({ length: 12 }, (_, i) => ({
     number: i + 1,
     longitude: (i * 30 + 120) % 360,
     sign: ['Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio',
-           'Aquário', 'Peixes', 'Áries', 'Touro', 'Gêmeos', 'Câncer'][i] as any,
+           'Aquário', 'Peixes', 'Áries', 'Touro', 'Gêmeos', 'Câncer'][i] as ZodiacSign,
     degree: i * 30,
   })),
   aspects: [
@@ -60,6 +61,35 @@ const mockSolarChart: NatalChart = {
   ],
   ascendant: 355.0,
   mc: 265.0,
+};
+
+const mockElectiveVeredict: ElectiveVeredict = {
+  score: 'propitious',
+  purpose: 'love',
+  planetHour: {
+    planetId: 'venus',
+    isDaytime: false,
+    hourNumber: 7,
+    startTime: '19:12',
+    endTime: '20:08',
+  },
+  lunarMansion: {
+    number: 9,
+    name: 'Al Tarf',
+    sign: 'Leao',
+    degreeRange: '8-21',
+    summary: 'Favorece cautela, protecao e retirada ordenada.',
+  },
+  moonStatus: {
+    phase: 'Gibosa Minguante',
+    isVoidOfCourse: false,
+    aspects: ['Lua sextil Venus'],
+  },
+  rulerCondition: {
+    planetId: 'venus',
+    totalScore: 9,
+    dignity: 'Domicilio',
+  },
 };
 
 describe('AI Prompts Formatting', () => {
@@ -128,6 +158,23 @@ describe('AI Prompts Formatting', () => {
 
     it('should include the natal chart data as reference', () => {
       expect(output).toContain('MAPA NATAL (REFERÊNCIA)');
+    });
+  });
+  describe('formatElectiveForAI', () => {
+    it('should format the current sky mode without natal overlays', () => {
+      const output = formatElectiveForAI(mockElectiveVeredict, mockSolarChart, 'sky_only');
+
+      expect(output).toContain('MODO DE LEITURA: CEU DO MOMENTO');
+      expect(output).not.toContain('DADOS NATAIS DE REFER');
+      expect(output).toContain('Hora Planet');
+    });
+
+    it('should include natal context when the combined mode is requested', () => {
+      const output = formatElectiveForAI(mockElectiveVeredict, mockSolarChart, 'sky_plus_natal', mockChart);
+
+      expect(output).toContain('MODO DE LEITURA: CEU DO MOMENTO + MAPA NATAL');
+      expect(output).toContain('DADOS NATAIS DE REFER');
+      expect(output).toContain('cai na Casa');
     });
   });
 });

@@ -2,15 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart, AIReport as AIReportType } from '@/types';
-import { 
-  Sparkles, 
-  AlertCircle, 
-  Loader2, 
-  ChevronDown, 
-  Key, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
+import {
+  Sparkles,
+  AlertCircle,
+  Loader2,
+  Key,
+  Eye,
+  EyeOff,
+  Trash2,
   ScrollText
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -47,19 +46,18 @@ export default function AIReport({
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<string>('google/gemini-flash-1.5');
+  const [modelId] = useState('qwen/qwen-2.5-7b-instruct');
   const [models, setModels] = useState<Model[]>([]);
-  const [showModelSelector, setShowModelSelector] = useState(false);
   const [apiKey, setApiKey] = useState<string>('');
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Carregar chave e modelos no início
   useEffect(() => {
     const storedApiKey = localStorage.getItem('openrouter_api_key');
     if (storedApiKey) setApiKey(storedApiKey);
-    
+
     // Tentar carregar relatório salvo para este mapa
     const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
     const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
@@ -68,7 +66,7 @@ export default function AIReport({
       setReportText(savedReport);
       if (onReportUpdated) onReportUpdated(savedReport);
     }
-    
+
     fetch('/api/report')
       .then(res => res.json())
       .then(data => {
@@ -103,12 +101,12 @@ export default function AIReport({
       const response = await fetch('/api/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           chart,
           reportMode,
           solarChart: isSolarMode ? solarRevolution : undefined,
           solarYear: isSolarMode ? solarYear : undefined,
-          model: selectedModel,
+          model: modelId,
           apiKey: apiKey.trim(),
         }),
       });
@@ -116,7 +114,7 @@ export default function AIReport({
       if (!response.ok) {
         const contentType = response.headers.get('content-type');
         let errorMessage = 'Erro ao comunicar com a IA';
-        
+
         if (contentType && contentType.includes('application/json')) {
           const data = await response.json();
           errorMessage = data.error || errorMessage;
@@ -124,7 +122,7 @@ export default function AIReport({
           const text = await response.text();
           errorMessage = text || `Erro do servidor (${response.status})`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
@@ -137,7 +135,7 @@ export default function AIReport({
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         const chunk = decoder.decode(value, { stream: true });
         accumulatedText += chunk;
         setReportText(accumulatedText);
@@ -147,7 +145,7 @@ export default function AIReport({
       // Salvar no localStorage ao finalizar
       const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
       localStorage.setItem(reportKey, accumulatedText);
-      
+
       if (onReportGenerated) {
         onReportGenerated({
           sections: [], // Compatibilidade com tipo antigo
@@ -176,7 +174,6 @@ export default function AIReport({
     }
   };
 
-  const selectedModelData = models.find(m => m.id === selectedModel);
 
   return (
     <div className="flex flex-col h-full max-h-[85vh] bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
@@ -184,10 +181,10 @@ export default function AIReport({
       <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-purple-500/30">
-            <Image 
-              src="/assets/logo-premium.png" 
-              alt="Logo" 
-              fill 
+            <Image
+              src="/assets/logo-premium.png"
+              alt="Logo"
+              fill
               className="object-cover"
             />
           </div>
@@ -203,7 +200,7 @@ export default function AIReport({
         </div>
 
         {reportText && !isStreaming && (
-          <button 
+          <button
             onClick={handleDeleteReport}
             className="p-2 text-slate-500 hover:text-red-400 transition-colors"
             title="Apagar Relatório"
@@ -214,7 +211,7 @@ export default function AIReport({
       </div>
 
       {/* Content Area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 scroll-smooth custom-scrollbar"
       >
@@ -223,49 +220,21 @@ export default function AIReport({
             <div className="w-20 h-20 mx-auto rounded-3xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 shadow-inner">
               <ScrollText className="w-10 h-10 text-purple-400" />
             </div>
-            
+
             <div className="space-y-2">
-                <h4 className="text-xl font-medium text-slate-200">Seu Mapa em Profundidade</h4>
-                <p className="text-sm text-slate-400 leading-relaxed">
+              <h4 className="text-xl font-medium text-slate-200">Seu Mapa em Profundidade</h4>
+              <p className="text-sm text-slate-400 leading-relaxed">
                 Nossa IA combina astrologia psicológica e preditiva para criar um guia único sobre seu temperamento, desafios e o momento atual.
-                </p>
+              </p>
             </div>
 
-            {/* Model Selector Tooltip-style */}
+
             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
-              <div className="relative">
-                <button
-                  onClick={() => setShowModelSelector(!showModelSelector)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl hover:border-purple-500/40 transition-all text-left"
-                >
-                  <div>
-                    <span className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold">Modelo de IA</span>
-                    <span className="text-sm text-slate-200 font-medium">{selectedModelData?.name || 'Carregando...'}</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showModelSelector ? 'rotate-180' : ''}`} />
-                </button>
-
-                {showModelSelector && (
-                  <div className="absolute bottom-full mb-2 z-50 w-full bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
-                    {models.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => { setSelectedModel(m.id); setShowModelSelector(false); }}
-                        className={`w-full p-3 text-left hover:bg-purple-500/10 border-b border-slate-800 last:border-0 transition-colors ${selectedModel === m.id ? 'bg-purple-500/10' : ''}`}
-                      >
-                        <div className="text-sm font-medium text-slate-200">{m.name}</div>
-                        <div className="text-[10px] text-slate-400">{m.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1">
                     <Key className="w-3 h-3" />
-                     Chave OpenRouter
+                    Chave OpenRouter
                   </span>
                   <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-400 hover:underline">Obter chave</a>
                 </div>
@@ -304,7 +273,7 @@ export default function AIReport({
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {reportText}
             </ReactMarkdown>
-            
+
             {isStreaming && (
               <div className="flex items-center gap-2 mt-4 text-purple-400 animate-pulse">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -327,7 +296,7 @@ export default function AIReport({
 
       {reportText && !isStreaming && (
         <div className="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-center gap-4">
-           <p className="text-[10px] text-slate-500 font-medium">Este relatório está salvo no seu dispositivo.</p>
+          <p className="text-[10px] text-slate-500 font-medium">Este relatório está salvo no seu dispositivo.</p>
         </div>
       )}
     </div>

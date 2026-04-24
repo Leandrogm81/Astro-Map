@@ -2,11 +2,11 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Moon, Sun, Sparkles, ChevronDown, Star } from 'lucide-react';
+import { Moon, Sun, Sparkles, ChevronDown, Star, Zap } from 'lucide-react';
 
 interface UnifiedMenuProps {
   activeTab: string;
-  onTabChange: (tabId: 'chart' | 'houses' | 'aspects' | 'report') => void;
+  onTabChange: (tabId: string) => void;
 }
 
 export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps) {
@@ -37,7 +37,7 @@ export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps
     setIsOpen(false);
   };
 
-  const handleItemClick = (tabId: 'chart' | 'houses' | 'aspects' | 'report') => {
+  const handleItemClick = (tabId: string) => {
     onTabChange(tabId);
     closeMenu();
   };
@@ -86,6 +86,9 @@ export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps
     { id: 'houses', label: 'Casas', icon: Moon },
     { id: 'aspects', label: 'Aspectos', icon: Sun },
     { id: 'report', label: 'Relatório IA', icon: Sparkles },
+    { id: 'traditional', label: 'Tradicional', icon: Sparkles },
+    { id: 'revolution', label: 'Revolução Solar', icon: Sun },
+    { id: 'elective', label: 'Eletiva Magística', icon: Zap },
   ] as const;
 
   const isAnyTabActive = menuItems.some(item => item.id === activeTab);

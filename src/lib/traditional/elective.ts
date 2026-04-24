@@ -6,7 +6,12 @@ import { PlanetPosition } from '@/types';
 /**
  * Ordem Caldeia de Regência (descendente de velocidade/distância)
  */
-const CHALDEAN_ORDER = ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'];
+export const CHALDEAN_ORDER = ['saturn', 'jupiter', 'mars', 'sun', 'venus', 'mercury', 'moon'];
+
+/**
+ * Regente do Dia (0=Domingo(Sol), 1=Segunda(Lua), 2=Terça(Marte), 3=Quarta(Mercúrio), 4=Quinta(Júpiter), 5=Sexta(Vênus), 6=Sábado(Saturno))
+ */
+export const DAY_RULERS = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn'];
 
 /**
  * Mapeamento de Propósito para Planeta Regente
@@ -81,31 +86,66 @@ export function getLunarMansion(moonLongitude: number): LunarMansion {
 }
 
 /**
+ * Retorna o Planeta Regente do Dia Astrológico (começa no nascer do sol)
+ */
+export function getPlanetaryDay(
+  targetDate: Date,
+  sunrise: Date,
+): string {
+  let dayOfWeek = targetDate.getDay(); // 0-6
+  
+  // Se ainda não amanheceu, astrologicamente ainda é o dia anterior
+  if (targetDate < sunrise) {
+    dayOfWeek = (dayOfWeek - 1 + 7) % 7;
+  }
+  
+  return DAY_RULERS[dayOfWeek];
+}
+
+/**
  * Calcula a Hora Planetária
  * @param date Data e hora alvo
  * @param sunrise Nascer do sol do dia
  * @param sunset Pôr do sol do dia
- * @param dayOfWeek Dia da semana (0-6, 0=Domingo)
+ * @param nextSunrise Nascer do sol de amanhã
+ * @param previousSunset Pôr do sol de ontem
+ * @param dayOfWeek Dia da semana civil (0-6)
  */
 export function calculatePlanetHour(
   targetDate: Date,
   sunrise: Date,
   sunset: Date,
   nextSunrise: Date,
+  previousSunset: Date,
   dayOfWeek: number
 ): PlanetHour {
   const isDaytime = targetDate >= sunrise && targetDate < sunset;
-  const startTime = isDaytime ? sunrise : (targetDate < sunrise ? new Date(sunrise.getTime() - 86400000) : sunset); // Simplificado
-  const endTime = isDaytime ? sunset : (targetDate < sunrise ? sunrise : nextSunrise);
+  
+  // Define os limites reais do período (Dia ou Noite)
+  let startTime: Date;
+  let endTime: Date;
+
+  if (isDaytime) {
+    startTime = sunrise;
+    endTime = sunset;
+  } else {
+    // Se for antes do amanhecer, a noite começou no pôr do sol de ontem
+    if (targetDate < sunrise) {
+      startTime = previousSunset;
+      endTime = sunrise;
+    } else {
+      // Se for depois do pôr do sol, a noite termina no amanhecer de amanhã
+      startTime = sunset;
+      endTime = nextSunrise;
+    }
+  }
   
   const totalDuration = endTime.getTime() - startTime.getTime();
   const hourDuration = totalDuration / 12;
   const elapsed = targetDate.getTime() - startTime.getTime();
-  const hourNumber = Math.floor(elapsed / hourDuration) + 1;
+  const hourNumber = Math.max(1, Math.min(12, Math.floor(elapsed / hourDuration) + 1));
 
-  // Regente do Dia (0=Sol, 1=Lua, 2=Marte, 3=Mercúrio, 4=Júpiter, 5=Vênus, 6=Saturno)
-  const DAY_RULERS = ['sun', 'moon', 'mars', 'mercury', 'jupiter', 'venus', 'saturn'];
-  const dayRuler = DAY_RULERS[dayOfWeek];
+  const dayRuler = getPlanetaryDay(targetDate, sunrise);
   
   // Ordem Caldeia a partir do regente do dia
   const startIdx = CHALDEAN_ORDER.indexOf(dayRuler);
