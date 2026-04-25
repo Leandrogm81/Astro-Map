@@ -321,13 +321,17 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
         }
 
         if (chart.prenatalSyzygy !== undefined) {
+          const syzygySign = getZodiacSign(chart.prenatalSyzygy);
+          const syzygyDegree = chart.prenatalSyzygy % 30;
+          const syzygyHouse = getHouseForPlanet(chart.prenatalSyzygy, chart.housesPlacidus);
+
           planetsToRender.push({
             name: 'Sizígia',
             id: 'syzygy',
-            sign: 'Áries' as ZodiacSign, // Placeholder for valid sign since it relies on longitude
-            degree: 0,
+            sign: syzygySign as ZodiacSign,
+            degree: syzygyDegree,
             longitude: chart.prenatalSyzygy,
-            house: 0,
+            house: syzygyHouse,
             retrograde: false,
             symbol: '☾',
             latitude: 0,
@@ -401,4 +405,23 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
 
 function colorForSign(signName: string): string {
   return SIGN_COLORS[signName] || '#94a3b8';
+}
+
+function getZodiacSign(longitude: number): string {
+  const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'];
+  return signs[Math.floor(longitude / 30) % 12];
+}
+
+function getHouseForPlanet(longitude: number, houses: { longitude: number; number: number }[]): number {
+  for (let i = 0; i < houses.length; i++) {
+    const cusp = houses[i].longitude;
+    const nextCusp = houses[(i + 1) % houses.length].longitude;
+    if (nextCusp < cusp) {
+      // Cruzou 0°
+      if (longitude >= cusp || longitude < nextCusp) return houses[i].number;
+    } else {
+      if (longitude >= cusp && longitude < nextCusp) return houses[i].number;
+    }
+  }
+  return 1;
 }

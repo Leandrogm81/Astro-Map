@@ -1,4 +1,4 @@
-import { PlanetPosition, HouseCusp, ZodiacSign, TraditionalPoints } from '@/types';
+import { PlanetPosition, HouseCusp, ZodiacSign, TraditionalPoints, AlmutenFigurisBreakdown, AlmutenFigurisBreakdownPoint } from '@/types';
 import { getFaceRuler, getTermRuler } from './dignities';
 import { getTraditionalDomicileRuler, getTraditionalExaltationRuler, getTraditionalTriplicityRulers } from './rulers';
 
@@ -18,8 +18,8 @@ export function calculateTraditionalPoints(
 
   if (!sun || !moon) {
     return {
-      hyleg: { id: 'sun', name: 'Sol', label: 'Hyleg', description: 'Dados insuficientes.' },
-      alcocoden: { id: 'sun', name: 'Sol', label: 'Alcocoden', description: 'Dados insuficientes.' },
+      hyleg: { id: 'sun', name: 'Sol', label: 'Hyleg', description: 'Dados insuficientes.', method: 'basic' },
+      alcocoden: { id: 'sun', name: 'Sol', label: 'Alcocoden', description: 'Dados insuficientes.', method: 'basic' },
       almutenFiguris: { id: 'sun', name: 'Sol', label: 'Almuten Figuris', description: 'Dados insuficientes.' },
       lordOfNativity: { id: 'sun', name: 'Sol', label: 'Senhor do Ascendente', description: 'Dados insuficientes.' }
     };
@@ -44,18 +44,22 @@ export function calculateTraditionalPoints(
   const alcocodenId = calculateAlcocodenId(hylegId, planets, isDay, houses);
   const alcocodenPlanet = getPlanet(alcocodenId) ?? { name: 'Desconhecido', symbol: '?' };
 
+  const almutenGrade: 'complete_with_prenatal_syzygy' | 'complete' = prenatalSyzygy !== undefined ? 'complete_with_prenatal_syzygy' : 'complete';
+
   return {
     hyleg: {
       id: hylegId,
       name: hylegPlanet.name,
       label: 'Hyleg',
-      description: 'O Doador da Vida. Representa a vitalidade física e a força energética que sustenta o corpo.'
+      description: 'O Doador da Vida. (Método simplificado experimental — não representa cálculo medieval completo.)',
+      method: 'simplified'
     },
     alcocoden: {
       id: alcocodenId,
       name: alcocodenPlanet.name,
       label: 'Alcocoden',
-      description: 'O Doador de Anos. Indica a longevidade potencial e a qualidade da manutenção da vida.'
+      description: 'O Doador de Anos. (Método simplificado experimental baseado no regente do signo do Hyleg.)',
+      method: 'simplified'
     },
     almutenFiguris: {
       id: almutenId,
@@ -68,8 +72,109 @@ export function calculateTraditionalPoints(
       name: lordOfNativityPlanet.name,
       label: 'Senhor do Ascendente',
       description: 'O Leme da Vida. Governa a direção pessoal, o caráter e a expressão externa do indivíduo.'
+    },
+    almutenFigurisBreakdown: calculateAlmutenFigurisBreakdown(planets, fortuneLon, ascendant, isDay, prenatalSyzygy),
+    methodMetadata: {
+      almutenFiguris: almutenGrade,
+      hyleg: 'simplified',
+      alcocoden: 'simplified',
+      houseSystem: 'placidus',
+      sect: 'corrected_basic',
+      aspects: 'moiety_basic'
     }
   };
+}
+
+export function calculateAlmutenFigurisBreakdown(
+  planets: PlanetPosition[],
+  fortuneLon: number,
+  ascLon: number,
+  isDay: boolean,
+  prenatalSyzygy?: number
+): AlmutenFigurisBreakdown {
+  const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+  const scores: Record<string, number> = {};
+  classicIds.forEach(id => scores[id] = 0);
+
+  const sun = planets.find(p => p.id === 'sun');
+  const moon = planets.find(p => p.id === 'moon');
+
+  const points: AlmutenFigurisBreakdownPoint[] = [
+    {
+      label: 'Sol',
+      longitude: sun?.longitude ?? ascLon,
+      sign: getSignFromLon(sun?.longitude ?? ascLon),
+      degree: (sun?.longitude ?? ascLon) % 30,
+      domicileRuler: getTraditionalDomicileRuler(getSignFromLon(sun?.longitude ?? ascLon)),
+      exaltationRuler: getTraditionalExaltationRuler(getSignFromLon(sun?.longitude ?? ascLon)),
+      triplicityRulers: getTraditionalTriplicityRulers(getSignFromLon(sun?.longitude ?? ascLon), isDay),
+      termRuler: getTermRuler(getSignFromLon(sun?.longitude ?? ascLon), (sun?.longitude ?? ascLon) % 30),
+      faceRuler: getFaceRuler(getSignFromLon(sun?.longitude ?? ascLon), (sun?.longitude ?? ascLon) % 30)
+    },
+    {
+      label: 'Lua',
+      longitude: moon?.longitude ?? ascLon,
+      sign: getSignFromLon(moon?.longitude ?? ascLon),
+      degree: (moon?.longitude ?? ascLon) % 30,
+      domicileRuler: getTraditionalDomicileRuler(getSignFromLon(moon?.longitude ?? ascLon)),
+      exaltationRuler: getTraditionalExaltationRuler(getSignFromLon(moon?.longitude ?? ascLon)),
+      triplicityRulers: getTraditionalTriplicityRulers(getSignFromLon(moon?.longitude ?? ascLon), isDay),
+      termRuler: getTermRuler(getSignFromLon(moon?.longitude ?? ascLon), (moon?.longitude ?? ascLon) % 30),
+      faceRuler: getFaceRuler(getSignFromLon(moon?.longitude ?? ascLon), (moon?.longitude ?? ascLon) % 30)
+    },
+    {
+      label: 'Ascendente',
+      longitude: ascLon,
+      sign: getSignFromLon(ascLon),
+      degree: ascLon % 30,
+      domicileRuler: getTraditionalDomicileRuler(getSignFromLon(ascLon)),
+      exaltationRuler: getTraditionalExaltationRuler(getSignFromLon(ascLon)),
+      triplicityRulers: getTraditionalTriplicityRulers(getSignFromLon(ascLon), isDay),
+      termRuler: getTermRuler(getSignFromLon(ascLon), ascLon % 30),
+      faceRuler: getFaceRuler(getSignFromLon(ascLon), ascLon % 30)
+    },
+    {
+      label: 'Parte da Fortuna',
+      longitude: fortuneLon,
+      sign: getSignFromLon(fortuneLon),
+      degree: fortuneLon % 30,
+      domicileRuler: getTraditionalDomicileRuler(getSignFromLon(fortuneLon)),
+      exaltationRuler: getTraditionalExaltationRuler(getSignFromLon(fortuneLon)),
+      triplicityRulers: getTraditionalTriplicityRulers(getSignFromLon(fortuneLon), isDay),
+      termRuler: getTermRuler(getSignFromLon(fortuneLon), fortuneLon % 30),
+      faceRuler: getFaceRuler(getSignFromLon(fortuneLon), fortuneLon % 30)
+    }
+  ];
+
+  if (prenatalSyzygy !== undefined) {
+    points.push({
+      label: 'Sizígia Pré-Natal',
+      longitude: prenatalSyzygy,
+      sign: getSignFromLon(prenatalSyzygy),
+      degree: prenatalSyzygy % 30,
+      domicileRuler: getTraditionalDomicileRuler(getSignFromLon(prenatalSyzygy)),
+      exaltationRuler: getTraditionalExaltationRuler(getSignFromLon(prenatalSyzygy)),
+      triplicityRulers: getTraditionalTriplicityRulers(getSignFromLon(prenatalSyzygy), isDay),
+      termRuler: getTermRuler(getSignFromLon(prenatalSyzygy), prenatalSyzygy % 30),
+      faceRuler: getFaceRuler(getSignFromLon(prenatalSyzygy), prenatalSyzygy % 30)
+    });
+  }
+
+  points.forEach(pt => {
+    const dom = pt.domicileRuler;
+    const exa = pt.exaltationRuler;
+    const tris = pt.triplicityRulers;
+    const term = pt.termRuler;
+    const face = pt.faceRuler;
+
+    if (scores[dom] !== undefined) scores[dom] += 5;
+    if (exa && scores[exa] !== undefined) scores[exa] += 4;
+    tris.forEach(tri => { if (scores[tri] !== undefined) scores[tri] += 3; });
+    if (scores[term] !== undefined) scores[term] += 2;
+    if (scores[face] !== undefined) scores[face] += 1;
+  });
+
+  return { points, scores };
 }
 
 function calculateFortune(sun: PlanetPosition, moon: PlanetPosition, asc: number, isDay: boolean): number {

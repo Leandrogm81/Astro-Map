@@ -1,7 +1,7 @@
-import { TraditionalAssessment, TraditionalScore, EssentialDignities } from './types';
+import { TraditionalAssessment, TraditionalScore } from './types';
 import { getTraditionalDomicileRuler, getTraditionalExaltationRuler } from './rulers';
 import { getFaceRuler, getTermRuler, calculateEssentialDignity, getSolarCondition } from './dignities';
-import { calculateHayz, getSectStatus } from './sect';
+import { calculateHayz, getSectStatus, getSectRole } from './sect';
 import { getDignityVibe } from './interpretations';
 import { PlanetPosition, ZodiacSign } from '@/types';
 
@@ -54,8 +54,9 @@ export function calculateTraditionalAssessment(
   // Sect & Hayz
   const hayz = calculateHayz(planet.id, planet.house || 1, sign, isDayChart);
   const sectStatus = getSectStatus(planet.id, isDayChart);
-  
-  if (sectStatus === 'in_sect' || sectStatus === 'benefic') accidental['Na Seita'] = 2;
+  const sectRole = getSectRole(planet.id, isDayChart);
+
+  if (sectRole.endsWith('_of_sect')) accidental['Na Seita'] = 2;
   if (hayz) accidental['Hayz'] = 3;
 
   // Casas Angulares (Força Acidental)
@@ -97,9 +98,10 @@ export function calculateTraditionalAssessment(
     degree: planet.degree,
     house: planet.house || 1,
     isRetrograde: planet.retrograde,
-    dignity: getPrimaryDignityLabel(dignities, essential),
+    dignity: getPrimaryDignityLabel(essential),
     totalScore: score.total,
-    sectStatus: sectStatus.toUpperCase(),
+    sectStatus,
+    sectRole,
     dignities: {
       domicile: PLANET_NAME_PT[domRuler] || '',
       exaltation: PLANET_NAME_PT[exRuler || ''] || '',
@@ -109,7 +111,7 @@ export function calculateTraditionalAssessment(
     condition: {
       ...solarCond,
       isInMutualReception: mutualReceptions,
-      sectStatus: sectStatus,
+      sectStatus,
       isHayz: hayz
     },
     score,
@@ -145,19 +147,19 @@ function generateTechnicalSummary(name: string, score: TraditionalScore): string
 /**
  * Retorna o rótulo da dignidade mais forte ou debilidade mais grave.
  */
-function getPrimaryDignityLabel(dignities: any, essential: Record<string, number>): string {
+function getPrimaryDignityLabel(essential: Record<string, number>): string {
   // Hierarquia de dignidades (vence a mais forte)
   if (essential['Domicílio']) return 'Domicílio';
   if (essential['Exaltação']) return 'Exaltação';
-  
+
   // Hierarquia de debilidades (se não houver dignidade maior, a debilidade é o rótulo principal)
   if (essential['Exílio']) return 'Exílio';
   if (essential['Queda']) return 'Queda';
-  
+
   // Dignidades menores
   if (essential['Triplicidade']) return 'Triplicidade';
   if (essential['Termo']) return 'Termo';
   if (essential['Face']) return 'Face';
-  
+
   return 'Peregrino';
 }

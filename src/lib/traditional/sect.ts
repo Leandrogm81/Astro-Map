@@ -1,4 +1,5 @@
 import { ZodiacSign } from '@/types';
+import { SectStatus, SectRole } from './types';
 
 /**
  * Determina se um planeta pertence à seita (sect) do nascimento
@@ -40,16 +41,51 @@ export function calculateHayz(planetId: string, house: number, sign: ZodiacSign,
 }
 
 /**
- * Retorna o status de seita (Benefic/Malefic da Seita)
+ * Retorna o status de seita (in_sect / out_of_sect / neutral / mercury_variable)
  */
-export function getSectStatus(planetId: string, isDayChart: boolean) {
+export function getSectStatus(planetId: string, isDayChart: boolean): SectStatus {
+  if (planetId === 'mercury') return 'mercury_variable';
+
   if (isDayChart) {
-    if (planetId === 'jupiter') return 'benefic';
-    if (planetId === 'saturn') return 'malefic_out_of_sect';
-    return isPlanetDiurnal(planetId) ? 'in_sect' : 'out_of_sect';
+    if (planetId === 'sun') return 'in_sect';
+    if (planetId === 'jupiter') return 'in_sect';
+    if (planetId === 'saturn') return 'in_sect';
+    if (planetId === 'moon') return 'out_of_sect';
+    if (planetId === 'venus') return 'out_of_sect';
+    if (planetId === 'mars') return 'out_of_sect';
   } else {
-    if (planetId === 'venus') return 'benefic';
-    if (planetId === 'mars') return 'malefic_out_of_sect';
-    return isPlanetNocturnal(planetId) ? 'in_sect' : 'out_of_sect';
+    if (planetId === 'moon') return 'in_sect';
+    if (planetId === 'venus') return 'in_sect';
+    if (planetId === 'mars') return 'in_sect';
+    if (planetId === 'sun') return 'out_of_sect';
+    if (planetId === 'jupiter') return 'out_of_sect';
+    if (planetId === 'saturn') return 'out_of_sect';
   }
+
+  return 'neutral';
+}
+
+/**
+ * Retorna o papel (role) de seita do planeta no contexto do mapa
+ */
+export function getSectRole(planetId: string, isDayChart: boolean): SectRole {
+  if (planetId === 'mercury') return 'mercury_variable';
+
+  if (isDayChart) {
+    if (planetId === 'sun') return 'luminary';
+    if (planetId === 'jupiter') return 'benefic_of_sect';
+    if (planetId === 'saturn') return 'malefic_of_sect';
+    if (planetId === 'moon') return 'luminary';
+    if (planetId === 'venus') return 'benefic_out_of_sect';
+    if (planetId === 'mars') return 'malefic_out_of_sect';
+  } else {
+    if (planetId === 'moon') return 'luminary';
+    if (planetId === 'venus') return 'benefic_of_sect';
+    if (planetId === 'mars') return 'malefic_of_sect';
+    if (planetId === 'sun') return 'luminary';
+    if (planetId === 'jupiter') return 'benefic_out_of_sect';
+    if (planetId === 'saturn') return 'malefic_out_of_sect';
+  }
+
+  return 'none';
 }

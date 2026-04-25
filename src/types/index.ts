@@ -26,6 +26,35 @@ export interface TraditionalPoint {
   name: string;
   label: string;
   description: string;
+  method?: string;
+}
+
+export interface AlmutenFigurisBreakdownPoint {
+  label: string;
+  longitude: number;
+  sign: string;
+  degree: number;
+  domicileRuler: string;
+  exaltationRuler: string | null;
+  triplicityRulers: string[];
+  termRuler: string;
+  faceRuler: string;
+}
+
+export interface AlmutenFigurisBreakdown {
+  points: AlmutenFigurisBreakdownPoint[];
+  scores: Record<string, number>;
+}
+
+export type TraditionalMethodGrade = 'complete' | 'complete_with_prenatal_syzygy' | 'simplified' | 'basic';
+
+export interface TraditionalMethodMetadata {
+  almutenFiguris: TraditionalMethodGrade;
+  hyleg: TraditionalMethodGrade;
+  alcocoden: TraditionalMethodGrade;
+  houseSystem: string;
+  sect: string;
+  aspects: string;
 }
 
 export interface TraditionalPoints {
@@ -33,6 +62,8 @@ export interface TraditionalPoints {
   almutenFiguris: TraditionalPoint;
   hyleg: TraditionalPoint;
   alcocoden: TraditionalPoint;
+  almutenFigurisBreakdown?: AlmutenFigurisBreakdown;
+  methodMetadata?: TraditionalMethodMetadata;
 }
 
 export interface PlanetPosition {

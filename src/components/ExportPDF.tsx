@@ -322,6 +322,8 @@ const translateSectStatus = (status: string) => {
   const map: Record<string, string> = {
     'IN_SECT': 'EM SEITA',
     'OUT_OF_SECT': 'FORA DE SEITA',
+    'NEUTRAL': 'NEUTRO',
+    'MERCURY_VARIABLE': 'MERCÚRIO VARIÁVEL',
     'HAYZ': 'HAYZ (IDEAL)',
     'EX_CONDITION': 'EXCELENTE',
     'BENEFIC': 'BENÉFICO',
@@ -1130,9 +1132,9 @@ export const TraditionalTreatisePDF = ({ chart, reportText, traditionalAssessmen
                    {a.score.breakdown.essential['Triplicidade'] ? 'Triplicidade ' : ''}
                  </Text>
               </View>
-              <Text style={[styles.tableCell, { textAlign: 'center', fontSize: 7, color: a.condition.sectStatus === 'benefic' ? '#10b981' : (a.condition.sectStatus === 'malefic' ? '#ef4444' : '#1e293b') }]}>
-                {translateSectStatus(a.sectStatus)}
-              </Text>
+               <Text style={[styles.tableCell, { textAlign: 'center', fontSize: 7, color: a.sectRole.startsWith('benefic') ? '#10b981' : (a.sectRole.startsWith('malefic') ? '#ef4444' : '#1e293b') }]}>
+                 {translateSectStatus(a.sectStatus)}
+               </Text>
               <Text style={[styles.tableCellBold, { textAlign: 'right', color: a.totalScore > 0 ? '#10b981' : (a.totalScore < 0 ? '#ef4444' : '#1e1b4b'), fontSize: 10 }]}>
                 {a.totalScore > 0 ? `+${a.totalScore}` : a.totalScore}
               </Text>

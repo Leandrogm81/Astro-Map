@@ -105,7 +105,8 @@ export async function POST(request: NextRequest) {
             chart.ascendant,
             chart.planets,
             chart.housesPlacidus,
-            chart.isDayChart ?? true
+            chart.isDayChart ?? true,
+            chart.prenatalSyzygy
           );
         } catch {
           console.error('Erro ao calcular pontos tradicionais no servidor:');

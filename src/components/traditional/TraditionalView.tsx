@@ -55,8 +55,9 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
     return calculateTraditionalPoints(
       chart.ascendant,
       chart.planets,
-      chart.housesPlacidus, // Or Whole, assuming Placidus for traditional points focus
-      chart.isDayChart ?? false
+      chart.housesPlacidus,
+      chart.isDayChart ?? false,
+      chart.prenatalSyzygy
     );
   }, [chart]);
 

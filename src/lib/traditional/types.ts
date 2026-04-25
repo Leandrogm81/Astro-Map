@@ -1,3 +1,14 @@
+export type SectStatus = 'in_sect' | 'out_of_sect' | 'neutral' | 'mercury_variable';
+
+export type SectRole =
+  | 'benefic_of_sect'
+  | 'benefic_out_of_sect'
+  | 'malefic_of_sect'
+  | 'malefic_out_of_sect'
+  | 'luminary'
+  | 'mercury_variable'
+  | 'none';
+
 export interface EssentialDignities {
   domicile: string;
   exaltation: string;
@@ -26,14 +37,15 @@ export interface TraditionalAssessment {
   isRetrograde: boolean;
   dignity: string;
   totalScore: number;
-  sectStatus: string;
+  sectStatus: SectStatus;
+  sectRole: SectRole;
   dignities: EssentialDignities;
   condition: {
     isCombust: boolean;
     isUnderRays: boolean;
     isCazimi: boolean;
     isInMutualReception: string[];
-    sectStatus: string;
+    sectStatus: SectStatus;
     isHayz?: boolean;
   };
   score: TraditionalScore;

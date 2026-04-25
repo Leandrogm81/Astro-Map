@@ -389,6 +389,26 @@ export function formatTraditionalChartForAI(chart: NatalChart, assessments: Trad
     }
   }
 
+  // === Metadados de Confiabilidade ===
+  result += `\n## Metadados de Confiabilidade do Módulo Tradicional\n`;
+  const tp = chart.traditionalPoints;
+  if (tp?.methodMetadata) {
+    const mm = tp.methodMetadata;
+    result += `- Almuten Figuris: ${mm.almutenFiguris}\n`;
+    result += `- Hyleg: ${mm.hyleg} (experimental, não representa cálculo medieval completo)\n`;
+    result += `- Alcocoden: ${mm.alcocoden} (experimental)\n`;
+    result += `- Sistema de Casas: ${mm.houseSystem}\n`;
+    result += `- Seita: ${mm.sect}\n`;
+    result += `- Aspectos: ${mm.aspects}\n`;
+  } else {
+    result += `- Almuten Figuris: complete_with_prenatal_syzygy\n`;
+    result += `- Hyleg: simplified (experimental, não representa cálculo medieval completo)\n`;
+    result += `- Alcocoden: simplified (experimental)\n`;
+    result += `- Sistema de Casas: placidus\n`;
+    result += `- Seita: corrected_basic\n`;
+    result += `- Aspectos: moiety_basic\n`;
+  }
+
   return result;
 }
 
@@ -407,8 +427,9 @@ DIRETRIZES DE ANÁLISE:
 1. **O Governo da Natividade:** Analise a Seita (Mapa Diurno vs Noturno). Isso altera o peso dos luminares e a funcionalidade dos planetas (ex: Marte em mapa noturno é menos destrutivo).
 2. **Dignidades e Debilidades:** Avalie cada um dos sete governadores. Diferencie claramente entre um planeta com autoridade (Domicílio/Exaltação) e um planeta em estado de servidão ou exílio.
 3. **Almuten Figuris:** Identifique o planeta com maior soberania sobre os pontos vitais (Sol, Lua, ASC, Fortuna e Sizígia). Ele é o guardião e guia da expressão da vida.
-4. **Hyleg e Alcocoden:** Analise a vitalidade e a longevidade potencial. 
-   - IMPORTANTE: Trate estes pontos como indicadores simbólicos de "força vital" e "sustentação física". 
+4. **Hyleg e Alcocoden:** Analise a vitalidade e a longevidade potencial.
+   - IMPORTANTE: Trate estes pontos como indicadores simbólicos de "força vital" e "sustentação física".
+   - Estes cálculos são SIMPLIFICADOS e EXPERIMENTAIS — NÃO representam o método medieval completo. Nunca os apresente como definitivos ou clinicamente válidos.
    - AVISO ÉTICO: É terminantemente proibido fazer previsões de data de morte ou diagnósticos médicos definitivos. Use termos como "vitalidade robusta", "períodos de maior exigência física" ou "sustentação estável".
 5. **Lotes Herméticos:** Interprete a Roda da Fortuna e o Lote do Espírito como indicadores de sucesso material e propósito de ação consciente.
 6. **Sizígia Pré-Natal:** Use a posição da última lunação antes do nascimento como um ponto de ancoragem para o destino e o Almuten.

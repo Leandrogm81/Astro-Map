@@ -294,11 +294,11 @@ export default function TraditionalPlanetDrawer({
                  <div className="w-px h-6 bg-white/5" />
                  <div className="flex flex-col items-center gap-1">
                     <span className="text-slate-500 uppercase tracking-tighter">Seita</span>
-                    <span className={`${
-                      assessment.condition.sectStatus === 'benefic' ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                       {assessment.condition.sectStatus === 'benefic' ? 'Em Seita' : 'Fora da Seita'}
-                    </span>
+                     <span className={`${
+                       assessment.sectRole.endsWith('_of_sect') ? 'text-green-400' : 'text-red-400'
+                     }`}>
+                        {assessment.sectRole.endsWith('_of_sect') ? 'Em Seita' : 'Fora da Seita'}
+                     </span>
                  </div>
               </div>
 
