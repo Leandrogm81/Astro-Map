@@ -86,9 +86,6 @@ export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps
     { id: 'houses', label: 'Casas', icon: Moon },
     { id: 'aspects', label: 'Aspectos', icon: Sun },
     { id: 'report', label: 'Relatório IA', icon: Sparkles },
-    { id: 'traditional', label: 'Tradicional', icon: Sparkles },
-    { id: 'revolution', label: 'Revolução Solar', icon: Sun },
-    { id: 'elective', label: 'Eletiva Magística', icon: Zap },
   ] as const;
 
   const isAnyTabActive = menuItems.some(item => item.id === activeTab);
@@ -123,7 +120,7 @@ export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps
           ref={dropdownRef}
           id="analysis-menu"
           role="menu"
-          /* eslint-disable-next-line react/forbid-component-props */
+          /* eslint-disable-next-line react/forbid-dom-props */
           style={dropdownStyle}
           className="w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
         >

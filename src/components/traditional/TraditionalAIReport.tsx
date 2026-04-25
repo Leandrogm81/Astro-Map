@@ -7,13 +7,9 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
-  ChevronDown,
-  Key,
-  ScrollText,
   FileText,
   History,
   ShieldCheck,
-  Zap
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -42,30 +38,16 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelId] = useState('qwen/qwen-2.5-7b-instruct');
-  const [models, setModels] = useState<Model[]>([]);
-  const [apiKey, setApiKey] = useState<string>('');
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedApiKey = localStorage.getItem('openrouter_api_key');
-    if (storedApiKey) setApiKey(storedApiKey);
-
     const savedReport = loadTraditionalReportFromStorage(chart.birthData);
     if (savedReport) {
       setReportText(savedReport);
-      if (onReportUpdated) onReportUpdated(savedReport);
+      // Removed redundant onReportUpdated(savedReport) to prevent infinite loops
     }
-
-    fetch('/api/report')
-      .then(res => res.json())
-      .then(data => {
-        if (data.models) setModels(data.models);
-      })
-      .catch(err => {
-        console.error('Erro ao carregar modelos:', err);
-      });
-  }, [chart]);
+  }, [chart.birthData]); // Only re-run if birth data changes
 
   useEffect(() => {
     if (isStreaming && scrollRef.current) {
@@ -74,12 +56,6 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   }, [reportText, isStreaming]);
 
   const handleGenerateReport = async () => {
-    if (!apiKey.trim()) {
-      setError('Por favor, insira sua chave API da OpenRouter nas configurações.');
-      return;
-    }
-
-    localStorage.setItem('openrouter_api_key', apiKey.trim());
     setLoading(true);
     setIsStreaming(true);
     setError(null);
@@ -95,7 +71,6 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
           assessments,
           reportMode: 'traditional',
           model: modelId,
-          apiKey: apiKey.trim(),
         }),
       });
 
@@ -170,23 +145,13 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
                 </button>
               )}
 
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5">
-                <Key className="w-4 h-4 text-gold-500" />
-                <input
-                  type="password"
-                  placeholder="Chave OpenRouter"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="bg-transparent border-none text-xs text-slate-300 focus:ring-0 outline-none w-40 placeholder:text-slate-600"
-                />
-              </div>
 
               <button
                 onClick={handleGenerateReport}
                 disabled={loading}
                 className={`group relative flex items-center gap-2 px-6 py-3.5 text-base font-bold rounded-2xl transition-all duration-300 overflow-hidden shadow-xl ${loading
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
-                    : 'bg-slate-950 text-gold-400 border border-gold-500/30 hover:border-gold-400/60 hover:text-white hover:shadow-gold-500/20 active:scale-95'
+                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
+                  : 'bg-slate-950 text-gold-400 border border-gold-500/30 hover:border-gold-400/60 hover:text-white hover:shadow-gold-500/20 active:scale-95'
                   }`}
               >
                 {/* Background Glow */}
@@ -221,17 +186,6 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 mb-6">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span className="text-sm font-medium">{error}</span>
-            {!apiKey && (
-              <div className="ml-auto flex items-center gap-2">
-                <input
-                  type="password"
-                  placeholder="Chave OpenRouter"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="bg-black/40 border border-white/10 rounded-lg px-3 py-1 text-xs focus:ring-1 focus:ring-gold-500 outline-none w-48 text-white"
-                />
-              </div>
-            )}
           </div>
         )}
 

@@ -1,7 +1,7 @@
-import { TraditionalAssessment, TraditionalScore } from './types';
-import { getTraditionalDomicileRuler, getTraditionalExaltationRuler, getTraditionalTriplicityRulers } from './rulers';
+import { TraditionalAssessment, TraditionalScore, EssentialDignities } from './types';
+import { getTraditionalDomicileRuler, getTraditionalExaltationRuler } from './rulers';
 import { getFaceRuler, getTermRuler, calculateEssentialDignity, getSolarCondition } from './dignities';
-import { calculateHayz, getSectStatus, isPlanetDiurnal } from './sect';
+import { calculateHayz, getSectStatus } from './sect';
 import { getDignityVibe } from './interpretations';
 import { PlanetPosition, ZodiacSign } from '@/types';
 
@@ -97,7 +97,7 @@ export function calculateTraditionalAssessment(
     degree: planet.degree,
     house: planet.house || 1,
     isRetrograde: planet.retrograde,
-    dignity: dignities.isPeregrine ? 'Peregrino' : (dignities.isAtDomicile ? 'Domicílio' : 'Afligido'),
+    dignity: getPrimaryDignityLabel(dignities, essential),
     totalScore: score.total,
     sectStatus: sectStatus.toUpperCase(),
     dignities: {
@@ -109,7 +109,7 @@ export function calculateTraditionalAssessment(
     condition: {
       ...solarCond,
       isInMutualReception: mutualReceptions,
-      sectStatus: sectStatus as any,
+      sectStatus: sectStatus,
       isHayz: hayz
     },
     score,
@@ -135,9 +135,29 @@ function isAtFall(planet: string, sign: ZodiacSign): boolean {
 }
 
 function generateTechnicalSummary(name: string, score: TraditionalScore): string {
-  if (score.total >= 10) return `${name} está em condição soberana e excepcional.`;
-  if (score.total >= 5) return `${name} está em condição forte e benéfica.`;
-  if (score.total <= -10) return `${name} está em estado crítico de debilidade.`;
-  if (score.total <= -5) return `${name} está severamente debilitado.`;
-  return `${name} possui condição moderada.`;
+  if (score.total >= 10) return `Apresenta fortíssima dignidade essencial e acidental, operando com máxima eficácia.`;
+  if (score.total >= 5) return `Apresenta boa dignidade, com capacidade de manifestação benéfica e estável.`;
+  if (score.total <= -10) return `Encontra-se em severa debilidade, indicando corrupção ou supressão de sua natureza essencial.`;
+  if (score.total <= -5) return `Encontra-se debilitado, exigindo mitigação por aspectos ou recepção mútua.`;
+  return `Apresenta condição mista ou peregrina, dependendo inteiramente de seus dispositores.`;
+}
+
+/**
+ * Retorna o rótulo da dignidade mais forte ou debilidade mais grave.
+ */
+function getPrimaryDignityLabel(dignities: any, essential: Record<string, number>): string {
+  // Hierarquia de dignidades (vence a mais forte)
+  if (essential['Domicílio']) return 'Domicílio';
+  if (essential['Exaltação']) return 'Exaltação';
+  
+  // Hierarquia de debilidades (se não houver dignidade maior, a debilidade é o rótulo principal)
+  if (essential['Exílio']) return 'Exílio';
+  if (essential['Queda']) return 'Queda';
+  
+  // Dignidades menores
+  if (essential['Triplicidade']) return 'Triplicidade';
+  if (essential['Termo']) return 'Termo';
+  if (essential['Face']) return 'Face';
+  
+  return 'Peregrino';
 }

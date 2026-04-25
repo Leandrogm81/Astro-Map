@@ -7,12 +7,11 @@ import type {
   BirthData, 
   NatalChart,
   ZodiacSign,
-  LotPosition,
-  TraditionalPoints
+  LotPosition
 } from '@/types';
 import { PLANETS, ZODIAC_SIGNS } from '@/types';
 import { getZodiacSign, getSignDegree, getHouseForPlanet } from './astrology';
-import { getBrazilianTimezone, getTimezoneOffsetForDate, isBrazilianDST as isBrazilianDSTCheck } from './geocoding';
+import { getTimezoneOffsetForDate, isBrazilianDST as isBrazilianDSTCheck } from './geocoding';
 import { useSettingsStore } from './settingsStore';
 
 import * as Astronomy from 'astronomy-engine';
@@ -382,6 +381,31 @@ function calculateLilithPosition(date: Date): PlanetPosition {
   };
 }
 
+/**
+ * Calcula a Sizígia Pré-Natal (última Lua Nova ou Lua Cheia antes do nascimento).
+ */
+async function calculatePrenatalSyzygy(date: Date): Promise<number> {
+  // Astronomy.SearchMoonPhase(phase, start_date, direction_days)
+  // 0=New, 1=First Quarter, 2=Full, 3=Third Quarter
+  
+  // Buscamos a última Lua Nova e a última Lua Cheia
+  const lastNewMoon = Astronomy.SearchMoonPhase(0, date, -40);
+  const lastFullMoon = Astronomy.SearchMoonPhase(2, date, -40);
+  
+  if (!lastNewMoon || !lastFullMoon) return 0;
+  
+  // A sizígia pré-natal é a que ocorreu MAIS TARDE (mais próxima do nascimento)
+  const syzygyDate = (lastNewMoon.date.getTime() > lastFullMoon.date.getTime()) 
+    ? lastNewMoon.date 
+    : lastFullMoon.date;
+    
+  // Calculamos a longitude do Sol nesse momento (que é a mesma da Lua na Lua Nova, ou oposta na Cheia)
+  const vector = Astronomy.GeoVector(Astronomy.Body.Sun, syzygyDate, true);
+  const ecliptic = Astronomy.Ecliptic(vector);
+  
+  return ecliptic.elon;
+}
+
 import { calculateLotLongitude } from './traditional/lots';
 import { calculateTraditionalPoints } from './traditional/points';
 
@@ -502,8 +526,11 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
     console.warn('Failed to calculate some lots', err);
   }
 
+  // Calculate Prenatal Syzygy
+  const prenatalSyzygy = await calculatePrenatalSyzygy(birthDate);
+
   // Calculate Traditional Points using the new specialized library
-  const traditionalPoints = calculateTraditionalPoints(ascendant, planets, housesPlacidus, isDayChart);
+  const traditionalPoints = calculateTraditionalPoints(ascendant, planets, housesPlacidus, isDayChart, prenatalSyzygy);
 
   // Assign houses to planets
   for (const planet of planets) {
@@ -524,6 +551,7 @@ export async function calculateNatalChart(birthData: BirthData): Promise<NatalCh
     lots,
     traditionalPoints,
     isDayChart,
+    prenatalSyzygy,
   };
 }
 
@@ -575,10 +603,7 @@ function calculateAspects(planets: PlanetPosition[]): Aspect[] {
  */
 function findSolarReturnTime(
   approximateDate: Date,
-  targetLongitude: number,
-  latitude: number,
-  longitude: number,
-  timezoneOffset: number
+  targetLongitude: number
 ): Date {
   // The Sun moves about 1 degree per day, so we search within ±3 days
   let searchStart = new Date(approximateDate);
@@ -661,10 +686,7 @@ export async function calculateSolarReturn(birthChart: NatalChart, year: number)
   // Find the exact time when Sun returns to the natal position
   const solarReturnDate = findSolarReturnTime(
     approximateReturn,
-    targetSunLongitude,
-    birthChart.birthData.latitude,
-    birthChart.birthData.longitude,
-    timezoneOffset
+    targetSunLongitude
   );
   
   // Map UTC solarReturnDate to the correct Local Time at the event's location

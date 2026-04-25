@@ -33,7 +33,7 @@ export interface TraditionalAssessment {
     isUnderRays: boolean;
     isCazimi: boolean;
     isInMutualReception: string[];
-    sectStatus: 'benefic' | 'malefic' | 'neutral';
+    sectStatus: string;
     isHayz?: boolean;
   };
   score: TraditionalScore;

@@ -294,8 +294,6 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
     setIsGenerating(true);
     setMagicInsight(null);
     setError(null);
-    const apiKey = localStorage.getItem('openrouter_api_key');
-
     try {
       const response = await fetch('/api/report', {
         method: 'POST',
@@ -308,7 +306,6 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
           veredict,
           targetDate: skyChart.birthData.date,
           targetTime: skyChart.birthData.time,
-          apiKey: apiKey || '',
         }),
       });
 

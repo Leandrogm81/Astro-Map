@@ -1,6 +1,7 @@
 import React from 'react';
 import { NatalChart, ZodiacSign } from '@/types';
-import { Compass, Trophy, Star } from 'lucide-react';
+import { Compass, Trophy, Star, Moon } from 'lucide-react';
+import { getZodiacSign, getSignDegree } from '@/lib/astrology';
 
 interface TraditionalPositionsTableProps {
   chart: NatalChart;
@@ -96,6 +97,27 @@ export default function TraditionalPositionsTable({ chart }: TraditionalPosition
                 </td>
               </tr>
             ))}
+
+            {/* Sizígia Pré-Natal */}
+            {chart.prenatalSyzygy !== undefined && (
+              <tr className="group hover:bg-white/5 transition-all duration-300">
+                <td className="px-4 py-3 rounded-l-2xl border-y border-l border-white/5 flex items-center gap-3">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                    <Moon className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-sm font-bold text-white">Sizígia Pré-Natal</span>
+                </td>
+                <td className="px-4 py-3 border-y border-white/5 text-sm text-slate-300">
+                  {getZodiacSign(chart.prenatalSyzygy)}
+                </td>
+                <td className="px-4 py-3 border-y border-white/5 text-sm font-mono text-gold-400/80">
+                  {formatDegree(getSignDegree(chart.prenatalSyzygy))}
+                </td>
+                <td className="px-4 py-3 rounded-r-2xl border-y border-r border-white/5 text-right text-sm font-bold text-white">
+                  {getHouse(chart.prenatalSyzygy)}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

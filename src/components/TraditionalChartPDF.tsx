@@ -1,6 +1,6 @@
 import React from 'react';
 import { Svg, Circle, Line, Text, G, Path, Rect } from '@react-pdf/renderer';
-import { NatalChart, ZODIAC_SIGNS, PLANETS, PlanetPosition } from '@/types';
+import { NatalChart, ZODIAC_SIGNS, PLANETS, PlanetPosition, ZodiacSign } from '@/types';
 import { EGYPTIAN_TERMS, getFaceRuler } from '@/lib/traditional/dignities';
 import {
   getTraditionalAxisLongitudes,
@@ -44,7 +44,8 @@ const PLANET_SYMBOLS: Record<string, string> = {
   'Lilith': '⚸',
   'Roda da Fortuna': '⊗',
   'Fortune': '⊗',
-  'Spirit': '🕊️'
+  'Spirit': '🕊️',
+  'Sizígia': '☾'
 };
 
 const ASPECT_COLORS: Record<string, string> = {
@@ -213,7 +214,7 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
       {ZODIAC_SIGNS.map((sign, si) => {
         const signStart = si * 30;
         return [0, 10, 20].map((d) => {
-          const rulerId = getFaceRuler(sign.name as any, d);
+          const rulerId = getFaceRuler(sign.name as ZodiacSign, d);
           if (!rulerId) return null;
           const planetInfo = PLANETS.find(p => p.id === rulerId.toLowerCase());
           const symbol = planetInfo?.symbol || rulerId[0];
@@ -319,6 +320,21 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
           planetsToRender = [...planetsToRender, ...lotsAsPlanets];
         }
 
+        if (chart.prenatalSyzygy !== undefined) {
+          planetsToRender.push({
+            name: 'Sizígia',
+            id: 'syzygy',
+            sign: 'Áries' as ZodiacSign, // Placeholder for valid sign since it relies on longitude
+            degree: 0,
+            longitude: chart.prenatalSyzygy,
+            house: 0,
+            retrograde: false,
+            symbol: '☾',
+            latitude: 0,
+            speed: 0
+          } as PlanetPosition);
+        }
+
         return planetsToRender.map((p, i) => {
           const angle = toAngle(p.longitude);
           const x = cx + planetR * Math.cos(angle);
@@ -333,6 +349,7 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
           if (p.name === 'Vênus') color = '#22c55e';
           if (p.id === 'fortune') color = '#fbbf24';
           if (p.id === 'spirit') color = '#8b5cf6';
+          if (p.id === 'syzygy') color = '#818cf8'; // indigo-400 like in UI
 
           return (
             <G key={`planet-${i}`}>

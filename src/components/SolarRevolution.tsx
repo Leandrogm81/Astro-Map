@@ -139,12 +139,6 @@ export default function SolarRevolution({
   const handleGenerateReport = async () => {
     if (!solarReturn) return;
 
-    const storedApiKey = localStorage.getItem('openrouter_api_key') || '';
-    if (!storedApiKey) {
-      setError('Por favor, configure sua chave API na aba "Relatório IA" primeiro.');
-      return;
-    }
-
     setGeneratingReport(true);
     setError(null);
     setReportText('');
@@ -158,7 +152,6 @@ export default function SolarRevolution({
           reportMode: 'solar',
           solarChart: solarReturn,
           solarYear: year,
-          apiKey: storedApiKey,
           model: 'qwen/qwen-2.5-7b-instruct',
         }),
       });

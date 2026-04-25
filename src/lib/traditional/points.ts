@@ -1,5 +1,5 @@
-import { PlanetPosition, HouseCusp, ZodiacSign, TraditionalPoint, TraditionalPoints } from '@/types';
-import { calculateEssentialDignity, getFaceRuler, getTermRuler } from './dignities';
+import { PlanetPosition, HouseCusp, ZodiacSign, TraditionalPoints } from '@/types';
+import { getFaceRuler, getTermRuler } from './dignities';
 import { getTraditionalDomicileRuler, getTraditionalExaltationRuler, getTraditionalTriplicityRulers } from './rulers';
 
 /**
@@ -9,7 +9,8 @@ export function calculateTraditionalPoints(
   ascendant: number,
   planets: PlanetPosition[],
   houses: HouseCusp[],
-  isDay: boolean
+  isDay: boolean,
+  prenatalSyzygy?: number
 ): TraditionalPoints {
   const getPlanet = (id: string) => planets.find(p => p.id === id);
   const sun = getPlanet('sun');
@@ -36,11 +37,11 @@ export function calculateTraditionalPoints(
   const hylegPlanet = hylegId === 'ascendant' ? { name: 'Ascendente', symbol: 'ASC' } : (getPlanet(hylegId) ?? { name: 'Desconhecido', symbol: '?' });
 
   // 3. Almuten Figuris (Vencedor do Mapa)
-  const almutenId = calculateAlmutenFigurisId(planets, fortuneLon, houses, ascendant, isDay);
+  const almutenId = calculateAlmutenFigurisId(planets, fortuneLon, houses, ascendant, isDay, prenatalSyzygy);
   const almutenPlanet = getPlanet(almutenId) ?? { name: 'Desconhecido', symbol: '?' };
 
   // 4. Alcocoden (Doador de Anos)
-  const alcocodenId = calculateAlcocodenId(hylegId, planets, isDay);
+  const alcocodenId = calculateAlcocodenId(hylegId, planets, isDay, houses);
   const alcocodenPlanet = getPlanet(alcocodenId) ?? { name: 'Desconhecido', symbol: '?' };
 
   return {
@@ -80,16 +81,23 @@ function calculateFortune(sun: PlanetPosition, moon: PlanetPosition, asc: number
 }
 
 function calculateHylegId(sun: PlanetPosition, moon: PlanetPosition, asc: number, isDay: boolean): string {
+  // Casas Hilegiacas (Ptolomeu/Bonatti): 1, 10, 11, 7, 9
+  // Ordem de preferência rigorosa:
   const hylegPlaces = [1, 10, 11, 7, 9];
 
   if (isDay) {
+    // 1. Sol (se em casa hilegiaca)
     if (hylegPlaces.includes(sun.house || 0)) return 'sun';
+    // 2. Lua (se em casa hilegiaca)
     if (hylegPlaces.includes(moon.house || 0)) return 'moon';
   } else {
+    // 1. Lua (se em casa hilegiaca)
     if (hylegPlaces.includes(moon.house || 0)) return 'moon';
+    // 2. Sol (se em casa hilegiaca)
     if (hylegPlaces.includes(sun.house || 0)) return 'sun';
   }
   
+  // 3. Ascendente (sempre o candidato final)
   return 'ascendant';
 }
 
@@ -98,7 +106,8 @@ function calculateAlmutenFigurisId(
   fortuneLon: number, 
   houses: HouseCusp[], 
   ascLon: number, 
-  isDay: boolean
+  isDay: boolean,
+  prenatalSyzygy?: number
 ): string {
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
   const scores: Record<string, number> = {};
@@ -108,7 +117,8 @@ function calculateAlmutenFigurisId(
     { lon: planets.find(p => p.id === 'sun')?.longitude ?? ascLon, weight: 1 },
     { lon: planets.find(p => p.id === 'moon')?.longitude ?? ascLon, weight: 1 },
     { lon: ascLon, weight: 1 },
-    { lon: fortuneLon, weight: 1 }
+    { lon: fortuneLon, weight: 1 },
+    { lon: prenatalSyzygy ?? ascLon, weight: 1 }
   ];
 
   pointsToEvaluate.forEach(pt => {
@@ -138,18 +148,61 @@ function calculateAlmutenFigurisId(
   return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
 }
 
-function calculateAlcocodenId(hylegId: string, planets: PlanetPosition[], isDay: boolean): string {
-  if (hylegId === 'ascendant' || hylegId === 'mc') {
-    const ascSign = planets.find(p => p.id === 'sun')?.sign;
-    return getTraditionalDomicileRuler(ascSign as ZodiacSign || 'Áries');
+/**
+ * Alcocoden: Regente do Hyleg que faz aspecto ao Hyleg.
+ * Implementação de ranking de dignidades.
+ */
+function calculateAlcocodenId(hylegId: string, planets: PlanetPosition[], isDay: boolean, houses: HouseCusp[]): string {
+  const getPlanet = (id: string) => planets.find(p => p.id === id);
+  const hylegPlanet = hylegId === 'ascendant' ? { longitude: houses[0].longitude, id: 'asc' } : getPlanet(hylegId);
+  
+  if (!hylegPlanet) return 'sun';
+
+  const hylegLon = hylegPlanet.longitude;
+  const hylegSign = getSignFromLon(hylegLon);
+  const hylegDeg = hylegLon % 30;
+
+  // Candidatos: Regentes das 5 dignidades essenciais do Hyleg
+  const candidates = new Set([
+    getTraditionalDomicileRuler(hylegSign),
+    getTraditionalExaltationRuler(hylegSign),
+    ...getTraditionalTriplicityRulers(hylegSign, isDay),
+    getTermRuler(hylegSign, hylegDeg),
+    getFaceRuler(hylegSign, hylegDeg)
+  ].filter(Boolean) as string[]);
+
+  // Filtro: O Alcocoden DEVE fazer aspecto ao Hyleg (ou ser o próprio regente do ascendente se Hyleg for ASC)
+  const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+  const validAlcocodens = Array.from(candidates).filter(cid => {
+    if (!classicIds.includes(cid)) return false;
+    const p = getPlanet(cid);
+    if (!p) return false;
+    
+    // Simplificação de aspecto: mesmo signo ou aspecto ptolomaico (sign-based)
+    const sign1 = Math.floor(p.longitude / 30);
+    const sign2 = Math.floor(hylegLon / 30);
+    const diff = Math.abs(sign1 - sign2);
+    const shortestDistance = Math.min(diff, 12 - diff);
+    return [0, 2, 3, 4, 6].includes(shortestDistance); // Conjunção, Sextil, Quadratura, Trígono, Oposição
+  });
+
+  if (validAlcocodens.length === 0) {
+    // Fallback: Domicílio do Hyleg
+    return getTraditionalDomicileRuler(hylegSign);
   }
 
-  const hylegPlanet = planets.find(p => p.id === hylegId);
-  if (!hylegPlanet) {
-    return getTraditionalDomicileRuler('Áries');
-  }
-  const hylegSign = hylegPlanet.sign as ZodiacSign;
-  return getTraditionalDomicileRuler(hylegSign);
+  // Se houver mais de um, vence o com mais dignidade no ponto do Hyleg (similar ao Almuten)
+  const candidateScores: Record<string, number> = {};
+  validAlcocodens.forEach(cid => {
+    candidateScores[cid] = 0;
+    if (cid === getTraditionalDomicileRuler(hylegSign)) candidateScores[cid] += 5;
+    if (cid === getTraditionalExaltationRuler(hylegSign)) candidateScores[cid] += 4;
+    if (getTraditionalTriplicityRulers(hylegSign, isDay).includes(cid)) candidateScores[cid] += 3;
+    if (cid === getTermRuler(hylegSign, hylegDeg)) candidateScores[cid] += 2;
+    if (cid === getFaceRuler(hylegSign, hylegDeg)) candidateScores[cid] += 1;
+  });
+
+  return Object.entries(candidateScores).sort((a, b) => b[1] - a[1])[0][0];
 }
 
 function getSignFromLon(lon: number): ZodiacSign {

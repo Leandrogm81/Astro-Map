@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
   Document, 
   Page, 
@@ -24,7 +24,9 @@ import {
   calculateDispositorChain, 
   getInterceptedSigns, 
   calculateCrossAspects, 
-  getHouseForPlanet
+  getHouseForPlanet,
+  getZodiacSign,
+  getSignDegree
 } from '@/lib/astrology';
 
 // Registrar fontes para um ar mais premium e garantir glifos astrológicos
@@ -828,6 +830,15 @@ export const MyPDFDocument = ({
                 <Text style={[styles.tableCell, { flex: 2, fontSize: 7, color: '#64748b' }]}>{lot.description}</Text>
               </View>
             ))}
+            {chart.prenatalSyzygy !== undefined && (
+              <View style={[styles.tableRow, (chart.lots?.length || 0) % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd]} wrap={false}>
+                <Text style={[styles.tableCell, { flex: 1.5, fontWeight: 'bold' }]}>Sizígia Pré-Natal</Text>
+                <Text style={[styles.tableCell, { flex: 1.2 }]}>{getZodiacSign(chart.prenatalSyzygy)}</Text>
+                <Text style={styles.tableCell}>{formatDeg(getSignDegree(chart.prenatalSyzygy))}</Text>
+                <Text style={[styles.tableCell, { flex: 0.5 }]}>{getHouseForPlanet(chart.prenatalSyzygy, chart.housesPlacidus)}</Text>
+                <Text style={[styles.tableCell, { flex: 2, fontSize: 7, color: '#64748b' }]}>Lua Nova/Cheia anterior ao nascimento</Text>
+              </View>
+            )}
           </View>
           <Footer />
         </Page>
@@ -1193,7 +1204,7 @@ export default function ExportPDF({
 }: ExportPDFProps) {
   const isCompact = variant === 'compact';
 
-  const document = isTraditional ? (
+  const document = useMemo(() => isTraditional ? (
     <TraditionalTreatisePDF 
       chart={chart} 
       reportText={reportText} 
@@ -1209,7 +1220,16 @@ export default function ExportPDF({
       solarReportText={solarReportText}
       pdfMode={isTraditional ? 'traditional' : pdfMode}
     />
-  );
+  ), [
+    isTraditional, 
+    chart, 
+    reportText, 
+    traditionalAssessments, 
+    solarRevolution, 
+    solarYear, 
+    solarReportText, 
+    pdfMode
+  ]);
 
   const fileName = isTraditional 
     ? `Tratado_Tradicional_${chart.birthData.name}.pdf`

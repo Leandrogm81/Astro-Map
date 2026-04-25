@@ -44,12 +44,26 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
       ? reportState.text
       : loadTraditionalReportFromStorage(chart.birthData);
 
-  const handleReportUpdated = (text: string) => {
+  const handleReportUpdated = React.useCallback((text: string) => {
     setReportState({
       storageKey: reportStorageKey,
       text,
     });
-  };
+  }, [reportStorageKey]);
+
+  const traditionalPoints = useMemo(() => {
+    return calculateTraditionalPoints(
+      chart.ascendant,
+      chart.planets,
+      chart.housesPlacidus, // Or Whole, assuming Placidus for traditional points focus
+      chart.isDayChart ?? false
+    );
+  }, [chart]);
+
+  const reportChart = useMemo(() => ({
+    ...chart,
+    traditionalPoints
+  }), [chart, traditionalPoints]);
 
   const handlePlanetClick = (id: string | null, position?: { x: number, y: number }) => {
     setSelectedPlanetId(id);
@@ -81,14 +95,6 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
   const selectedAssessment = selectedPlanetId ? assessments[selectedPlanetId] : null;
   const selectedPlanet = selectedPlanetId ? chart.planets.find(p => p.id === selectedPlanetId) : null;
 
-  const traditionalPoints = useMemo(() => {
-    return calculateTraditionalPoints(
-      chart.ascendant,
-      chart.planets,
-      chart.housesPlacidus, // Or Whole, assuming Placidus for traditional points focus
-      chart.isDayChart ?? false
-    );
-  }, [chart]);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -177,7 +183,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
       {/* Relatório de IA Tradicional */}
       <div className="mt-12">
         <TraditionalAIReport 
-          chart={chart} 
+          chart={reportChart} 
           assessments={Object.values(assessments)}
           onReportUpdated={handleReportUpdated}
         />

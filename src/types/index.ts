@@ -80,6 +80,7 @@ export interface NatalChart {
   lots?: LotPosition[];
   traditionalPoints?: TraditionalPoints;
   isDayChart?: boolean;
+  prenatalSyzygy?: number;
 }
 
 export interface SavedChart {
