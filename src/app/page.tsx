@@ -118,7 +118,7 @@ export default function Home() {
       .then(() => setInitialized(true))
       .catch((err) => {
         console.error('Failed to initialize ephemeris:', err);
-        setError('Falha ao inicializar cálculos astron\u00f4micos. Recarregue a página.');
+        setError('Falha ao inicializar cálculos astronômicos. Recarregue a página.');
       });
   }, []);
 
@@ -475,8 +475,8 @@ export default function Home() {
                   <UnifiedMenu activeTab={activeTab} onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} />
                   {[
                     { id: 'traditional', label: 'Tradicional', icon: Sparkles },
-                    { id: 'revolution', label: 'Revolu\u00e7\u00e3o Solar', icon: Sun },
-                    { id: 'elective', label: 'Eletiva Mag\u00edstica', icon: Zap },
+                    { id: 'revolution', label: 'Revolução Solar', icon: Sun },
+                    { id: 'elective', label: 'Eletiva Magística', icon: Zap },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -574,7 +574,7 @@ export default function Home() {
                 <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
                   <span className="flex items-center gap-1">
                     <Star className="w-4 h-4" />
-                    C\u00e1lculos precisos
+                    Cálculos precisos
                   </span>
                   <span className="flex items-center gap-1">
                     <Moon className="w-4 h-4" />
@@ -600,10 +600,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
             <p>
-              © 2026 AstroMap. C\u00e1lculos astron\u00f4micos via Astronomy Engine.
+              © 2026 AstroMap. Cálculos astronômicos via Astronomy Engine.
             </p>
             <div className="flex items-center gap-4">
-              <span>Gr\u00e1tis e sem necessidade de cadastro</span>
+              <span>Grátis e sem necessidade de cadastro</span>
               <span>•</span>
               <span>Dados protegidos e salvos localmente</span>
             </div>

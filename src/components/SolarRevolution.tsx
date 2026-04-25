@@ -259,7 +259,7 @@ export default function SolarRevolution({
             ))}
           </div>
 
-          {/* Gráfico de Revolu\u00e7\u00e3o (Sobreposi\u00e7\u00e3o) */}
+          {/* Gráfico de Revolução (Sobreposição) */}
           <div className="glass p-6 rounded-3xl shadow-inner relative overflow-hidden group">
             <div className="flex items-center justify-between mb-6 relative z-10">
               <div>
