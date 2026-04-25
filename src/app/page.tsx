@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { BirthData, NatalChart, AIReport as AIReportType, SavedChart } from '@/types';
 import { initSweph, calculateNatalChart } from '@/lib/ephemeris';
 import { saveChart, updateChart, getReportKey, getReportKeyLegacy } from '@/lib/storage';
@@ -9,13 +10,35 @@ import AstroChart from '@/components/AstroChart';
 import PlanetTable from '@/components/PlanetTable';
 import HousesTable from '@/components/HousesTable';
 import AspectsList from '@/components/AspectsList';
-import AIReport from '@/components/AIReport';
-import SolarRevolution from '@/components/SolarRevolution';
 import SavedCharts from '@/components/SavedCharts';
-import ExportPDF from '@/components/ExportPDF';
-import TraditionalView from '@/components/traditional/TraditionalView';
-import TraditionalElectivePanel from '@/components/traditional/TraditionalElectivePanel';
 import UnifiedMenu from '@/components/UnifiedMenu';
+
+// Carregamento dinâmico de componentes pesados para otimização de performance
+const AIReport = dynamic(() => import('@/components/AIReport'), {
+  loading: () => <TabLoading />,
+});
+
+const SolarRevolution = dynamic(() => import('@/components/SolarRevolution'), {
+  loading: () => <TabLoading />,
+});
+
+const ExportPDF = dynamic(() => import('@/components/ExportPDF'), {
+  loading: () => (
+    <div className="px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl text-slate-500 bg-white/5 border border-white/10 opacity-50">
+      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+      PDF
+    </div>
+  ),
+  ssr: false
+});
+
+const TraditionalView = dynamic(() => import('@/components/traditional/TraditionalView'), {
+  loading: () => <TabLoading />,
+});
+
+const TraditionalElectivePanel = dynamic(() => import('@/components/traditional/TraditionalElectivePanel'), {
+  loading: () => <TabLoading />,
+});
 import Image from 'next/image';
 import {
   MapPin,
@@ -59,6 +82,19 @@ function isValidChart(chart: unknown): chart is NatalChart {
   );
 }
 
+// Componente de loading premium para abas dinâmicas
+const TabLoading = () => (
+  <div className="flex flex-col items-center justify-center py-20 text-center">
+    <div className="relative mb-6">
+      <div className="absolute inset-0 bg-gold-500/20 blur-xl rounded-full animate-pulse" />
+      <Loader2 className="w-10 h-10 text-gold-400 animate-spin relative z-10" />
+    </div>
+    <p className="text-slate-400 font-serif tracking-[0.2em] uppercase text-[10px] animate-pulse">
+      Sincronizando Efemérides...
+    </p>
+  </div>
+);
+
 export default function Home() {
   const [initialized, setInitialized] = useState(false);
   const [chart, setChart] = useState<NatalChart | null>(null);
@@ -68,6 +104,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'houses' | 'aspects' | 'report' | 'revolution' | 'elective'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
   const [initialFormData, setInitialFormData] = useState<BirthData | undefined>(undefined);
   const [aiReport, setAiReport] = useState<AIReportType | null>(null);
@@ -238,15 +275,95 @@ export default function Home() {
     });
   }, []);
 
+  const toggleMobileSidebar = useCallback(() => {
+    setMobileSidebarOpen(prev => !prev);
+  }, []);
+
   const hasValidChart = isValidChart(chart);
+
+  const sidebarContent = (
+    <>
+      <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
+        <button
+          onClick={() => toggleSection('form')}
+          className="w-full px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Moon className="w-5 h-5 text-purple-400" />
+            <h2 className="text-lg font-semibold text-purple-200">
+              Dados de Nascimento
+            </h2>
+          </div>
+          {expandedSections.has('form') ? (
+            <ChevronUp className="w-5 h-5 text-slate-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-slate-400" />
+          )}
+        </button>
+
+        {expandedSections.has('form') && (
+          <div className="p-4 md:p-6">
+            {!initialized ? (
+              <div className="text-center py-8">
+                <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
+                <p className="text-slate-400">Calculando efemérides astronômicas...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {editingChartId && (
+                  <div className="bg-blue-500/20 text-blue-200 border border-blue-500/30 p-3 rounded-lg text-sm flex justify-between items-center">
+                    <span>Você está editando um mapa salvo. Clique em &quot;Calcular&quot; para atualizar.</span>
+                    <button onClick={() => { setEditingChartId(null); setInitialFormData(undefined); }} className="text-blue-400 hover:text-blue-300 underline">Cancelar</button>
+                  </div>
+                )}
+                <BirthForm
+                  onSubmit={handleFormSubmit}
+                  loading={loading}
+                  initialData={initialFormData}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
+        <button
+          onClick={() => toggleSection('saved')}
+          className="w-full px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Save className="w-5 h-5 text-purple-400" />
+            <h2 className="text-lg font-semibold text-purple-200">
+              Mapas Salvos
+            </h2>
+          </div>
+          {expandedSections.has('saved') ? (
+            <ChevronUp className="w-5 h-5 text-slate-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-slate-400" />
+          )}
+        </button>
+
+        {expandedSections.has('saved') && (
+          <div className="p-4 md:p-6">
+            <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
+          </div>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <main className="min-h-screen">
       {/* Header */}
       <header className="border-b border-gold-500/20 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              <button onClick={toggleMobileSidebar} className="lg:hidden p-2 text-slate-400 hover:text-white transition-colors" title="Menu">
+                <Menu className="w-5 h-5" />
+              </button>
               <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-gold-500/10 border border-gold-500/20">
                 <Image 
                   src="/assets/logo-premium.png" 
@@ -256,7 +373,7 @@ export default function Home() {
                 />
               </div>
               <div>
-                <h1 className="text-xl font-serif font-black tracking-tight text-white">
+                <h1 className="text-base md:text-xl font-serif font-black tracking-tight text-white">
                   Astro<span className="gradient-text-gold">Map</span>
                 </h1>
                 <p className="text-[9px] uppercase tracking-[0.3em] font-bold text-gold-500/60">Suíte Astrológica Clássica</p>
@@ -267,10 +384,11 @@ export default function Home() {
               {hasValidChart && !sidebarVisible && (
                 <button
                   onClick={handleNewChart}
-                  className="px-4 py-2 text-xs font-bold uppercase tracking-widest bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 border border-gold-500/30 rounded-full transition-all flex items-center gap-2"
+                  className="px-2 md:px-4 py-2 text-xs font-bold uppercase tracking-widest bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 border border-gold-500/30 rounded-full transition-all flex items-center gap-2"
+                  title="Calcular Novo Mapa"
                 >
                   <Star className="w-3 h-3" />
-                  Calcular Novo Mapa
+                  <span className="hidden md:inline">Calcular Novo Mapa</span>
                 </button>
               )}
               <button
@@ -282,87 +400,33 @@ export default function Home() {
                 title="Sair do AstroMap"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Sair
+                <span className="hidden md:inline">Sair</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
           {/* Sidebar */}
           {sidebarVisible && (
-            <div className="lg:col-span-4 space-y-6 animate-in slide-in-from-left duration-500">
-              {/* Formulário */}
-              <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => toggleSection('form')}
-                  className="w-full px-6 py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Moon className="w-5 h-5 text-purple-400" />
-                    <h2 className="text-lg font-semibold text-purple-200">
-                      Dados de Nascimento
-                    </h2>
-                  </div>
-                  {expandedSections.has('form') ? (
-                    <ChevronUp className="w-5 h-5 text-slate-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
-                  )}
-                </button>
+            <div className="hidden lg:block lg:col-span-4 space-y-6 animate-in slide-in-from-left duration-500">
+              {sidebarContent}
+            </div>
+          )}
 
-                {expandedSections.has('form') && (
-                  <div className="p-6">
-                    {!initialized ? (
-                      <div className="text-center py-8">
-                        <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
-                        <p className="text-slate-400">Calculando efemérides astronômicas...</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {editingChartId && (
-                          <div className="bg-blue-500/20 text-blue-200 border border-blue-500/30 p-3 rounded-lg text-sm flex justify-between items-center">
-                            <span>Você está editando um mapa salvo. Clique em &quot;Calcular&quot; para atualizar.</span>
-                            <button onClick={() => { setEditingChartId(null); setInitialFormData(undefined); }} className="text-blue-400 hover:text-blue-300 underline">Cancelar</button>
-                          </div>
-                        )}
-                        <BirthForm 
-                          onSubmit={handleFormSubmit} 
-                          loading={loading} 
-                          initialData={initialFormData}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Mapas Salvos */}
-              <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
-                <button
-                  onClick={() => toggleSection('saved')}
-                  className="w-full px-6 py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Save className="w-5 h-5 text-purple-400" />
-                    <h2 className="text-lg font-semibold text-purple-200">
-                      Mapas Salvos
-                    </h2>
-                  </div>
-                  {expandedSections.has('saved') ? (
-                    <ChevronUp className="w-5 h-5 text-slate-400" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
-                  )}
-                </button>
-
-                {expandedSections.has('saved') && (
-                  <div className="p-6">
-                    <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
-                  </div>
-                )}
+          {/* Mobile Drawer */}
+          {mobileSidebarOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="absolute inset-0 bg-black/60" onClick={toggleMobileSidebar} />
+              <div className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-sm bg-slate-950 border-r border-white/10 overflow-y-auto p-6">
+                <div className="flex justify-end mb-4">
+                  <button onClick={toggleMobileSidebar} className="p-2 text-slate-400 hover:text-white transition-colors" title="Fechar">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                {sidebarContent}
               </div>
             </div>
           )}
@@ -386,21 +450,21 @@ export default function Home() {
             {hasValidChart ? (
               <div className="space-y-6">
                 {/* Info Header */}
-                <div className="p-8 glass-gold rounded-3xl relative overflow-hidden group">
+                <div className="p-4 md:p-8 glass-gold rounded-3xl relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gold-500/5 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-gold-500/10 transition-colors" />
                   <h2 className="text-4xl font-serif font-bold text-white mb-4 tracking-tight">
                     {chart.birthData.name}
                   </h2>
-                  <div className="flex flex-wrap gap-6 text-sm">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                  <div className="flex flex-wrap gap-2 md:gap-6 text-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/5 rounded-full border border-white/10">
                       <Sun className="w-4 h-4 text-gold-400" />
                       <span className="text-slate-200">{chart.birthData.date}</span>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                    <div className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/5 rounded-full border border-white/10">
                       <Moon className="w-4 h-4 text-indigo-400" />
                       <span className="text-slate-200">{chart.birthData.time}</span>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
+                    <div className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/5 rounded-full border border-white/10">
                       <Star className="w-4 h-4 text-gold-500" />
                       <span className="text-slate-200">{chart.birthData.location}</span>
                     </div>
@@ -447,7 +511,7 @@ export default function Home() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="glass rounded-3xl p-8 shadow-2xl">
+                <div className="glass rounded-3xl p-4 md:p-8 shadow-2xl">
 {activeTab === 'chart' && (
                       <div className="space-y-6">
                         <AstroChart chart={chart} />

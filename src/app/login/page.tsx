@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Moon, Star, KeyRound, Lock, User } from 'lucide-react';
+import { Moon, Star, KeyRound, Lock, User, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -49,16 +50,16 @@ export default function LoginPage() {
         <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-gold-200 rounded-full animate-pulse delay-150 blur-[1px]"></div>
         <div className="absolute top-1/2 right-1/3 w-2 h-2 bg-purple-200 rounded-full animate-pulse delay-300 blur-[1px]"></div>
       </div>
-      
+
       {/* Efeito de brilho de fundo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500/10 rounded-full blur-[100px] z-0 pointer-events-none"></div>
-      
+
       <div className="w-full max-w-md z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-20 h-20 mb-4 rounded-2xl overflow-hidden shadow-2xl shadow-gold-500/20 border border-gold-500/30">
-            <Image 
-              src="/assets/logo-premium.png" 
-              alt="AstroMap Logo" 
+            <Image
+              src="/assets/logo-premium.png"
+              alt="AstroMap Logo"
               fill
               className="object-cover"
             />
@@ -71,7 +72,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50">
+        <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl shadow-black/50">
           <h2 className="text-xl font-serif font-bold text-white mb-6 flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-gold-400" />
             Acesso Restrito
@@ -106,13 +107,24 @@ export default function LoginPage() {
                   <Lock className="h-4 w-4 text-slate-500" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-gold-500 focus:border-gold-500 sm:text-sm transition-all"
+                  className="block w-full pl-10 pr-10 py-3 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-gold-500 focus:border-gold-500 sm:text-sm transition-all"
                   placeholder="••••••••"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-gold-400 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 

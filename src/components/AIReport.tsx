@@ -6,9 +6,6 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
-  Key,
-  Eye,
-  EyeOff,
   Trash2,
   ScrollText
 } from 'lucide-react';
@@ -47,34 +44,20 @@ export default function AIReport({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelId] = useState('qwen/qwen-2.5-7b-instruct');
-  const [models, setModels] = useState<Model[]>([]);
-  const [apiKey, setApiKey] = useState<string>('');
-  const [showApiKey, setShowApiKey] = useState<boolean>(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Carregar chave e modelos no início
+  // Carregar relatório salvo no início
   useEffect(() => {
-    const storedApiKey = localStorage.getItem('openrouter_api_key');
-    if (storedApiKey) setApiKey(storedApiKey);
-
     // Tentar carregar relatório salvo para este mapa
     const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
     const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
     const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
+
     if (savedReport) {
       setReportText(savedReport);
       if (onReportUpdated) onReportUpdated(savedReport);
     }
-
-    fetch('/api/report')
-      .then(res => res.json())
-      .then(data => {
-        if (data.models) setModels(data.models);
-      })
-      .catch(err => {
-        console.error('Erro ao carregar modelos:', err);
-      });
   }, [chart, isSolarMode, solarYear, onReportUpdated]);
 
   // Auto-scroll durante o streaming
@@ -85,12 +68,6 @@ export default function AIReport({
   }, [reportText, isStreaming]);
 
   const handleGenerateReport = async () => {
-    if (!apiKey.trim()) {
-      setError('Por favor, insira sua chave API da OpenRouter');
-      return;
-    }
-
-    localStorage.setItem('openrouter_api_key', apiKey.trim());
     setLoading(true);
     setIsStreaming(true);
     setError(null);
@@ -107,7 +84,6 @@ export default function AIReport({
           solarChart: isSolarMode ? solarRevolution : undefined,
           solarYear: isSolarMode ? solarYear : undefined,
           model: modelId,
-          apiKey: apiKey.trim(),
         }),
       });
 
@@ -176,7 +152,7 @@ export default function AIReport({
 
 
   return (
-    <div className="flex flex-col h-full max-h-[85vh] bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-full max-h-[70vh] md:max-h-[85vh] bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
       {/* Header Premium */}
       <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -229,37 +205,10 @@ export default function AIReport({
             </div>
 
 
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold flex items-center gap-1">
-                    <Key className="w-3 h-3" />
-                    Chave OpenRouter
-                  </span>
-                  <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-400 hover:underline">Obter chave</a>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="sk-or-v1-..."
-                    className="w-full px-4 py-3 pr-12 bg-slate-950/60 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:ring-1 focus:ring-purple-500/50 transition-all font-mono text-xs"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                  >
-                    {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
 
             <button
               onClick={handleGenerateReport}
-              disabled={loading || !apiKey.trim()}
+              disabled={loading}
               className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-white font-bold shadow-lg shadow-purple-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-3"
             >
               <Sparkles className="w-5 h-5 animate-pulse" />

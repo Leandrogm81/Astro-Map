@@ -29,11 +29,15 @@ export default function TraditionalPlanetDrawer({
 
   useEffect(() => {
     if (isOpen && position) {
-      const drawerWidth = 448; // max-w-lg (28rem)
+      const drawerWidth = window.innerWidth < 768 ? window.innerWidth - 16 : 448;
       const drawerHeight = Math.min(600, window.innerHeight * 0.8); 
       
       // Lógica "Ao lado do clique" solicitada pelo usuário
       let left = position.x + 40;
+      // Mobile: centralizar com margem de 8px
+      if (window.innerWidth < 768) {
+        left = 8;
+      }
       let top = position.y - 150;
 
       // Ajuste horizontal (evitar sair pela direita)
@@ -105,7 +109,7 @@ export default function TraditionalPlanetDrawer({
               position: 'fixed',
               zIndex: 101,
             }}
-            className="w-full max-w-lg bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
+            className="w-full max-w-[calc(100vw-16px)] md:max-w-lg bg-slate-950/95 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.8)] pointer-events-auto overflow-hidden flex flex-col max-h-[90vh]"
           >
             {/* Drag Handle Top Bar */}
             <div className="h-6 w-full flex items-center justify-center bg-white/5 cursor-move active:bg-white/10 transition-colors shrink-0">

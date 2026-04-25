@@ -101,7 +101,7 @@ export default function PlanetTable({ chart }: PlanetTableProps) {
           return (
             <div 
               key={planet.name}
-              className={`group element-${element} relative p-5 min-h-[140px] rounded-2xl bg-white/5 border border-white/10 hover:border-gold-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/5 flex flex-col justify-between`}
+              className={`group element-${element} relative p-5 min-h-0 md:min-h-[140px] rounded-2xl bg-white/5 border border-white/10 hover:border-gold-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-gold-500/5 flex flex-col justify-between`}
             >
               {/* Element Glow - Wrapped to handle overflow-hidden without clipping tooltips */}
               <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">

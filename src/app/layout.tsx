@@ -22,6 +22,12 @@ export const metadata: Metadata = {
   description: "Calcule seu mapa astral completo com interpretação por inteligência artificial. Grátis e sem cadastro.",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

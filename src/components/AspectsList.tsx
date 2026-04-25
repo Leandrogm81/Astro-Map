@@ -75,7 +75,7 @@ export default function AspectsList({ chart }: AspectsListProps) {
               return (
                 <div
                   key={`${key}-${index}`}
-                  className="flex items-center justify-between p-3 bg-slate-900/50 border border-purple-500/10 rounded-lg hover:bg-slate-800/50 transition-colors"
+                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 p-3 bg-slate-900/50 border border-purple-500/10 rounded-lg hover:bg-slate-800/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-300 min-w-[80px]">
@@ -94,7 +94,7 @@ export default function AspectsList({ chart }: AspectsListProps) {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-2 md:gap-4 text-xs">
                     <span
                       className={`px-3 py-1 rounded-full bg-aspect-${aspect.type} text-white/90 font-bold uppercase tracking-tighter text-[10px] shadow-lg border border-white/10`}
                     >

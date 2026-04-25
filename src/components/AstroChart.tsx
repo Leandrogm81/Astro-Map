@@ -502,7 +502,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
         </div>
 
         {showAspects && (
-          <div className="flex flex-wrap justify-center gap-y-3 gap-x-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-900/60 backdrop-blur-sm px-6 py-4 rounded-2xl border border-white/5 shadow-xl w-full">
+          <div className="flex flex-wrap justify-center gap-y-1.5 md:gap-y-3 gap-x-3 md:gap-x-6 text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-900/60 backdrop-blur-sm px-3 py-3 md:px-6 md:py-4 rounded-2xl border border-white/5 shadow-xl w-full">
             <div className="flex items-center gap-2">
               <span className="text-sm aspect-conjunction">☌</span>
               <span>Conjunção</span>
