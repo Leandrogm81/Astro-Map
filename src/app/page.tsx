@@ -12,7 +12,6 @@ import HousesTable from '@/components/HousesTable';
 import AspectsList from '@/components/AspectsList';
 import SavedCharts from '@/components/SavedCharts';
 import UnifiedMenu from '@/components/UnifiedMenu';
-import DashboardView from '@/components/DashboardView';
 
 // Carregamento dinâmico de componentes pesados para otimização de performance
 const AIReport = dynamic(() => import('@/components/AIReport'), {
@@ -103,7 +102,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'houses' | 'aspects' | 'report' | 'revolution' | 'elective'>('chart');
-  const [mobileView, setMobileView] = useState<'form' | 'dashboard'>('form');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -159,7 +157,6 @@ export default function Home() {
       setSolarYear(undefined);
       setSolarReportText('');
       setSidebarVisible(false); // Hide sidebar after calculation
-      setMobileView('dashboard');
       
       try {
         if (editingChartId) {
@@ -197,7 +194,6 @@ export default function Home() {
     setSolarYear(undefined);
     setSolarReportText('');
     setActiveTab('chart');
-    setMobileView('form');
     setEditingChartId(null);
     setInitialFormData(undefined);
     setSidebarVisible(true);
@@ -238,7 +234,6 @@ export default function Home() {
       setEditingChartId(null);
       setInitialFormData(undefined);
       setSidebarVisible(false); // Esconde a sidebar ao selecionar um mapa
-      setMobileView('dashboard');
       setError(null);
     } else {
       setError('Dados do mapa astral inválidos ou corrompidos');
@@ -248,7 +243,6 @@ export default function Home() {
   const handleEditChart = useCallback((savedChart: SavedChart) => {
     setEditingChartId(savedChart.id);
     setInitialFormData(savedChart.chart.birthData);
-    setMobileView('form');
     setExpandedSections(prev => new Set([...prev, 'form']));
     // Rola para o topo
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -453,42 +447,6 @@ export default function Home() {
             )}
 
             {/* Resultado */}
-            {hasValidChart && (
-              <div className="block md:hidden">
-                <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-900/80 p-1.5 backdrop-blur-md">
-                  <button
-                    type="button"
-                    onClick={() => setMobileView('dashboard')}
-                    className={`rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
-                      mobileView === 'dashboard'
-                        ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
-                        : 'text-slate-400 border border-transparent'
-                    }`}
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setMobileView('form')}
-                    className={`rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-widest transition-all ${
-                      mobileView === 'form'
-                        ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
-                        : 'text-slate-400 border border-transparent'
-                    }`}
-                  >
-                    Formulario
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {hasValidChart && mobileView === 'dashboard' && (
-              <div className="block md:hidden">
-                <DashboardView chart={chart} transitChart={solarRevolution} />
-              </div>
-            )}
-
-            <div className={hasValidChart && mobileView === 'dashboard' ? 'hidden md:block' : ''}>
             {hasValidChart ? (
               <div className="space-y-6">
                 {/* Info Header */}
@@ -651,7 +609,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-            </div>
           </div>
         </div>
       </div>

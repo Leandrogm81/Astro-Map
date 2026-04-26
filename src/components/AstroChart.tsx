@@ -8,17 +8,15 @@ import { normalizePlanetKey, planetLabelPtBr, PlanetId } from '@/lib/planetNamin
 interface AstroChartProps {
   chart: NatalChart;
   onChartReady?: (svgElement: SVGSVGElement | null) => void;
-  variant?: 'default' | 'minimal';
 }
 
-export default function AstroChart({ chart, onChartReady, variant = 'default' }: AstroChartProps) {
+export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const chartGroupRef = useRef<SVGGElement>(null);
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
   const [selectedPlanet, setSelectedPlanet] = useState<string | null>(null);
   const [showAspects, setShowAspects] = useState(true);
-  const isMinimal = variant === 'minimal';
 
   // Zoom and Pan states
   const [zoom, setZoom] = useState(1);
@@ -419,9 +417,9 @@ export default function AstroChart({ chart, onChartReady, variant = 'default' }:
     }) : [];
 
   return (
-    <div ref={containerRef} className={`w-full mx-auto bg-[#020617] shadow-2xl ${isMinimal ? 'max-w-none rounded-2xl p-2 border border-white/10' : 'max-w-[960px] rounded-3xl p-4 border border-slate-800'}`}>
+    <div ref={containerRef} className="w-full max-w-[960px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800">
       
-      <div className={`relative w-full aspect-square overflow-hidden ${isMinimal ? 'rounded-xl' : 'rounded-2xl'}`}>
+      <div className="relative w-full aspect-square overflow-hidden rounded-2xl">
         {/* Botão Reset flutuante para Mobile */}
         {isTouchDevice && (zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
           <button 
@@ -434,7 +432,7 @@ export default function AstroChart({ chart, onChartReady, variant = 'default' }:
         )}
 
         {/* Controles de Zoom Overlay - Somente no Desktop */}
-        {!isTouchDevice && !isMinimal && (
+        {!isTouchDevice && (
           <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
             <button 
               onClick={() => setZoom(z => Math.min(5, z + 0.3))} 
@@ -495,7 +493,6 @@ export default function AstroChart({ chart, onChartReady, variant = 'default' }:
         </svg>
       </div>
 
-      {!isMinimal && (
       <div className="mt-6 flex flex-col items-center gap-6">
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white transition-colors">
@@ -556,7 +553,6 @@ export default function AstroChart({ chart, onChartReady, variant = 'default' }:
           </div>
         )}
       </div>
-      )}
     </div>
   );
 }
