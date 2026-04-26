@@ -67,13 +67,14 @@ export function calculateEssentialDignity(planet: string, sign: ZodiacSign, degr
   const term = getTermRuler(sign, degree);
   const face = getFaceRuler(sign, degree);
 
+  const pId = planet.toLowerCase();
   return {
-    isAtDomicile: domicile === planet,
-    isAtExaltation: exaltation === planet,
-    isAtTriplicity: triplicities.includes(planet),
-    isAtTerm: term === planet,
-    isAtFace: face === planet,
-    isPeregrine: domicile !== planet && exaltation !== planet && !triplicities.includes(planet) && term !== planet && face !== planet
+    isAtDomicile: domicile === pId,
+    isAtExaltation: exaltation === pId,
+    isAtTriplicity: triplicities.includes(pId),
+    isAtTerm: term === pId,
+    isAtFace: face === pId,
+    isPeregrine: domicile !== pId && exaltation !== pId && !triplicities.includes(pId) && term !== pId && face !== pId
   };
 }
 

@@ -13,13 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
-
-interface Model {
-  id: string;
-  name: string;
-  description: string;
-  cost: string;
-}
+import { DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
 interface AIReportProps {
   chart: NatalChart;
@@ -43,7 +37,7 @@ export default function AIReport({
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modelId] = useState('qwen/qwen-2.5-7b-instruct');
+  const [modelId] = useState(DEFAULT_MODEL_ID);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 

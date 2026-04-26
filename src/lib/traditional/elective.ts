@@ -116,8 +116,7 @@ export function calculatePlanetHour(
   sunrise: Date,
   sunset: Date,
   nextSunrise: Date,
-  previousSunset: Date,
-  dayOfWeek: number
+  previousSunset: Date
 ): PlanetHour {
   const isDaytime = targetDate >= sunrise && targetDate < sunset;
   
@@ -176,10 +175,12 @@ export function getElectiveVeredict(
   moonMansion: LunarMansion
 ): ElectiveVeredict {
   const rulerId = PURPOSE_RULER[purpose];
-  const ruler = targetPlanets.find(p => p.id === rulerId);
-  const moon = targetPlanets.find(p => p.id === 'moon')!;
+  const ruler = targetPlanets.find(p => p.id?.toLowerCase() === rulerId.toLowerCase());
+  const moon = targetPlanets.find(p => p.id?.toLowerCase() === 'moon')!;
+  const sun = targetPlanets.find(p => p.id?.toLowerCase() === 'sun')!;
   
   if (!ruler) throw new Error(`Regente ${rulerId} não encontrado.`);
+  if (!sun) throw new Error(`Sol não encontrado.`);
 
   const assessment = calculateTraditionalAssessment(ruler, targetPlanets, isDayChart);
   const moonAssessment = calculateTraditionalAssessment(moon, targetPlanets, isDayChart);
@@ -211,7 +212,7 @@ export function getElectiveVeredict(
     planetHour,
     lunarMansion: moonMansion,
     moonStatus: {
-      phase: getMoonPhaseName(moon.longitude, targetPlanets.find(p => p.id === 'sun')!.longitude),
+      phase: getMoonPhaseName(moon.longitude, sun.longitude),
       isVoidOfCourse: false, // TODO: Implementar lógica VOC
       aspects: [], // TODO: Listar aspectos aplicativos
     },

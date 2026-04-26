@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { NatalChart, PlanetPosition, Aspect } from '@/types';
+import { NatalChart } from '@/types';
 import { calculateSolarReturn } from '@/lib/ephemeris';
 import { Sun, Loader2, Sparkles, ScrollText, Trash2, Home, Compass, Zap, Target, LucideIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import TransitWheel from './TransitWheel';
-import { calculateCrossAspects, getHouseForPlanet, getElementColor, ZODIAC_SIGNS } from '@/lib/astrology';
+import { calculateCrossAspects, getHouseForPlanet } from '@/lib/astrology';
 import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
+import { DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
 
 const HOUSE_MEANINGS: Record<number, { title: string; area: string }> = {
@@ -152,7 +153,7 @@ export default function SolarRevolution({
           reportMode: 'solar',
           solarChart: solarReturn,
           solarYear: year,
-          model: 'qwen/qwen-2.5-7b-instruct',
+          model: DEFAULT_MODEL_ID,
         }),
       });
 

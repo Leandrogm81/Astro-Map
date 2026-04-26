@@ -17,12 +17,8 @@ import {
   loadTraditionalReportFromStorage,
 } from '@/lib/traditional/reportStorage';
 import { 
-  Sparkles, 
   Info, 
-  ChevronDown, 
   ArrowLeft,
-  Settings,
-  Download
 } from 'lucide-react';
 
 interface TraditionalViewProps {
@@ -33,7 +29,7 @@ interface TraditionalViewProps {
 export default function TraditionalView({ chart, onBack }: TraditionalViewProps) {
   const [selectedPlanetId, setSelectedPlanetId] = useState<string | null>(null);
   const [clickPosition, setClickPosition] = useState<{ x: number, y: number } | null>(null);
-  const [showAllLots, setShowAllLots] = useState(false);
+  const [showAllLots] = useState(false);
   const reportStorageKey = useMemo(() => getTraditionalReportStorageKey(chart.birthData), [chart.birthData]);
   const [reportState, setReportState] = useState(() => ({
     storageKey: reportStorageKey,
@@ -95,6 +91,8 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
   const selectedAssessment = selectedPlanetId ? assessments[selectedPlanetId] : null;
   const selectedPlanet = selectedPlanetId ? chart.planets.find(p => p.id === selectedPlanetId) : null;
 
+  const memoizedAssessments = useMemo(() => Object.values(assessments), [assessments]);
+
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -124,7 +122,7 @@ export default function TraditionalView({ chart, onBack }: TraditionalViewProps)
           chart={chart} 
           reportText={reportText}
           isTraditional={true}
-          traditionalAssessments={Object.values(assessments)}
+          traditionalAssessments={memoizedAssessments}
             variant="compact"
           />
         </div>

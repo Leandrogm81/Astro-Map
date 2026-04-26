@@ -10,7 +10,7 @@ import {
   getElectiveVeredict,
   getPlanetaryDay
 } from '@/lib/traditional/elective';
-import { calculateNatalChart, parseTimezoneOffset } from '@/lib/ephemeris';
+import { calculateNatalChart, parseTimezoneOffset, calculateRiseSet } from '@/lib/ephemeris';
 import { getTimezoneOffsetForDate, getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { useGeocoding } from '@/hooks/useGeocoding';
 import { PLANETARY_CORRESPONDENCES, RITUAL_INTENTIONS, RITUAL_CATEGORIES, PlanetKey, RitualCategoryId } from '@/lib/traditional/magic-correspondences';
@@ -184,12 +184,33 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Effect to handle real-time clock updates
+  useEffect(() => {
+    if (!isRealTime) return;
+
+    const tick = () => {
+      const now = new Date();
+      setTargetDateStr(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
+      setTargetTimeStr(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+    };
+
+    tick();
+    const intervalId = window.setInterval(tick, 60000);
+    return () => window.clearInterval(intervalId);
+  }, [isRealTime]);
+
+  // Effect to handle sky calculation when date/time or location changes
   useEffect(() => {
     let active = true;
 
-    const updateSky = async (moment: Date, isInitial: boolean) => {
-      if (isInitial) setIsCalculatingSky(true);
+    const updateSky = async () => {
+      if (!targetDateStr || !targetTimeStr) return;
       
+      const [year, month, day] = targetDateStr.split('-').map(Number);
+      const [hours, minutes] = targetTimeStr.split(':').map(Number);
+      const moment = new Date(year, month - 1, day, hours, minutes, 0);
+
+      setIsCalculatingSky(true);
       try {
         const calculatedSkyChart = await calculateNatalChart(buildMomentBirthData(baseBirthData, moment));
         if (!active) return;
@@ -201,38 +222,15 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
         console.error(err);
         setError('Não foi possível calcular o céu do momento.');
       } finally {
-        if (active && isInitial) setIsCalculatingSky(false);
+        if (active) setIsCalculatingSky(false);
       }
     };
 
-    if (isRealTime) {
-      const now = new Date();
-      setTargetDateStr(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
-      setTargetTimeStr(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
-      
-      void updateSky(now, true);
-      const intervalId = window.setInterval(() => {
-        const tick = new Date();
-        setTargetDateStr(`${tick.getFullYear()}-${String(tick.getMonth() + 1).padStart(2, '0')}-${String(tick.getDate()).padStart(2, '0')}`);
-        setTargetTimeStr(`${String(tick.getHours()).padStart(2, '0')}:${String(tick.getMinutes()).padStart(2, '0')}`);
-        void updateSky(tick, false);
-      }, 60000);
-      return () => {
-        active = false;
-        window.clearInterval(intervalId);
-      };
-    } else {
-      if (targetDateStr && targetTimeStr) {
-        const [year, month, day] = targetDateStr.split('-').map(Number);
-        const [hours, minutes] = targetTimeStr.split(':').map(Number);
-        const customDate = new Date(year, month - 1, day, hours, minutes, 0);
-        void updateSky(customDate, true);
-      }
-      return () => {
-        active = false;
-      };
-    }
-  }, [baseBirthData, isRealTime, targetDateStr, targetTimeStr]);
+    updateSky();
+    return () => {
+      active = false;
+    };
+  }, [baseBirthData, targetDateStr, targetTimeStr]);
 
   // Limpar insight se mudar de modo
   useEffect(() => {
@@ -245,19 +243,13 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
     if (!skyChart) return null;
 
     const dayOfWeek = electiveDateTime.getDay();
-    const sunrise = new Date(electiveDateTime);
-    const sunset = new Date(electiveDateTime);
-    const nextSunrise = new Date(electiveDateTime);
-    const previousSunset = new Date(electiveDateTime);
-
-    sunrise.setHours(6, 0, 0);
-    sunset.setHours(18, 0, 0);
-    nextSunrise.setDate(nextSunrise.getDate() + 1);
-    nextSunrise.setHours(6, 0, 0);
-    previousSunset.setDate(previousSunset.getDate() - 1);
-    previousSunset.setHours(18, 0, 0);
-
-    const moon = skyChart.planets.find((planet) => planet.id === 'moon');
+    const { sunrise, sunset, nextSunrise, previousSunset } = calculateRiseSet(
+      electiveDateTime,
+      targetLat,
+      targetLon
+    );
+    
+    const moon = skyChart.planets.find((planet) => planet.id?.toLowerCase() === 'moon');
     if (!moon) return null;
 
     const planetHour = calculatePlanetHour(
@@ -265,8 +257,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
       sunrise,
       sunset,
       nextSunrise,
-      previousSunset,
-      dayOfWeek
+      previousSunset
     );
     const mansion = getLunarMansion(moon.longitude);
 
@@ -277,13 +268,12 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
       planetHour,
       mansion
     );
-  }, [electiveDateTime, purpose, skyChart]);
+  }, [electiveDateTime, purpose, skyChart, targetLat, targetLon]);
 
   const planetaryDay = useMemo(() => {
-    const sunrise = new Date(electiveDateTime);
-    sunrise.setHours(6, 0, 0); // Simplified sunrise for fallback, in real scenarios use precise sunrise from geocoding
+    const { sunrise } = calculateRiseSet(electiveDateTime, targetLat, targetLon);
     return getPlanetaryDay(electiveDateTime, sunrise);
-  }, [electiveDateTime]);
+  }, [electiveDateTime, targetLat, targetLon]);
 
   const handleGenerateInsight = async () => {
     if (!skyChart || !veredict) {

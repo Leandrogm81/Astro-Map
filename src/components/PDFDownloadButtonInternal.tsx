@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import { NatalChart } from '@/types';
 import { TraditionalAssessment } from '@/lib/traditional/types';
@@ -9,6 +9,8 @@ import {
   MyPDFDocument,
   TraditionalTreatisePDF
 } from './ExportPDF';
+
+const EMPTY_ARRAY: TraditionalAssessment[] = [];
 
 interface PDFDownloadButtonInternalProps {
   chart: NatalChart;
@@ -29,11 +31,11 @@ export default function PDFDownloadButtonInternal({
   solarReportText,
   variant = 'full',
   isTraditional = false,
-  traditionalAssessments = []
+  traditionalAssessments = EMPTY_ARRAY
 }: PDFDownloadButtonInternalProps) {
   const isCompact = variant === 'compact';
 
-  const document = isTraditional ? (
+  const document = useMemo(() => isTraditional ? (
     <TraditionalTreatisePDF
       chart={chart}
       reportText={reportText}
@@ -48,7 +50,15 @@ export default function PDFDownloadButtonInternal({
       reportText={reportText}
       solarReportText={solarReportText}
     />
-  );
+  ), [
+    isTraditional,
+    chart,
+    reportText,
+    traditionalAssessments,
+    solarRevolution,
+    solarYear,
+    solarReportText
+  ]);
 
   const fileName = isTraditional
     ? `Tratado_Tradicional_${chart.birthData.name}.pdf`

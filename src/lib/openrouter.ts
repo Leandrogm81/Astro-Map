@@ -1,4 +1,5 @@
 import { NatalChart, AIReport } from '@/types';
+import { DEFAULT_MODEL_ID } from './aiConfig';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -59,7 +60,7 @@ Inclua insights psicológicos e espirituais quando apropriado.`,
         'X-Title': 'AstroMap',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: DEFAULT_MODEL_ID,
         messages,
         temperature: 0.8,
         max_tokens: 4000,

@@ -15,7 +15,7 @@ export function calculateTraditionalAssessment(
   isDayChart: boolean
 ): TraditionalAssessment {
   const sign = planet.sign as ZodiacSign;
-  const sun = allPlanets.find(p => p.id === 'sun');
+  const sun = allPlanets.find(p => p.id?.toLowerCase() === 'sun');
   
   const essential: Record<string, number> = {};
   const accidental: Record<string, number> = {};
@@ -33,16 +33,17 @@ export function calculateTraditionalAssessment(
   const domRuler = getTraditionalDomicileRuler(sign);
   const exRuler = getTraditionalExaltationRuler(sign);
   // Se o regente do signo é o próprio planeta, ele não está em exílio
-  if (domRuler !== planet.id && getTraditionalDomicileRuler(getOppositeSign(sign)) === planet.id) {
+  const pIdLower = planet.id?.toLowerCase() || '';
+  if (domRuler !== pIdLower && getTraditionalDomicileRuler(getOppositeSign(sign)) === pIdLower) {
     essential['Exílio'] = -5;
   }
   // Queda (Oposto da exaltação) - Simplificado para os 7
-  if (isAtFall(planet.id, sign)) {
+  if (isAtFall(pIdLower, sign)) {
     essential['Queda'] = -4;
   }
 
   // 2. Dignidades Acidentais
-  const solarCond = planet.id !== 'sun' && sun
+  const solarCond = planet.id?.toLowerCase() !== 'sun' && sun
     ? getSolarCondition(planet.longitude, sun.longitude)
     : { isCazimi: false, isCombust: false, isUnderRays: false };
 
@@ -52,8 +53,8 @@ export function calculateTraditionalAssessment(
   if (planet.retrograde) accidental['Retrógrado'] = -5;
   
   // Sect & Hayz
-  const hayz = calculateHayz(planet.id, planet.house || 1, sign, isDayChart);
-  const sectStatus = getSectStatus(planet.id, isDayChart);
+  const hayz = calculateHayz(pIdLower, planet.house || 1, sign, isDayChart);
+  const sectStatus = getSectStatus(pIdLower, isDayChart);
   
   if (sectStatus === 'in_sect' || sectStatus === 'benefic') accidental['Na Seita'] = 2;
   if (hayz) accidental['Hayz'] = 3;
@@ -67,16 +68,16 @@ export function calculateTraditionalAssessment(
   // Recepção Mútua (Domicílio)
   const mutualReceptions: string[] = [];
   allPlanets.forEach(other => {
-    if (other.id === planet.id) return;
+    if (other.id?.toLowerCase() === planet.id?.toLowerCase()) return;
     const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
-    if (!classicIds.includes(other.id)) return;
+    if (!classicIds.includes(other.id?.toLowerCase())) return;
 
     const mySignRuler = getTraditionalDomicileRuler(sign);
     const otherSignRuler = getTraditionalDomicileRuler(other.sign as ZodiacSign);
 
-    if (mySignRuler === other.id && otherSignRuler === planet.id) {
+    if (mySignRuler === other.id?.toLowerCase() && otherSignRuler === pIdLower) {
       accidental['Recepção Mútua'] = 2;
-      mutualReceptions.push(PLANET_NAME_PT[other.id] || other.id);
+      mutualReceptions.push(PLANET_NAME_PT[other.id?.toLowerCase() || ''] || other.id);
     }
   });
 
@@ -113,7 +114,7 @@ export function calculateTraditionalAssessment(
       isHayz: hayz
     },
     score,
-    technicalSummary: generateTechnicalSummary(PLANET_NAME_PT[planet.id] || planet.id, score),
+    technicalSummary: generateTechnicalSummary(PLANET_NAME_PT[pIdLower] || planet.id, score),
     interpretations: {
       term: getDignityVibe('term', getTermRuler(sign, planet.degree)),
       face: getDignityVibe('decan', getFaceRuler(sign, planet.degree))
@@ -131,7 +132,7 @@ function isAtFall(planet: string, sign: ZodiacSign): boolean {
   const falls: Record<string, ZodiacSign> = {
     sun: 'Libra', moon: 'Escorpião', jupiter: 'Capricórnio', venus: 'Virgem', mars: 'Câncer', saturn: 'Áries', mercury: 'Peixes'
   };
-  return falls[planet] === sign;
+  return falls[planet.toLowerCase()] === sign;
 }
 
 function generateTechnicalSummary(name: string, score: TraditionalScore): string {

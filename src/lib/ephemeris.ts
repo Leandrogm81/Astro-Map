@@ -601,6 +601,35 @@ function calculateAspects(planets: PlanetPosition[]): Aspect[] {
  * Find the exact time when the Sun returns to a specific longitude
  * Uses iterative binary search to find the exact moment
  */
+export function calculateRiseSet(date: Date, latitude: number, longitude: number): { sunrise: Date; sunset: Date; nextSunrise: Date; previousSunset: Date } {
+  const observer = new Astronomy.Observer(latitude, longitude, 0);
+  
+  // Fallbacks seguros sem mutação
+  const defaultSunrise = new Date(date);
+  defaultSunrise.setHours(6, 0, 0, 0);
+  const defaultSunset = new Date(date);
+  defaultSunset.setHours(18, 0, 0, 0);
+  
+  // Busca por nascer e pôr do sol
+  // Usamos limitDays: 1 para buscar no período de 24h em torno da data
+  const sunrise = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, 1, date, -1)?.date || defaultSunrise;
+  const sunset = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, -1, date, -1)?.date || defaultSunset;
+  
+  // Próximo nascer do sol
+  const tomorrow = new Date(date.getTime() + 24 * 3600000);
+  const defaultNextSunrise = new Date(tomorrow);
+  defaultNextSunrise.setHours(6, 0, 0, 0);
+  const nextSunrise = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, 1, tomorrow, -1)?.date || defaultNextSunrise;
+  
+  // Pôr do sol anterior
+  const yesterday = new Date(date.getTime() - 24 * 3600000);
+  const defaultPrevSunset = new Date(yesterday);
+  defaultPrevSunset.setHours(18, 0, 0, 0);
+  const previousSunset = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, -1, yesterday, -1)?.date || defaultPrevSunset;
+
+  return { sunrise, sunset, nextSunrise, previousSunset };
+}
+
 function findSolarReturnTime(
   approximateDate: Date,
   targetLongitude: number

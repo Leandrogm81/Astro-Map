@@ -1191,6 +1191,8 @@ interface ExportPDFProps {
   pdfMode?: 'ai_rs_only' | 'traditional' | 'full';
 }
 
+const EMPTY_ARRAY: TraditionalAssessment[] = [];
+
 export default function ExportPDF({ 
   chart, 
   solarRevolution, 
@@ -1199,7 +1201,7 @@ export default function ExportPDF({
   solarReportText, 
   variant = 'full',
   isTraditional = false,
-  traditionalAssessments = [],
+  traditionalAssessments = EMPTY_ARRAY,
   pdfMode = 'ai_rs_only'
 }: ExportPDFProps) {
   const isCompact = variant === 'compact';

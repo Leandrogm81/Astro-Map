@@ -18,6 +18,7 @@ import {
   loadTraditionalReportFromStorage,
   saveTraditionalReportToStorage,
 } from '@/lib/traditional/reportStorage';
+import { DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
 interface TraditionalAIReportProps {
   chart: NatalChart;
@@ -30,7 +31,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modelId] = useState('qwen/qwen-2.5-7b-instruct');
+  const [modelId] = useState(DEFAULT_MODEL_ID);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 

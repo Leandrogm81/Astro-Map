@@ -11,31 +11,10 @@ import {
   formatElectiveForAI
 } from '@/lib/aiPrompts';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
+import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
 // Configurações da OpenRouter
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL_ID = 'openai/gpt-oss-120b';
-
-export const AVAILABLE_MODELS = [
-  {
-    id: 'openai/gpt-oss-120b',
-    name: 'GPT OSS 120B',
-    description: 'Modelo OpenAI GPT OSS 120B.\nCusto: variável',
-    cost: 'variável'
-  },
-  {
-    id: 'z-ai/glm-4.5-air',
-    name: 'GLM 4.5 Air',
-    description: 'Modelo Z-AI GLM 4.5 Air.\nCusto: variável',
-    cost: 'variável'
-  },
-  {
-    id: 'qwen/qwen-2.5-7b-instruct',
-    name: 'Qwen 2.5 7B Instruct',
-    description: 'Modelo versátil da série Qwen.\nCusto: variável',
-    cost: 'variável'
-  }
-];
 
 const AVAILABLE_MODEL_IDS = new Set(AVAILABLE_MODELS.map((item) => item.id));
 
