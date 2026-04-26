@@ -27,11 +27,9 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-
-  useEffect(() => {
-    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
-  }, []);
+  const [isTouchDevice] = useState(() => (
+    typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0)
+  ));
 
   const getLocalCoords = (clientX: number, clientY: number) => {
     if (!svgRef.current) return { x: clientX, y: clientY };
@@ -490,7 +488,7 @@ export default function TransitWheel({ natalChart, transitChart, onChartReady }:
             {focused.p.name} {isTransit ? '(Transitando)' : '(Natal)'}
           </text>
           <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">
-            {focused.p.sign} {Math.floor(focused.p.degree)}°{Math.floor((focused.p.degree % 1) * 60)}'
+            {focused.p.sign} {Math.floor(focused.p.degree)}°{Math.floor((focused.p.degree % 1) * 60)}&apos;
           </text>
           <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">
             Casa {focused.p.house} • {getDignity(focused.p.name, focused.p.sign)}

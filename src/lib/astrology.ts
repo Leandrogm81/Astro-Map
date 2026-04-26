@@ -198,8 +198,17 @@ export function calculateAspectType(angle: number): { type: string; exactAngle: 
   return null;
 }
 
-export function calculateCrossAspects(planetsA: PlanetPosition[], planetsB: PlanetPosition[]) {
-  const aspects: any[] = [];
+interface CrossAspect {
+  planet1: string;
+  planet2: string;
+  type: string;
+  angle: number;
+  orb: number;
+  applying: boolean;
+}
+
+export function calculateCrossAspects(planetsA: PlanetPosition[], planetsB: PlanetPosition[]): CrossAspect[] {
+  const aspects: CrossAspect[] = [];
   
   planetsA.forEach(p1 => {
     planetsB.forEach(p2 => {

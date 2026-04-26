@@ -15,6 +15,8 @@ import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
 import { PlanetPosition } from '@/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
+export const maxDuration = 60;
+
 // Configurações da OpenRouter
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -169,7 +171,7 @@ export async function POST(request: NextRequest) {
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
-        max_tokens: 4000,
+        max_tokens: 8000,
         stream: true,
       }),
     });

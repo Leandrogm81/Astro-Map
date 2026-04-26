@@ -1,4 +1,4 @@
-export const DEFAULT_MODEL_ID = 'openai/gpt-oss-120b';
+export const DEFAULT_MODEL_ID = 'deepseek/deepseek-v4-flash';
 
 export const AVAILABLE_MODELS = [
   {

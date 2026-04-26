@@ -2,6 +2,19 @@ import { GeocodingResult } from '@/types';
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
+interface NominatimSearchResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    country?: string;
+  };
+}
+
 export async function geocodeLocation(query: string): Promise<GeocodingResult[]> {
   if (!query || query.length < 3) {
     return [];
@@ -27,9 +40,9 @@ export async function geocodeLocation(query: string): Promise<GeocodingResult[]>
       throw new Error(`Geocoding error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as NominatimSearchResult[];
     
-    return (data as any[]).map((item) => ({
+    return data.map((item) => ({
       display_name: item.display_name,
       lat: parseFloat(item.lat),
       lon: parseFloat(item.lon),

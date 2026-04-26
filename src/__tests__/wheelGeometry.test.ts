@@ -5,6 +5,7 @@ import {
   longitudeToTraditionalAngle,
   getTraditionalTooltipPosition
 } from '../lib/traditional/wheelGeometry';
+import type { NatalChart } from '../types';
 
 describe('traditional wheel geometry', () => {
   describe('getTraditionalTooltipPosition', () => {
@@ -29,10 +30,12 @@ describe('traditional wheel geometry', () => {
       // Ponto em x=10, y=400, forçando ox a ser negativo ou muito pequeno
       // isRightHalf=false, ox = 10 + 35 = 45. Não precisa de clamp aqui, mas e se fosse o inverso?
       // Se estivéssemos na direita e o box fosse grande demais.
-      const { ox } = getTraditionalTooltipPosition(210, 400, 300, BH, VW, VH); // isRightHalf=false, ox = 210 + 35 = 245. boxWidth=300 -> 545. ok.
+      const leftEdge = getTraditionalTooltipPosition(210, 400, 300, BH, VW, VH); // isRightHalf=false, ox = 210 + 35 = 245. boxWidth=300 -> 545. ok.
+      expect(210 + leftEdge.ox).toBe(245);
       
       // Teste de clamp na direita:
-      const { ox: oxRight } = getTraditionalTooltipPosition(780, 400, BW, BH, VW, VH);
+      const rightEdge = getTraditionalTooltipPosition(780, 400, BW, BH, VW, VH);
+      expect(780 + rightEdge.ox).toBe(545);
       // isRightHalf=true, ox = 780 - 200 - 35 = 545. ok.
       
       // Teste forçando clamp na esquerda (se focusX fosse muito pequeno e estivéssemos na direita? Impossível pela lógica isRightHalf)
@@ -70,8 +73,8 @@ describe('traditional wheel geometry', () => {
     const chart = {
       ascendant: 123,
       mc: 15,
-      housesPlacidus: [{ longitude: 210 }] as any
-    } as any;
+      housesPlacidus: [{ longitude: 210 }]
+    } as unknown as Pick<NatalChart, 'ascendant' | 'mc' | 'housesPlacidus'>;
 
     expect(getTraditionalWheelAnchor(chart)).toBe(210);
   });
@@ -93,8 +96,8 @@ describe('traditional wheel geometry', () => {
         { longitude: 30 },
         { longitude: 60 },
         { longitude: 90 }
-      ] as any
-    } as any;
+      ]
+    } as unknown as Pick<NatalChart, 'ascendant' | 'mc' | 'housesPlacidus'>;
 
     expect(getTraditionalAxisLongitudes(chart)).toEqual({
       ac: 120,

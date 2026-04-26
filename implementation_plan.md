@@ -1,44 +1,39 @@
-# Plano de Localização — Eletiva Magística
+# Plano de Implementação: Otimização de Relatórios de IA (Precisão e Velocidade)
 
-## Objetivo
+Este plano visa resolver a interrupção prematura dos relatórios e melhorar a experiência do usuário (UX) através da escolha de um modelo mais rápido e preciso.
 
-Traduzir elementos que aparecem em inglês no módulo **Eletiva Magística**, tanto na interface do usuário (UI) quanto no relatório gerado pela IA. Isso inclui nomes de planetas (ex: "Sun" -> "Sol"), propósitos mágicos (ex: "LOVE" -> "Amor e Relacionamentos") e condições de regência.
+## User Review Required
 
 > [!IMPORTANT]
-> **RESTRIÇÃO DE ESCOPO (UI ONLY)**: As traduções devem ser aplicadas apenas na camada de exibição (frontend e strings enviadas à IA). A estrutura de dados interna, IDs de planetas (keys), lógica de cálculo e contratos de API **não devem ser alterados** para evitar quebras de lógica no sistema.
+> **Modelo Selecionado:** Estamos alterando o modelo padrão para o **DeepSeek v4 Flash**. Ele oferece o melhor equilíbrio entre o "início imediato" (baixa latência) que você solicitou e a precisão técnica necessária para a astrologia tradicional.
+>
+> **Ambiente de Hospedagem:** A configuração de `maxDuration` é essencial para evitar cortes. Caso o deploy seja no Vercel Hobby, o limite de 10s é rígido, mas o uso do modelo Flash minimiza o risco de ultrapassar esse tempo.
+
+## Causa Raiz Identificada
+
+1. **Limite de Saída (max_tokens):** O código atual limita a resposta a 4000 tokens (~3000 palavras). Os prompts solicitam até 4000 palavras, causando o corte.
+2. **Timeout da Função:** Sem a diretiva `maxDuration`, a execução pode ser interrompida pelo servidor antes da conclusão em relatórios extensos.
+3. **Latência do Modelo:** O modelo anterior (`gpt-oss-120b`) possui um tempo de processamento inicial elevado.
 
 ## Mudanças Propostas
 
-### [Core] [NEW] [constants.ts](file:///c:/Users/leand/OneDrive/Documentos/Antigravity%20AstroMap/Astro-Map/src/lib/traditional/constants.ts)
+### Backend (Configuração e API)
 
-- Criar mapeamentos centralizados para nomes de planetas e propósitos.
+#### [MODIFY] [aiConfig.ts](file:///c:/Users/leand/OneDrive/Documentos/Antigravity%20AstroMap/Astro-Map/src/lib/aiConfig.ts)
+- Alterar `DEFAULT_MODEL_ID` para `'deepseek/deepseek-v4-flash'`.
+- Isso tornará o início da geração muito mais rápido em todas as áreas do app.
 
-### [Lib] [MODIFY] [scoring.ts](file:///c:/Users/leand/OneDrive/Documentos/Antigravity%20AstroMap/Astro-Map/src/lib/traditional/scoring.ts)
+#### [MODIFY] [route.ts](file:///c:/Users/leand/OneDrive/Documentos/Antigravity%20AstroMap/Astro-Map/src/app/api/report/route.ts)
+- Adicionar `export const maxDuration = 60;` no topo do arquivo.
+- Alterar `max_tokens` de `4000` para `8000` para suportar relatórios completos e longos.
 
-- Importar `PLANET_NAME_PT` do novo arquivo de constantes para evitar duplicação.
+## Plano de Verificação
 
-### [UI] [MODIFY] [TraditionalElectivePanel.tsx](file:///c:/Users/leand/OneDrive/Documentos/Antigravity%20AstroMap/Astro-Map/src/components/traditional/TraditionalElectivePanel.tsx)
+### Verificação Manual
+1. Abrir o painel de **Eletiva Magística**.
+2. Clicar em **"Consultar Astros"**.
+3. Cronometrar o tempo até a primeira palavra (deve ser significativamente menor).
+4. Validar se o texto chega ao fim (Seção V do relatório).
 
-- Traduzir o campo "Regente" no Códice Hermético.
-- Traduzir "Dia Planetário" e "Hora Planetária" no painel de Sintonia Celeste.
-- Traduzir o status do regente (ex: "Venus em Peregrino" -> "Vênus em Peregrino").
-- Garantir que a seleção de intenção mostre labels em português.
-
-### [AI] [MODIFY] [aiPrompts.ts](file:///c:/Users/leand/OneDrive/Documentos/Antigravity%20AstroMap/Astro-Map/src/lib/aiPrompts.ts)
-
-- Traduzir o `purpose` no cabeçalho do prompt.
-- Traduzir os nomes dos planetas na hora planetária e na condição do regente.
-- Garantir que o contexto enviado para a IA use termos em português.
-
-## Verificação Plan
-
-### Automatizada
-
-- `npm run lint`
-- `npm run build`
-
-### Manual
-
-- Abrir o módulo de Eletiva.
-- Verificar se "Sol", "Lua", etc. aparecem corretamente nos painéis.
-- Gerar um relatório de IA e verificar se o cabeçalho e os dados técnicos estão em português.
+### Testes Automatizados
+- `npm run build`: Garantir integridade da rota de API.
