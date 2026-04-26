@@ -19,13 +19,6 @@ import {
   saveTraditionalReportToStorage,
 } from '@/lib/traditional/reportStorage';
 
-interface Model {
-  id: string;
-  name: string;
-  description: string;
-  cost: string;
-}
-
 interface TraditionalAIReportProps {
   chart: NatalChart;
   assessments: TraditionalAssessment[];
@@ -190,7 +183,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
         )}
 
         {reportText ? (
-          <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl border border-white/5 p-8 md:p-12 shadow-inner group relative overflow-hidden transition-all duration-500 hover:border-gold-500/20">
+          <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl border border-white/5 p-6 md:p-12 shadow-inner group relative overflow-hidden transition-all duration-500 hover:border-gold-500/20">
             {/* Subtle Gold Background Glow for the report text area */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gold-500/5 blur-[100px] -translate-y-1/2 translate-x-1/2" />
 
@@ -198,9 +191,9 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
               ref={scrollRef}
               className="prose prose-invert prose-gold max-w-none 
                 prose-headings:font-serif prose-headings:text-gold-100 
-                prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-lg
+                prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-base md:prose-p:text-lg
                 prose-strong:text-gold-400 prose-strong:font-bold
-                prose-h3:border-b prose-h3:border-gold-500/20 prose-h3:pb-2 prose-h3:mt-12"
+                prose-h3:border-b prose-h3:border-gold-500/20 prose-h3:pb-2 prose-h3:mt-8 md:prose-h3:mt-12"
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {reportText}

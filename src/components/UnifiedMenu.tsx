@@ -4,12 +4,19 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Moon, Sun, Sparkles, ChevronDown, Star, Zap } from 'lucide-react';
 
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
 interface UnifiedMenuProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  items?: MenuItem[];
 }
 
-export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps) {
+export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -81,14 +88,17 @@ export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps
     };
   }, [isOpen]);
 
-  const menuItems = [
+  const defaultItems = [
     { id: 'chart', label: 'Visão Geral', icon: Star },
     { id: 'houses', label: 'Casas', icon: Moon },
     { id: 'aspects', label: 'Aspectos', icon: Sun },
     { id: 'report', label: 'Relatório IA', icon: Sparkles },
   ] as const;
 
+  const menuItems = items || defaultItems;
+
   const isAnyTabActive = menuItems.some(item => item.id === activeTab);
+  const activeItem = menuItems.find(item => item.id === activeTab) || menuItems[0];
 
   const dropdownStyle = useMemo(() => ({
     position: 'fixed' as const,
@@ -104,14 +114,14 @@ export default function UnifiedMenu({ activeTab, onTabChange }: UnifiedMenuProps
         onClick={toggleMenu}
         aria-haspopup="menu"
         aria-controls="analysis-menu"
-        className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap border ${
+        className={`px-4 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap border ${
           isOpen || isAnyTabActive
             ? 'bg-gold-500/20 text-gold-400 border-gold-500/30 shadow-lg shadow-gold-500/5'
             : 'text-slate-400 border-transparent hover:text-slate-100 hover:bg-white/5'
         }`}
       >
-        <Star className={`w-3.5 h-3.5 pointer-events-none transition-transform duration-200 ${isOpen ? 'scale-110' : ''}`} />
-        <span className="pointer-events-none">Mapa</span>
+        <activeItem.icon className={`w-3.5 h-3.5 pointer-events-none transition-transform duration-200 ${isOpen ? 'scale-110' : ''}`} />
+        <span className="pointer-events-none">{activeItem.label}</span>
         <ChevronDown className={`w-3 h-3 pointer-events-none transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 

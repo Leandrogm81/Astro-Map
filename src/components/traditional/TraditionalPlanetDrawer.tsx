@@ -57,6 +57,7 @@ export default function TraditionalPlanetDrawer({
       }
       if (top < 10) top = 10;
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCoords({ top, left });
     }
   }, [isOpen, position]);
@@ -130,7 +131,7 @@ export default function TraditionalPlanetDrawer({
                   </h2>
                   <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] mt-1.5 flex items-center gap-1.5">
                     <Star className="w-3 h-3 text-gold-500/50" />
-                    {planet.sign} • {Math.floor(planet.degree)}°{Math.floor((planet.degree % 1) * 60)}'
+                    {planet.sign} • {Math.floor(planet.degree)}°{Math.floor((planet.degree % 1) * 60)}&apos;
                   </p>
                 </div>
               </div>
@@ -203,7 +204,7 @@ export default function TraditionalPlanetDrawer({
                             </span>
                           </div>
                           <p className="text-[11px] text-slate-400 leading-relaxed italic">
-                            "{aspectInterpretation}"
+                            &quot;{aspectInterpretation}&quot;
                           </p>
                         </div>
                       );
@@ -267,13 +268,13 @@ export default function TraditionalPlanetDrawer({
                   <div className="relative pl-4 border-l border-gold-500/30">
                     <p className="text-[9px] font-black text-gold-500/50 uppercase tracking-widest mb-1.5">Qualidade do Termo</p>
                     <p className="text-[11px] text-slate-200 leading-relaxed italic pr-2">
-                      "{assessment.interpretations.term}"
+                      &quot;{assessment.interpretations.term}&quot;
                     </p>
                   </div>
                   <div className="relative pl-4 border-l border-blue-400/30">
                     <p className="text-[9px] font-black text-blue-400/50 uppercase tracking-widest mb-1.5">Coloração do Decanato</p>
                     <p className="text-[11px] text-slate-200 leading-relaxed italic pr-2">
-                      "{assessment.interpretations.face}"
+                      &quot;{assessment.interpretations.face}&quot;
                     </p>
                   </div>
                 </div>
@@ -294,11 +295,31 @@ export default function TraditionalPlanetDrawer({
                  <div className="w-px h-6 bg-white/5" />
                  <div className="flex flex-col items-center gap-1">
                     <span className="text-slate-500 uppercase tracking-tighter">Seita</span>
-                    <span className={`${
-                      assessment.condition.sectStatus === 'benefic' ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                       {assessment.condition.sectStatus === 'benefic' ? 'Em Seita' : 'Fora da Seita'}
-                    </span>
+                    {(() => {
+                      const status = assessment.condition.sectStatus;
+                      if (status === 'benefic' || status === 'in_sect') {
+                        return (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-medium border border-emerald-500/30">
+                            Em Seita
+                          </span>
+                        );
+                      }
+                      if (status === 'malefic_out_of_sect' || status === 'out_of_sect') {
+                        return (
+                          <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-[10px] font-medium border border-red-500/30">
+                            Fora da Seita
+                          </span>
+                        );
+                      }
+                      if (status === 'mercury_variable') {
+                        return (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-medium border border-amber-500/30">
+                            Seita Variável
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                  </div>
               </div>
 

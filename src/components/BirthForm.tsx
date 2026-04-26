@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { BirthData, GeocodingResult } from '@/types';
-import { geocodeLocation, getTimezoneFromCoordinates } from '@/lib/geocoding';
+import { getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { Search, MapPin, Clock, Calendar, User } from 'lucide-react';
 
 import { useGeocoding } from '@/hooks/useGeocoding';
@@ -33,7 +33,6 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
     searchQuery,
     setSearchQuery,
     searchResults,
-    setSearchResults,
     showResults,
     setShowResults,
     isSearching,
@@ -47,6 +46,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
   // 4. Efeitos de Sincronização
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         name: initialData.name || '',
         date: initialData.date || '',
@@ -92,7 +92,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.date && formData.time && formData.latitude && formData.longitude) {
+    if (formData.name && formData.date && formData.time && formData.latitude !== undefined && formData.longitude !== undefined) {
       onSubmit(formData);
     }
   };
@@ -117,36 +117,37 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
           />
         </div>
 
-        {/* Data */}
-        <div>
-          <label htmlFor="birthDate" className="block text-sm font-medium text-purple-200 mb-2">
-            <Calendar className="inline w-4 h-4 mr-2" />
-            Data de Nascimento
-          </label>
-          <input
-            id="birthDate"
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
-            required
-          />
-        </div>
+        {/* Data e Hora */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="birthDate" className="block text-sm font-medium text-purple-200 mb-2">
+              <Calendar className="inline w-4 h-4 mr-2" />
+              Data de Nascimento
+            </label>
+            <input
+              id="birthDate"
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+              className="w-full px-4 py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all cursor-pointer"
+              required
+            />
+          </div>
 
-        {/* Hora */}
-        <div>
-          <label htmlFor="birthTime" className="block text-sm font-medium text-purple-200 mb-2">
-            <Clock className="inline w-4 h-4 mr-2" />
-            Hora de Nascimento
-          </label>
-          <input
-            id="birthTime"
-            type="time"
-            value={formData.time}
-            onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-            className="w-full px-4 py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
-            required
-          />
+          <div>
+            <label htmlFor="birthTime" className="block text-sm font-medium text-purple-200 mb-2">
+              <Clock className="inline w-4 h-4 mr-2" />
+              Hora de Nascimento
+            </label>
+            <input
+              id="birthTime"
+              type="time"
+              value={formData.time}
+              onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
+              className="w-full px-4 py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all cursor-pointer"
+              required
+            />
+          </div>
         </div>
 
         {/* Localização */}

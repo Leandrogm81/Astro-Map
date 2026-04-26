@@ -117,9 +117,12 @@ function calculateAlmutenFigurisId(
     { lon: planets.find(p => p.id === 'sun')?.longitude ?? ascLon, weight: 1 },
     { lon: planets.find(p => p.id === 'moon')?.longitude ?? ascLon, weight: 1 },
     { lon: ascLon, weight: 1 },
-    { lon: fortuneLon, weight: 1 },
-    { lon: prenatalSyzygy ?? ascLon, weight: 1 }
+    { lon: fortuneLon, weight: 1 }
   ];
+
+  if (prenatalSyzygy !== undefined) {
+    pointsToEvaluate.push({ lon: prenatalSyzygy, weight: 1 });
+  }
 
   pointsToEvaluate.forEach(pt => {
     const sign = getSignFromLon(pt.lon);

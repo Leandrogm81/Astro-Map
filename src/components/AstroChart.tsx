@@ -3,7 +3,7 @@ import { ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { NatalChart, PlanetPosition } from '@/types';
 import { ZODIAC_SIGNS, PLANETS } from '@/types';
 import { getElementColor, getDignity } from '@/lib/astrology';
-import { normalizePlanetKey, planetLabelPtBr } from '@/lib/planetNaming';
+import { normalizePlanetKey, planetLabelPtBr, PlanetId } from '@/lib/planetNaming';
 
 interface AstroChartProps {
   chart: NatalChart;
@@ -26,6 +26,7 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
   }, []);
 
@@ -133,7 +134,6 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
   const R_ZODIAC_INNER = 330;
   const R_TICK_INNER = 320;
   const R_PLANETS_OUTER = 300;
-  const R_PLANETS_INNER = 250;
   const R_ASPECTS = 210;
 
   // Ascendant is anchor (9 o'clock / 180 degrees)
@@ -353,15 +353,15 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     <g transform={`translate(${focusedPlanetPos.x}, ${focusedPlanetPos.y})`}>
       <g transform={`translate(${focusedPlanetPos.x > CX ? -190 : 20}, -60)`} className="pointer-events-none">
         <rect width="180" height="90" rx="6" fill="#0f172a" stroke="#7c3aed" strokeWidth="1" />
-        <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="bold">{planetLabelPtBr(planetPositions.find(p => p.planet.id === hoveredPlanet || p.planet.id === selectedPlanet)?.planet.id as any || 'sun')}</text>
-        <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">{focusedPlanetPos.planet.sign} {Math.floor(focusedPlanetPos.planet.degree)}°{Math.floor((focusedPlanetPos.planet.degree % 1) * 60)}'</text>
+        <text x="90" y="20" textAnchor="middle" fill="#e2e8f0" fontSize="14" fontWeight="bold">{planetLabelPtBr(planetPositions.find(p => p.planet.id === hoveredPlanet || p.planet.id === selectedPlanet)?.planet.id as PlanetId || 'sun')}</text>
+        <text x="90" y="40" textAnchor="middle" fill="#94a3b8" fontSize="12">{focusedPlanetPos.planet.sign} {Math.floor(focusedPlanetPos.planet.degree)}°{Math.floor((focusedPlanetPos.planet.degree % 1) * 60)}&apos;</text>
         <text x="90" y="58" textAnchor="middle" fill="#94a3b8" fontSize="12">Casa {focusedPlanetPos.planet.house} • {getDignity(normalizePlanetKey(focusedPlanetPos.planet.name) || 'sun', focusedPlanetPos.planet.sign)}</text>
         <text x="90" y="75" textAnchor="middle" fill="#94a3b8" fontSize="11">{focusedPlanetPos.planet.speed > 0 ? `Rapidez: ${focusedPlanetPos.planet.speed.toFixed(2)}°/d` : ''} {focusedPlanetPos.planet.retrograde ? '(Retrógrado)' : ''}</text>
       </g>
     </g>
   );
 
-  const filteredAspects = chart.aspects.filter(aspect => {
+  chart.aspects.filter(aspect => {
     if (!hoveredPlanet && !selectedPlanet) return true;
     const focus = selectedPlanet || hoveredPlanet;
     if (!focus) return true;
@@ -420,7 +420,18 @@ export default function AstroChart({ chart, onChartReady }: AstroChartProps) {
     <div ref={containerRef} className="w-full max-w-[960px] mx-auto bg-[#020617] rounded-3xl p-4 shadow-2xl border border-slate-800">
       
       <div className="relative w-full aspect-square overflow-hidden rounded-2xl">
-        {/* Controles de Zoom Overlay - Somente no Desktop (JS detected) */}
+        {/* Botão Reset flutuante para Mobile */}
+        {isTouchDevice && (zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+          <button 
+            onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }}
+            className="absolute bottom-4 right-4 z-20 bg-purple-600/90 text-white p-3 rounded-full shadow-lg shadow-purple-500/40 animate-in fade-in zoom-in duration-300 backdrop-blur-sm border border-white/20 active:scale-90 transition-transform"
+            title="Resetar Visão"
+          >
+            <Maximize className="w-6 h-6" />
+          </button>
+        )}
+
+        {/* Controles de Zoom Overlay - Somente no Desktop */}
         {!isTouchDevice && (
           <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 bg-slate-900/80 p-2 rounded-xl border border-slate-700/50 backdrop-blur-md">
             <button 

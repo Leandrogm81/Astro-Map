@@ -42,14 +42,20 @@ export function calculateHayz(planetId: string, house: number, sign: ZodiacSign,
 /**
  * Retorna o status de seita (Benefic/Malefic da Seita)
  */
-export function getSectStatus(planetId: string, isDayChart: boolean) {
+export type SectStatus = 'in_sect' | 'out_of_sect' | 'benefic' | 'malefic_in_sect' | 'malefic_out_of_sect' | 'mercury_variable' | 'neutral';
+
+export function getSectStatus(planetId: string, isDayChart: boolean): SectStatus {
+  if (planetId === 'mercury') return 'mercury_variable';
+  
   if (isDayChart) {
-    if (planetId === 'jupiter') return 'benefic';
-    if (planetId === 'saturn') return 'malefic_out_of_sect';
+    if (planetId === 'jupiter') return 'benefic'; // Benefic da seita diurna
+    if (planetId === 'saturn') return 'in_sect'; // Maléfico em seita (menos agressivo)
+    if (planetId === 'mars') return 'malefic_out_of_sect'; // Maléfico fora da seita
     return isPlanetDiurnal(planetId) ? 'in_sect' : 'out_of_sect';
   } else {
-    if (planetId === 'venus') return 'benefic';
-    if (planetId === 'mars') return 'malefic_out_of_sect';
+    if (planetId === 'venus') return 'benefic'; // Benefic da seita noturna
+    if (planetId === 'mars') return 'in_sect'; // Maléfico em seita (menos agressivo)
+    if (planetId === 'saturn') return 'malefic_out_of_sect'; // Maléfico fora da seita
     return isPlanetNocturnal(planetId) ? 'in_sect' : 'out_of_sect';
   }
 }

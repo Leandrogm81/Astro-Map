@@ -464,35 +464,53 @@ export default function Home() {
                       <Moon className="w-4 h-4 text-indigo-400" />
                       <span className="text-slate-200">{chart.birthData.time}</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/5 rounded-full border border-white/10">
-                      <Star className="w-4 h-4 text-gold-500" />
-                      <span className="text-slate-200">{chart.birthData.location}</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/5 rounded-full border border-white/10 overflow-hidden">
+                      <Star className="w-4 h-4 text-gold-500 shrink-0" />
+                      <span className="text-slate-200 truncate max-w-[120px] md:max-w-none">{chart.birthData.location}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="sticky top-[56px] z-40 flex items-center gap-2 p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20 overflow-x-auto scrollbar-none">
-                  <UnifiedMenu activeTab={activeTab} onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} />
-                  {[
-                    { id: 'traditional', label: 'Tradicional', icon: Sparkles },
-                    { id: 'revolution', label: 'Revolução Solar', icon: Sun },
-                    { id: 'elective', label: 'Eletiva Magística', icon: Zap },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                      className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
-                        activeTab === tab.id
-                          ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
-                          : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'
-                      }`}
-                    >
-                      <tab.icon className="w-3.5 h-3.5" />
-                      {tab.label}
-                    </button>
-                  ))}
+                <div className="sticky top-[56px] z-40 flex items-center gap-2 p-1.5 md:p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20">
+                  {/* Mobile: Menu Unificado para TODAS as abas */}
+                  <div className="flex md:hidden w-full">
+                    <UnifiedMenu 
+                      activeTab={activeTab} 
+                      onTabChange={(id: string) => setActiveTab(id as typeof activeTab)}
+                      items={[
+                        { id: 'chart', label: 'Visão Geral', icon: Star },
+                        { id: 'traditional', label: 'Tradicional', icon: Sparkles },
+                        { id: 'houses', label: 'Casas', icon: Moon },
+                        { id: 'aspects', label: 'Aspectos', icon: Sun },
+                        { id: 'report', label: 'Relatório IA', icon: Sparkles },
+                        { id: 'revolution', label: 'Rev. Solar', icon: Sun },
+                        { id: 'elective', label: 'Eletiva', icon: Zap },
+                      ]}
+                    />
+                  </div>
 
-                    {/* UnifiedMenu moved to chart tab content */}
+                  {/* Desktop: Layout original com tabs e dropdown parcial */}
+                  <div className="hidden md:flex items-center gap-2 overflow-x-auto scrollbar-none">
+                    <UnifiedMenu activeTab={activeTab} onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} />
+                    {[
+                      { id: 'traditional', label: 'Tradicional', icon: Sparkles },
+                      { id: 'revolution', label: 'Revolução Solar', icon: Sun },
+                      { id: 'elective', label: 'Eletiva Magística', icon: Zap },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                        className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
+                            : 'text-slate-400 border-transparent hover:text-slate-100 hover:bg-white/5'
+                        }`}
+                      >
+                        <tab.icon className="w-3.5 h-3.5" />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                   
                   {/* Separador visual */}
                   <div className="w-px bg-white/10 mx-1 self-stretch shrink-0" />
