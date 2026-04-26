@@ -69,6 +69,8 @@ export interface Aspect {
   applying: boolean; // Se está se aproximando ou se afastando
 }
 
+import { TraditionalAssessment } from '@/lib/traditional/types';
+
 export interface NatalChart {
   birthData: BirthData;
   planets: PlanetPosition[];
@@ -79,6 +81,7 @@ export interface NatalChart {
   mc: number; // Medium Coeli
   lots?: LotPosition[];
   traditionalPoints?: TraditionalPoints;
+  traditionalAssessments?: TraditionalAssessment[];
   isDayChart?: boolean;
   prenatalSyzygy?: number;
 }

@@ -10,6 +10,8 @@ import {
   getElectiveVeredict,
   getPlanetaryDay
 } from '@/lib/traditional/elective';
+import { calculateTraditionalPoints } from '@/lib/traditional/points';
+import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
 import { calculateNatalChart, parseTimezoneOffset, calculateRiseSet } from '@/lib/ephemeris';
 import { getTimezoneOffsetForDate, getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { useGeocoding } from '@/hooks/useGeocoding';
@@ -242,7 +244,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   const veredict = useMemo(() => {
     if (!skyChart) return null;
 
-    const dayOfWeek = electiveDateTime.getDay();
+    // dayOfWeek is not used
     const { sunrise, sunset, nextSunrise, previousSunset } = calculateRiseSet(
       electiveDateTime,
       targetLat,
@@ -285,12 +287,35 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
     setMagicInsight(null);
     setError(null);
     try {
+      // Enriquecer o mapa natal com dados tradicionais se necessário
+      const enrichedNatalChart = { ...chart };
+      
+      if (electiveMode === 'sky_plus_natal' && !enrichedNatalChart.traditionalPoints) {
+        // Calcular pontos tradicionais (Almuten, Hyleg, etc)
+        enrichedNatalChart.traditionalPoints = calculateTraditionalPoints(
+          chart.ascendant,
+          chart.planets,
+          chart.housesPlacidus,
+          chart.isDayChart ?? true,
+          chart.prenatalSyzygy
+        );
+
+        // Calcular estado operacional dos planetas (assessments)
+        enrichedNatalChart.traditionalAssessments = chart.planets
+          .filter(p => ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id))
+          .map((p) => calculateTraditionalAssessment(
+            p,
+            chart.planets,
+            chart.isDayChart ?? true
+          ));
+      }
+
       const response = await fetch('/api/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chart: skyChart,
-          natalChart: chart,
+          natalChart: enrichedNatalChart,
           reportMode: 'elective_magic',
           electiveMode,
           veredict,

@@ -23,15 +23,37 @@ function formatTraditionalSkyContext(chart: NatalChart): string {
 function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart): string {
   let result = '';
 
-  result += `DADOS NATAIS DE REFERÃŠNCIA:\n`;
+  result += `DADOS NATAIS DE REFERÊNCIA:\n`;
   result += `- Ascendente natal: ${getZodiacSign(natalChart.ascendant)} ${formatDegree(natalChart.ascendant % 30)}\n`;
 
   natalChart.planets.forEach((planet) => {
     if (!TRADITIONAL_PLANET_IDS.includes(planet.id)) return;
-    result += `- ${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}Â° na Casa ${planet.house}\n`;
+    result += `- ${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}° na Casa ${planet.house}\n`;
   });
 
-  result += `\nTRÃ‚NSITOS DO CÃ‰U DO MOMENTO NAS CASAS NATAIS:\n`;
+  // Adicionar Contexto Tradicional do Mapa Natal se disponível
+  if (natalChart.traditionalPoints || (natalChart.traditionalAssessments && natalChart.traditionalAssessments.length > 0)) {
+    result += `\nCONTEXTO TRADICIONAL DO MAPA NATAL:\n`;
+    result += `-`.repeat(40) + '\n';
+    
+    if (natalChart.traditionalPoints) {
+      const tp = natalChart.traditionalPoints;
+      result += `- ALMUTEN FIGURIS: ${tp.almutenFiguris?.name || 'N/A'}\n`;
+      result += `- HYLEG: ${tp.hyleg?.name || 'N/A'}\n`;
+      result += `- ALCOCODEN: ${tp.alcocoden?.name || 'N/A'}\n`;
+      result += `- SENHOR DA NATIVIDADE: ${tp.lordOfNativity?.name || 'N/A'}\n`;
+    }
+
+    if (natalChart.traditionalAssessments && natalChart.traditionalAssessments.length > 0) {
+      result += `\nESTADO OPERACIONAL DOS PLANETAS NATAIS:\n`;
+      natalChart.traditionalAssessments.forEach(ass => {
+        const cond = ass.totalScore >= 10 ? 'Soberana' : ass.totalScore >= 5 ? 'Forte' : ass.totalScore <= -10 ? 'Crítica' : ass.totalScore <= -5 ? 'Debilitada' : 'Moderada';
+        result += `- ${ass.planetId.toUpperCase()}: ${ass.totalScore} pts (${cond}) | Dignidade: ${ass.dignity}\n`;
+      });
+    }
+  }
+
+  result += `\nTRÂNSITOS DO CÉU DO MOMENTO NAS CASAS NATAIS:\n`;
   result += `-`.repeat(40) + '\n';
 
   skyChart.planets.forEach((planet) => {
@@ -44,17 +66,17 @@ function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart
     .filter((aspect) =>
       TRADITIONAL_PLANET_IDS.includes(aspect.planet1.toLowerCase()) &&
       TRADITIONAL_PLANET_IDS.includes(aspect.planet2.toLowerCase()) &&
-      ['conjunÃ§Ã£o', 'sextil', 'quadratura', 'trÃ­gono', 'oposiÃ§Ã£o'].includes(aspect.type)
+      ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(aspect.type)
     )
     .sort((a, b) => a.orb - b.orb)
     .slice(0, 12);
 
   if (crossAspects.length > 0) {
-    result += `\nASPECTOS ENTRE O CÃ‰U DO MOMENTO E O MAPA NATAL:\n`;
+    result += `\nASPECTOS ENTRE O CÉU DO MOMENTO E O MAPA NATAL:\n`;
     result += `-`.repeat(40) + '\n';
 
     crossAspects.forEach((aspect) => {
-      result += `${aspect.planet1} (agora) ${aspect.type} ${aspect.planet2} (natal) â€” Ã³rbita ${aspect.orb.toFixed(1)}Â°\n`;
+      result += `${aspect.planet1} (agora) ${aspect.type} ${aspect.planet2} (natal) — órbita ${aspect.orb.toFixed(1)}°\n`;
     });
   }
 
@@ -520,8 +542,7 @@ export function formatElectiveForAI(
 `;
   result += `- Dignidade Essencial: ${rulerCondition.dignity}
 `;
-  result += `- Pontuacao Almuten: ${rulerCondition.totalScore} pts
-
+  result += `- Força Tradicional do Regente: ${rulerCondition.totalScore} pts
 `;
 
   result += `CONTEXTO DO CEU COMPLETO:
@@ -588,27 +609,27 @@ DADOS DE ENTRADA (A serem fornecidos pelo usuário):
 
 Propósito da Operação (Ex: Ganho financeiro, Proteção, Sabedoria).
 
-Dados do Mapa Natal (Signos, Casas e Graus dos Planetas).
+Dados do Mapa Natal Enriquecidos (Dignidades, Almuten, Hyleg, Alcocoden).
 
 Dados da Janela Eletiva (Data, Hora e Local).
 
 DIRETRIZES TÉCNICAS DE ANÁLISE:
 
-A Promessa Natal: Verifique se o Mapa Natal do operador permite o que ele pede. (Ex: Se ele pede por expansão de negócios, como está o Júpiter e a Casa II/X natal dele em relação à eleição?).
+1. A Promessa Natal Enriquecida: Analise não apenas as posições natais, mas a autoridade dos planetas (Almuten Figuris) e sua força operacional (pontuação tradicional). Se o operador pede por "autoridade" e o Sol natal dele é o Almuten Figuris ou está soberano em pontuação, a eleição ganha um peso triplicado. Use os dados do "CONTEXTO TRADICIONAL DO MAPA NATAL" fornecidos.
 
-O Senhor do Ano (Profeção): Considere se o planeta regente da eleição tem dignidade ou importância no mapa natal do operador.
+2. O Senhor do Ano (Profeção) e Regência: Considere se o planeta regente da eleição tem dignidade ou importância no mapa natal do operador (ex: é o Senhor da Natividade dele?).
 
-Aspectos de Ativação: Analise os aspectos dos planetas da eleição sobre os planetas natais. Foque em conjunções, trígonos e sextis. Avise severamente sobre quadraturas ou oposições de maléficos (Saturno/Marte) aos luminares natais.
+3. Aspectos de Ativação: Analise os aspectos dos planetas da eleição sobre os planetas natais. Foque em conjunções, trígonos e sextis. Avise severamente sobre quadraturas ou oposições de maléficos (Saturno/Marte) aos luminares natais.
 
-O Ascendente da Eleição: O Ascendente do momento da operação deve, preferencialmente, cair em uma casa favorável do Mapa Natal ou estar em harmonia com o Almuten Figuris do operador.
+4. O Ascendente da Eleição: O Ascendente do momento da operação deve, preferencialmente, cair em uma casa favorável do Mapa Natal ou estar em harmonia com o Almuten Figuris do operador.
 
 ESTRUTURA DA RESPOSTA (Markdown):
 
 🌌 I. O Alinhamento dos Mundos (Auspiciosidade Geral)
 Análise do "Céu Universal". Como as emanações estão fluindo no momento independente do operador?
 
-👤 II. A Assinatura da Alma (Conexão com o Natal)
-Aqui reside o coração da análise. Como os astros do momento "tocam" os teus astros de nascimento? Existe ressonância ou dissonância? O planeta da eleição é um amigo ou um estranho ao seu mapa?
+👤 II. A Assinatura da Alma (Conexão com o Natal Tradicional)
+Aqui reside o coração da análise. Como os astros do momento "tocam" a estrutura técnica do seu nascimento? Use os dados de Almuten, Hyleg e Estado Operacional Natal para personalizar o conselho. O planeta da eleição respeita a hierarquia do seu mapa?
 
 🏗️ III. A Fortaleza do Operador (Casas e Ângulos)
 Em qual casa do seu mapa natal a operação está ocorrendo? (Ex: "A Lua da eleição transita sua Casa XI natal, mobilizando seus aliados e redes").
@@ -623,8 +644,8 @@ REGRAS DE OURO:
 
 Tom de Voz: Solene, técnico, profundo e personalizado. Use "Tu" ou o tratamento formal.
 
-Terminologia: Hyleg, Alcocoden, Senhor da Genitura, Trânsito, Radix, Revolução.
+Terminologia: Hyleg, Alcocoden, Senhor da Genitura, Almuten Figuris, Estado Operacional, Radix.
 
 Extensão: Entre 1200 e 2000 palavras. Explore a filosofia da "Simpatia Universal".
 
-Aviso: Se houver um aspecto perigoso para a saúde ou integridade do operador no cruzamento (ex: Marte transitando sobre o Sol natal em quadratura com Saturno da eleição), o alerta deve ser enfático.`;
+Aviso: Se houver um aspecto perigoso para a saúde ou integridade do operador no cruzamento, o alerta deve ser enfático.`;

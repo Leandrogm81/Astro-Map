@@ -11,6 +11,8 @@ import {
   formatElectiveForAI
 } from '@/lib/aiPrompts';
 import { calculateTraditionalPoints } from '@/lib/traditional/points';
+import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
+import { PlanetPosition } from '@/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
 // Configurações da OpenRouter
@@ -101,6 +103,37 @@ export async function POST(request: NextRequest) {
       if (!veredict || !veredict.planetHour || !veredict.lunarMansion) {
         return NextResponse.json({ error: 'Dados do veredito incompletos para a análise mágica.' }, { status: 400 });
       }
+
+      // Enriquecimento do NatalChart se for modo sky_plus_natal
+      if (electiveMode === 'sky_plus_natal' && natalChart) {
+        if (!natalChart.traditionalPoints) {
+          try {
+            natalChart.traditionalPoints = calculateTraditionalPoints(
+              natalChart.ascendant,
+              natalChart.planets,
+              natalChart.housesPlacidus,
+              natalChart.isDayChart ?? true,
+              natalChart.prenatalSyzygy
+            );
+          } catch (e) {
+            console.error('API: Erro ao calcular pontos tradicionais natal:', e);
+          }
+        }
+
+        if (!natalChart.traditionalAssessments) {
+          try {
+            natalChart.traditionalAssessments = natalChart.planets
+              .filter((p: PlanetPosition) => ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id))
+              .map((p: PlanetPosition) => calculateTraditionalAssessment(
+                p,
+                natalChart.planets,
+                natalChart.isDayChart ?? true
+              ));
+          } catch (e) {
+            console.error('API: Erro ao calcular assessments tradicionais natal:', e);
+          }
+        }
+      }
       
       // Usa a data/hora enviada pelo frontend (momento do céu eleito).
       // Fallback para o relógio do servidor se o frontend não enviar.
@@ -182,6 +215,7 @@ export async function POST(request: NextRequest) {
 
             for (const line of lines) {
               const trimmedLine = line.trim();
+              // const dayOfWeek = date.getDay(); // Removido pois não está sendo usado
               if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
               
               const dataStr = trimmedLine.replace(/^data: /, '').trim();
