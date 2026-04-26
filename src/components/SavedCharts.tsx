@@ -98,7 +98,7 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
             <div
               key={savedChart.id}
               onClick={() => handleSelect(savedChart)}
-              className="group p-3 md:p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/50 transition-all"
+              className="group p-2.5 md:p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/50 transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -118,22 +118,22 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
                       </span>
                     </div>
 
-                  <p className="mt-1.5 md:mt-2 text-xs text-slate-500">
+                  <p className="hidden md:block mt-1.5 md:mt-2 text-xs text-slate-500">
                     Salvo em {formatDate(savedChart.createdAt)}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5 md:gap-2 ml-3 md:ml-4">
+                <div className="flex items-center gap-1 md:gap-2 ml-2 md:ml-4">
                   <button
                     onClick={(e) => handleEdit(savedChart, e)}
-                    className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                    className="h-9 w-9 md:h-auto md:w-auto flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
                     title="Editar Dados e Recalcular"
                   >
                     <Pencil className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={(e) => handleDelete(savedChart.id, e)}
-                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                    className="h-9 w-9 md:h-auto md:w-auto flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                     title="Excluir"
                   >
                     <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />

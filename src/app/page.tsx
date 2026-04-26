@@ -157,6 +157,7 @@ export default function Home() {
       setSolarYear(undefined);
       setSolarReportText('');
       setSidebarVisible(false); // Hide sidebar after calculation
+      setMobileSidebarOpen(false);
       
       try {
         if (editingChartId) {
@@ -234,6 +235,7 @@ export default function Home() {
       setEditingChartId(null);
       setInitialFormData(undefined);
       setSidebarVisible(false); // Esconde a sidebar ao selecionar um mapa
+      setMobileSidebarOpen(false);
       setError(null);
     } else {
       setError('Dados do mapa astral inválidos ou corrompidos');
@@ -420,7 +422,7 @@ export default function Home() {
           {mobileSidebarOpen && (
             <div className="fixed inset-0 z-50 lg:hidden">
               <div className="absolute inset-0 bg-black/60" onClick={toggleMobileSidebar} />
-              <div className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-sm bg-slate-950 border-r border-white/10 overflow-y-auto p-4">
+              <div className="absolute left-0 top-0 bottom-0 w-[75vw] max-w-sm bg-slate-950 border-r border-white/10 overflow-y-auto p-4">
                 <div className="flex justify-end mb-3">
                   <button onClick={toggleMobileSidebar} className="p-2 text-slate-400 hover:text-white transition-colors" title="Fechar">
                     <X className="w-5 h-5" />
