@@ -183,6 +183,7 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Erro ao calcular mapa astral');
     } finally {
       setLoading(false);
+    }
   }, [initialized, editingChartId]);
 
   const handleNewChart = useCallback(() => {
