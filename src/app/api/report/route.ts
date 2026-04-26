@@ -15,7 +15,7 @@ import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
 import { PlanetPosition } from '@/types';
 import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 // Configurações da OpenRouter
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
