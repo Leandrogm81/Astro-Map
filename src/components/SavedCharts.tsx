@@ -86,19 +86,19 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       <h3 className="text-lg font-medium text-purple-200">
         Mapas Astrais Salvos ({charts.length})
       </h3>
 
-      <div className="space-y-3 max-h-96 overflow-y-auto">
+      <div className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
         {charts
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .map((savedChart) => (
             <div
               key={savedChart.id}
               onClick={() => handleSelect(savedChart)}
-              className="group p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/50 transition-all"
+              className="group p-3 md:p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/50 transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -106,7 +106,7 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
                       {savedChart.name || 'Mapa sem nome'}
                     </h4>
                     
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                    <div className="mt-1.5 md:mt-2 flex flex-wrap items-center gap-2 md:gap-3 text-xs text-slate-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
                         {savedChart.birthData?.date || 'Data desconhecida'}
@@ -118,25 +118,25 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
                       </span>
                     </div>
 
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-1.5 md:mt-2 text-xs text-slate-500">
                     Salvo em {formatDate(savedChart.createdAt)}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-1.5 md:gap-2 ml-3 md:ml-4">
                   <button
                     onClick={(e) => handleEdit(savedChart, e)}
                     className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
                     title="Editar Dados e Recalcular"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={(e) => handleDelete(savedChart.id, e)}
                     className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
                     title="Excluir"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   </button>
                   
                   <ChevronRight className="w-5 h-5 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />

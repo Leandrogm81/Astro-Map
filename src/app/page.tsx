@@ -286,7 +286,7 @@ export default function Home() {
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
         <button
           onClick={() => toggleSection('form')}
-          className="w-full px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+          className="w-full px-4 py-2.5 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Moon className="w-5 h-5 text-purple-400" />
@@ -330,7 +330,7 @@ export default function Home() {
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
         <button
           onClick={() => toggleSection('saved')}
-          className="w-full px-4 py-3 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+          className="w-full px-4 py-2.5 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Save className="w-5 h-5 text-purple-400" />
@@ -420,13 +420,15 @@ export default function Home() {
           {mobileSidebarOpen && (
             <div className="fixed inset-0 z-50 lg:hidden">
               <div className="absolute inset-0 bg-black/60" onClick={toggleMobileSidebar} />
-              <div className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-sm bg-slate-950 border-r border-white/10 overflow-y-auto p-6">
-                <div className="flex justify-end mb-4">
+              <div className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-sm bg-slate-950 border-r border-white/10 overflow-y-auto p-4">
+                <div className="flex justify-end mb-3">
                   <button onClick={toggleMobileSidebar} className="p-2 text-slate-400 hover:text-white transition-colors" title="Fechar">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                {sidebarContent}
+                <div className="space-y-4">
+                  {sidebarContent}
+                </div>
               </div>
             </div>
           )}
