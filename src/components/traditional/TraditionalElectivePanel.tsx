@@ -16,6 +16,7 @@ import { calculateNatalChart, parseTimezoneOffset, calculateRiseSet } from '@/li
 import { getTimezoneOffsetForDate, getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { useGeocoding } from '@/hooks/useGeocoding';
 import { PLANETARY_CORRESPONDENCES, RITUAL_INTENTIONS, RITUAL_CATEGORIES, PlanetKey, RitualCategoryId } from '@/lib/traditional/magic-correspondences';
+import { translatePlanetKeyPt, translatePlanetNamePt } from '@/lib/traditional/constants';
 import { saveElective, getSavedElectives, deleteElective, SavedElective } from '@/lib/storage';
 import {
   Moon,
@@ -690,7 +691,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                 Códice Hermético
               </h3>
               <span className="text-[10px] bg-white/10 text-slate-300 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                Regente: {selectedIntention.ruler}
+                Regente: {translatePlanetKeyPt(selectedIntention.ruler)}
               </span>
             </div>
             
@@ -733,13 +734,13 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Dia Planetário</div>
-                <div className="text-white font-bold capitalize text-lg">{planetaryDay}</div>
+                <div className="text-white font-bold capitalize text-lg">{translatePlanetNamePt(planetaryDay)}</div>
                 <div className="text-[10px] text-slate-400 mt-1 uppercase">Governa o período</div>
               </div>
               
               <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Hora Planetária</div>
-                <div className="text-white font-bold capitalize text-lg">{veredict?.planetHour.planetId ?? '--'}</div>
+                <div className="text-white font-bold capitalize text-lg">{veredict ? translatePlanetNamePt(veredict.planetHour.planetId) : '--'}</div>
                 <div className="text-[10px] text-slate-400 mt-1 uppercase">
                   {veredict ? `${veredict.planetHour.hourNumber}ª da ${veredict.planetHour.isDaytime ? 'Luz' : 'Sombra'}` : '--'}
                 </div>
@@ -758,7 +759,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                 <div className={`font-bold text-lg ${(veredict?.rulerCondition.totalScore ?? 0) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                   {veredict?.rulerCondition.totalScore ?? '--'} pontos
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1 uppercase">{selectedIntention.ruler} em {veredict?.rulerCondition.dignity ?? '--'}</div>
+                <div className="text-[10px] text-slate-400 mt-1 uppercase">{translatePlanetKeyPt(selectedIntention.ruler)} em {veredict?.rulerCondition.dignity ?? '--'}</div>
               </div>
             </div>
 

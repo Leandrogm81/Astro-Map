@@ -167,6 +167,9 @@ describe('AI Prompts Formatting', () => {
       expect(output).toContain('MODO DE LEITURA: CEU DO MOMENTO');
       expect(output).not.toContain('DADOS NATAIS DE REFER');
       expect(output).toContain('Hora Planet');
+      expect(output).toContain('AMOR E RELACIONAMENTOS');
+      expect(output).toContain('Vênus');
+      expect(output).not.toContain('LOVE');
     });
 
     it('should include natal context when the combined mode is requested', () => {

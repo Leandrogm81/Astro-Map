@@ -1,8 +1,34 @@
 import { NatalChart, ZodiacSign, PlanetPosition, Aspect } from '@/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
 import { TraditionalAssessment, ElectiveMode, ElectiveVeredict } from './traditional/types';
+import { translateMagicPurposePt, translatePlanetNamePt } from './traditional/constants';
 
 const TRADITIONAL_PLANET_IDS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+
+function translateElectiveText(text: string): string {
+  return text
+    .replace(/\bSUN\b/g, translatePlanetNamePt('sun'))
+    .replace(/\bMOON\b/g, translatePlanetNamePt('moon'))
+    .replace(/\bMERCURY\b/g, translatePlanetNamePt('mercury'))
+    .replace(/\bVENUS\b/g, translatePlanetNamePt('venus'))
+    .replace(/\bMARS\b/g, translatePlanetNamePt('mars'))
+    .replace(/\bJUPITER\b/g, translatePlanetNamePt('jupiter'))
+    .replace(/\bSATURN\b/g, translatePlanetNamePt('saturn'))
+    .replace(/\bSun\b/g, translatePlanetNamePt('Sun'))
+    .replace(/\bMoon\b/g, translatePlanetNamePt('Moon'))
+    .replace(/\bMercury\b/g, translatePlanetNamePt('Mercury'))
+    .replace(/\bVenus\b/g, translatePlanetNamePt('Venus'))
+    .replace(/\bMars\b/g, translatePlanetNamePt('Mars'))
+    .replace(/\bJupiter\b/g, translatePlanetNamePt('Jupiter'))
+    .replace(/\bSaturn\b/g, translatePlanetNamePt('Saturn'))
+    .replace(/\bsun\b/g, translatePlanetNamePt('sun'))
+    .replace(/\bmoon\b/g, translatePlanetNamePt('moon'))
+    .replace(/\bmercury\b/g, translatePlanetNamePt('mercury'))
+    .replace(/\bvenus\b/g, translatePlanetNamePt('venus'))
+    .replace(/\bmars\b/g, translatePlanetNamePt('mars'))
+    .replace(/\bjupiter\b/g, translatePlanetNamePt('jupiter'))
+    .replace(/\bsaturn\b/g, translatePlanetNamePt('saturn'));
+}
 
 function formatTraditionalSkyContext(chart: NatalChart): string {
   let result = '';
@@ -17,7 +43,7 @@ function formatTraditionalSkyContext(chart: NatalChart): string {
     result += `\n`;
   });
 
-  return result;
+  return translateElectiveText(result);
 }
 
 function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart): string {
@@ -80,7 +106,7 @@ function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart
     });
   }
 
-  return result;
+  return translateElectiveText(result);
 }
 
 /**
@@ -518,7 +544,7 @@ export function formatElectiveForAI(
 `;
   result += `MODO DE LEITURA: ${mode === 'sky_plus_natal' ? 'CEU DO MOMENTO + MAPA NATAL' : 'CEU DO MOMENTO'}
 `;
-  result += `PROPOSITO MAGICO: ${purpose.toUpperCase()}
+  result += `PROPOSITO MAGICO: ${translateMagicPurposePt(purpose).toUpperCase()}
 `;
   result += `VEREDITO TECNICO: ${score.toUpperCase()}
 
@@ -556,7 +582,15 @@ export function formatElectiveForAI(
     result += formatElectiveNatalContext(skyChart, natalChart);
   }
 
-  return result;
+  return result
+    .replace(
+      `- Hora PlanetÃ¡ria: ${(planetHour.planetId || 'N/A').toUpperCase()}`,
+      `- Hora PlanetÃ¡ria: ${translatePlanetNamePt(planetHour.planetId)}`
+    )
+    .replace(
+      `CONDICAO DO REGENTE DO PROPOSITO (${(rulerCondition.planetId || 'N/A').toUpperCase()}):`,
+      `CONDICAO DO REGENTE DO PROPOSITO (${translatePlanetNamePt(rulerCondition.planetId)}):`
+    );
 }
 
 /**
