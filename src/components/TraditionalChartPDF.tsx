@@ -3,7 +3,6 @@ import { Svg, Circle, Line, Text, G, Path, Rect } from '@react-pdf/renderer';
 import { NatalChart, ZODIAC_SIGNS, PLANETS, PlanetPosition, ZodiacSign } from '@/types';
 import { EGYPTIAN_TERMS, getFaceRuler } from '@/lib/traditional/dignities';
 import {
-  getTraditionalAxisLongitudes,
   getTraditionalWheelAnchor,
   longitudeToTraditionalAngle
 } from '@/lib/traditional/wheelGeometry';
@@ -56,6 +55,15 @@ const ASPECT_COLORS: Record<string, string> = {
   conjunction: '#fbbf24'
 };
 
+const ANGULAR_HOUSE_LABELS: Record<number, 'AC' | 'IC' | 'DC' | 'MC'> = {
+  0: 'AC',
+  3: 'IC',
+  6: 'DC',
+  9: 'MC'
+};
+
+const normalizePdfLongitude = (longitude: number): number => ((longitude % 360) + 360) % 360;
+
 export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalChartPDFProps) {
   const cx = size / 2;
   const cy = size / 2;
@@ -73,16 +81,18 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
   const innerR = housesR - 62;
   const planetR = housesR - 20;
 
-  const bgColor = '#050816';
-  const panelColor = '#0b1220';
+  const bgColor = '#ffffff';
+  const panelColor = '#ffffff';
   const ringColor = '#7c3aed';
   const accentGold = '#fbbf24';
-  const accentOrange = '#f59e0b';
-  const gridStroke = '#24324b';
-  const labelColor = '#94a3b8';
+  const accentOrange = '#d97706';
+  const gridStroke = '#e2e8f0';
+  const labelColor = '#64748b';
 
-  const asc = getTraditionalWheelAnchor(chart);
+  const asc = chart.ascendant ?? getTraditionalWheelAnchor(chart);
   const toAngle = (lon: number) => longitudeToTraditionalAngle(lon, asc);
+  const wholeSignStart = Math.floor(normalizePdfLongitude(asc) / 30) * 30;
+  const getWholeSignHouseStart = (index: number) => normalizePdfLongitude(wholeSignStart + index * 30);
 
   const getArcPath = (startLon: number, endLon: number, rOut: number, rIn: number) => {
     const startAngle = toAngle(startLon);
@@ -100,28 +110,21 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
     return `M ${x1} ${y1} A ${rOut} ${rOut} 0 0 0 ${x2} ${y2} L ${x3} ${y3} A ${rIn} ${rIn} 0 0 1 ${x4} ${y4} Z`;
   };
 
-  const axisText = (lon: number, label: string, isPrimary = false) => {
-    const angle = toAngle(lon);
+  const getAngularHouseLabel = (index: number) => {
+    const label = ANGULAR_HOUSE_LABELS[index];
+    if (!label) return null;
+
+    const angle = toAngle(getWholeSignHouseStart(index));
     const r = signsOuterR + 9;
     return (
-      <G key={label}>
-        <Line
-          x1={cx + signsOuterR * Math.cos(angle)}
-          y1={cy + signsOuterR * Math.sin(angle)}
-          x2={cx + (housesR - 6) * Math.cos(angle)}
-          y2={cy + (housesR - 6) * Math.sin(angle)}
-          stroke={accentGold}
-          strokeWidth={isPrimary ? 1.8 : 1.2}
-          opacity={0.9}
-        />
-        <Text
-          x={cx + r * Math.cos(angle) - 9}
-          y={cy + r * Math.sin(angle) + 4}
-          style={{ fontSize: 10, fill: accentOrange, fontWeight: 'bold', fontFamily: 'DejaVu Sans' }}
-        >
-          {label}
-        </Text>
-      </G>
+      <Text
+        key={`house-axis-${label}`}
+        x={cx + r * Math.cos(angle) - 9}
+        y={cy + r * Math.sin(angle) + 4}
+        style={{ fontSize: 10, fill: accentOrange, fontWeight: 'bold', fontFamily: 'DejaVu Sans' }}
+      >
+        {label}
+      </Text>
     );
   };
 
@@ -202,7 +205,7 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
               <Text
                 x={cx + tr * Math.cos(midAngle) - 2.5}
                 y={cy + tr * Math.sin(midAngle) + 2.5}
-                style={{ fontSize: 7, fill: '#cbd5e1', fontFamily: 'DejaVu Sans' }}
+                style={{ fontSize: 7, fill: labelColor, fontFamily: 'DejaVu Sans' }}
               >
                 {symbol}
               </Text>
@@ -239,8 +242,7 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
       })}
 
       {[...Array(12)].map((_, i) => {
-        const house = chart.housesPlacidus[i];
-        const houseStartLon = house?.longitude ?? ((asc + i * 30) % 360);
+        const houseStartLon = getWholeSignHouseStart(i);
         const angle = toAngle(houseStartLon);
         const isAngular = i === 0 || i === 3 || i === 6 || i === 9;
         const midHouseAngle = toAngle(houseStartLon + 15);
@@ -262,13 +264,14 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
               y={cy + numR * Math.sin(midHouseAngle) + 2.5}
               style={{
                 fontSize: 8,
-                fill: isAngular ? '#e2e8f0' : labelColor,
+                fill: isAngular ? accentOrange : labelColor,
                 fontWeight: isAngular ? 'bold' : 'normal',
                 fontFamily: 'DejaVu Sans'
               }}
             >
               {i + 1}
             </Text>
+            {isAngular ? getAngularHouseLabel(i) : null}
           </G>
         );
       })}
@@ -341,10 +344,10 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
           const y = cy + planetR * Math.sin(angle);
 
           let color = accentGold;
-          if (p.name === 'Sol') color = '#f59e0b';
-          if (p.name === 'Lua') color = '#cbd5e1';
+          if (p.name === 'Sol') color = accentOrange;
+          if (p.name === 'Lua') color = '#475569';
           if (p.name === 'Marte') color = '#ef4444';
-          if (p.name === 'Saturno') color = '#cbd5e1';
+          if (p.name === 'Saturno') color = '#475569';
           if (p.name === 'Mercúrio') color = '#60a5fa';
           if (p.name === 'Vênus') color = '#22c55e';
           if (p.id === 'fortune') color = '#fbbf24';
@@ -379,19 +382,6 @@ export default function TraditionalChartPDF({ chart, size = 350 }: TraditionalCh
           );
         });
       })()}
-
-      {(() => {
-        const axes = getTraditionalAxisLongitudes(chart);
-        return (
-          <G>
-            {axisText(axes.ac, 'AC', true)}
-            {axisText(axes.dc, 'DC')}
-            {axisText(axes.mc, 'MC', true)}
-            {axisText(axes.ic, 'IC')}
-          </G>
-        );
-      })()}
-
       <Circle cx={cx} cy={cy} r={innerR} fill={bgColor} stroke="#1e293b" strokeWidth="0.8" />
       <Circle cx={cx} cy={cy} r={innerR - 2} fill={bgColor} stroke="#334155" strokeWidth="0.4" strokeDasharray="2,2" opacity="0.9" />
       <Circle cx={cx} cy={cy} r={5} fill="none" stroke={accentGold} strokeWidth="1" />

@@ -5,6 +5,7 @@ import {
   formatPdfAspectRow,
   getAspectLabelPt,
   getPlanetLabelPt,
+  translateSectStatus,
 } from '../lib/traditional/pdfFormatting';
 
 describe('traditional pdf formatting', () => {
@@ -46,5 +47,11 @@ describe('traditional pdf formatting', () => {
       orb: 3.7,
       applying: false,
     });
+  });
+
+  it('translates sect statuses for the traditional PDF tables', () => {
+    expect(translateSectStatus('benefic')).toBe('BENÉFICO');
+    expect(translateSectStatus('out_of_sect')).toBe('FORA DE SEITA');
+    expect(translateSectStatus('MERCURY_VARIABLE')).toBe('SEITA VARIÁVEL');
   });
 });

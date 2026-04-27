@@ -18,6 +18,7 @@ import TraditionalChartPDF from './TraditionalChartPDF';
 import { Download, Loader2 } from 'lucide-react';
 import {
   formatPdfAspectRow,
+  translateSectStatus,
 } from '@/lib/traditional/pdfFormatting';
 import { 
   getDignity, 
@@ -314,21 +315,6 @@ const getPlanetSymbolTrad = (id: string): string => {
     venus: '♀', mars: '♂', jupiter: '♃', saturn: '♄'
   };
   return map[id] || '';
-};
-
-// Auxiliares de Tradução Tradicional
-const translateSectStatus = (status: string) => {
-  const norm = status.toUpperCase().replace(/-/g, '_');
-  const map: Record<string, string> = {
-    'IN_SECT': 'EM SEITA',
-    'OUT_OF_SECT': 'FORA DE SEITA',
-    'HAYZ': 'HAYZ (IDEAL)',
-    'EX_CONDITION': 'EXCELENTE',
-    'BENEFIC': 'BENÉFICO',
-    'MALEFIC_OUT_OF_SECT': 'MALÉFICO/FORA',
-    'MALEFIC': 'MALÉFICO'
-  };
-  return map[norm] || status;
 };
 
 const translateDignity = (dignity: string) => {
@@ -1290,5 +1276,4 @@ export default function ExportPDF({
     </div>
   );
 }
-
 

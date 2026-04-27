@@ -46,6 +46,22 @@ export function getAspectLabelPt(type: string): string {
   return type.toUpperCase();
 }
 
+export function translateSectStatus(status: string): string {
+  const normalizedStatus = status.toUpperCase().replace(/-/g, '_');
+  const statusLabels: Record<string, string> = {
+    IN_SECT: 'EM SEITA',
+    OUT_OF_SECT: 'FORA DE SEITA',
+    HAYZ: 'HAYZ (IDEAL)',
+    EX_CONDITION: 'EXCELENTE',
+    BENEFIC: 'BENÉFICO',
+    MALEFIC_OUT_OF_SECT: 'MALÉFICO/FORA',
+    MALEFIC: 'MALÉFICO',
+    MERCURY_VARIABLE: 'SEITA VARIÁVEL',
+  };
+
+  return statusLabels[normalizedStatus] || status;
+}
+
 export function isTraditionalPlanet(input: string): boolean {
   const planetId = normalizePlanetKey(input);
   return !!planetId && TRADITIONAL_CLASSIC_PLANET_SET.has(planetId);
