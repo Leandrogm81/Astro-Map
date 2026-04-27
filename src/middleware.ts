@@ -16,9 +16,12 @@ export function middleware(request: NextRequest) {
   }
 
   const sessionCookie = request.cookies.get('astromap_session');
+  const sessionValue = sessionCookie?.value;
+
+  const isAuthenticated = sessionValue === 'admin' || sessionValue?.startsWith('guest:');
 
   // Se não estiver autenticado e tentar acessar uma rota protegida
-  if (!sessionCookie || sessionCookie.value !== 'authenticated') {
+  if (!isAuthenticated) {
     // Se for rota de API, retorna 401
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });

@@ -32,6 +32,20 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelId] = useState(DEFAULT_MODEL_ID);
+  const [userRole, setUserRole] = useState<string>('admin');
+
+  useEffect(() => {
+    const match = document.cookie.match(/astromap_role=([^;]+)/);
+    if (match) setUserRole(match[1]);
+  }, []);
+
+  const isGuest = userRole.startsWith('guest:');
+  const isGuestUsed = (() => {
+    if (!isGuest) return false;
+    const credits = userRole.split(':')[1];
+    const match = credits.match(/t(\d)/);
+    return match ? match[1] === '0' : true;
+  })();
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -129,7 +143,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
             </div>
 
             <div className="flex items-center gap-3">
-              {reportText && (
+              {reportText && !isGuest && (
                 <button
                   onClick={clearReport}
                   className="p-2.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all"
@@ -140,34 +154,40 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
               )}
 
 
-              <button
-                onClick={handleGenerateReport}
-                disabled={loading}
-                className={`group relative flex items-center gap-2 px-6 py-3.5 text-base font-bold rounded-2xl transition-all duration-300 overflow-hidden shadow-xl ${loading
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
-                  : 'bg-slate-950 text-gold-400 border border-gold-500/30 hover:border-gold-400/60 hover:text-white hover:shadow-gold-500/20 active:scale-95'
-                  }`}
-              >
-                {/* Background Glow */}
-                {!loading && (
-                  <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/10 via-gold-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                )}
+              {isGuestUsed ? (
+                <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-200 text-xs max-w-[200px]">
+                  Crédito de visitante para o Tratado utilizado.
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateReport}
+                  disabled={loading}
+                  className={`group relative flex items-center gap-2 px-6 py-3.5 text-base font-bold rounded-2xl transition-all duration-300 overflow-hidden shadow-xl ${loading
+                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5'
+                    : 'bg-slate-950 text-gold-400 border border-gold-500/30 hover:border-gold-400/60 hover:text-white hover:shadow-gold-500/20 active:scale-95'
+                    }`}
+                >
+                  {/* Background Glow */}
+                  {!loading && (
+                    <div className="absolute inset-0 bg-gradient-to-tr from-gold-600/10 via-gold-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  )}
 
-                {/* Animated Gradient Border (Simulated) */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-[linear-gradient(45deg,transparent,rgba(212,175,55,0.8),transparent)] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                  {/* Animated Gradient Border (Simulated) */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-20 bg-[linear-gradient(45deg,transparent,rgba(212,175,55,0.8),transparent)] translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
 
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Invocando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5 flex-shrink-0 group-hover:animate-pulse" />
-                    <span className="relative z-10">{reportText ? 'Atualizar Tratado' : 'Gerar Tratado'}</span>
-                  </>
-                )}
-              </button>
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Invocando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 flex-shrink-0 group-hover:animate-pulse" />
+                      <span className="relative z-10">{reportText ? 'Atualizar Tratado' : 'Gerar Tratado'}</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 

@@ -46,6 +46,44 @@ export async function POST(request: NextRequest) {
       apiKey: userApiKey 
     } = body;
 
+    // 2. Validação de Sessão e Role
+    const sessionCookie = request.cookies.get('astromap_session');
+    const sessionValue = sessionCookie?.value;
+
+    if (sessionValue?.startsWith('guest:')) {
+      const credits = sessionValue.split(':')[1]; // ex: n1t1r1e1
+      
+      const getCredit = (code: string) => {
+        const match = credits.match(new RegExp(`${code}(\\d)`));
+        return match ? parseInt(match[1]) : 0;
+      };
+
+      let isAllowed = false;
+      let errorMsg = '';
+
+      if (reportMode === 'natal') {
+        isAllowed = getCredit('n') > 0;
+        errorMsg = 'Você já utilizou seu crédito de Mapa Natal.';
+      } else if (reportMode === 'traditional') {
+        isAllowed = getCredit('t') > 0;
+        errorMsg = 'Você já utilizou seu crédito de Astrologia Tradicional.';
+      } else if (reportMode === 'solar') {
+        isAllowed = getCredit('r') > 0;
+        errorMsg = 'Você já utilizou seu crédito de Revolução Solar.';
+      } else if (reportMode === 'elective_magic') {
+        isAllowed = getCredit('e') > 0;
+        errorMsg = 'Você já utilizou seu crédito de Consulta Eletiva.';
+      } else {
+        // Modo não mapeado ou padrão
+        isAllowed = getCredit('n') > 0;
+        errorMsg = 'Crédito de visitante insuficiente para este módulo.';
+      }
+
+      if (!isAllowed) {
+        return NextResponse.json({ error: errorMsg }, { status: 403 });
+      }
+    }
+
     // 2. Validação básica de dados
     if (!chart || !chart.birthData) {
       return NextResponse.json(
@@ -244,12 +282,36 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const responseHeaders: Record<string, string> = {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    };
+
+    // Se for visitante, marca o crédito específico como usado
+    if (sessionValue?.startsWith('guest:')) {
+      const credits = sessionValue.split(':')[1];
+      const modeMap: Record<string, string> = {
+        'natal': 'n',
+        'traditional': 't',
+        'solar': 'r',
+        'elective_magic': 'e'
+      };
+      
+      const code = modeMap[reportMode as string] || 'n';
+      const newCredits = credits.replace(new RegExp(`${code}1`), `${code}0`);
+      const newRole = `guest:${newCredits}`;
+      
+      const duration = 60 * 60 * 24 * 3;
+      const headers = new Headers(responseHeaders);
+      headers.append('Set-Cookie', `astromap_session=${newRole}; Path=/; Max-Age=${duration}; HttpOnly; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+      headers.append('Set-Cookie', `astromap_role=${newRole}; Path=/; Max-Age=${duration}; SameSite=Lax${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
+      
+      return new Response(stream, { headers });
+    }
+
     return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
+      headers: responseHeaders,
     });
 
   } catch (error) {

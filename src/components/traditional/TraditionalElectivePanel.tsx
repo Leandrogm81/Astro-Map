@@ -103,6 +103,21 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   const [savedElectives, setSavedElectives] = useState<SavedElective[]>([]);
   const [saveToast, setSaveToast] = useState(false);
   
+  const [userRole, setUserRole] = useState<string>('admin');
+
+  useEffect(() => {
+    const match = document.cookie.match(/astromap_role=([^;]+)/);
+    if (match) setUserRole(match[1]);
+  }, []);
+
+  const isGuest = userRole.startsWith('guest:');
+  const isGuestUsed = (() => {
+    if (!isGuest) return false;
+    const credits = userRole.split(':')[1];
+    const match = credits.match(/e(\d)/);
+    return match ? match[1] === '0' : true;
+  })();
+  
   // Time Machine States
   const [isRealTime, setIsRealTime] = useState(true);
   const [targetDateStr, setTargetDateStr] = useState<string>('');
@@ -220,7 +235,10 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
         setSkyChart(calculatedSkyChart);
         setSkyTimestamp(moment);
         setError(null);
-      } catch (err) {
+        // Atualizar role após tentativa de geração (pode ter mudado para guest:used)
+      const match = document.cookie.match(/astromap_role=([^;]+)/);
+      if (match) setUserRole(match[1]);
+    } catch (err) {
         if (!active) return;
         console.error(err);
         setError('Não foi possível calcular o céu do momento.');
@@ -387,7 +405,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {veredict && !isCalculatingSky && (
+          {veredict && !isCalculatingSky && !isGuest && (
             <button
               onClick={() => {
                 const intention = RITUAL_INTENTIONS.find(i => i.id === intentionId);
@@ -486,17 +504,19 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                       {new Date(el.savedAt).toLocaleDateString('pt-BR')} • {el.score === 'propitious' ? '✅ Auspicioso' : el.score === 'neutral' ? '⚖️ Neutro' : '⛔ Hostil'}
                     </p>
                   </button>
-                  <button
-                    onClick={() => {
-                      deleteElective(el.id);
-                      setSavedElectives(getSavedElectives());
-                    }}
-                    title="Excluir eletiva"
-                    aria-label="Excluir eletiva salva"
-                    className="p-1.5 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {!isGuest && (
+                    <button
+                      onClick={() => {
+                        deleteElective(el.id);
+                        setSavedElectives(getSavedElectives());
+                      }}
+                      title="Excluir eletiva"
+                      aria-label="Excluir eletiva salva"
+                      className="p-1.5 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -960,23 +980,29 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                       <option value="sky_plus_natal">Céu Eletivo + Mapa Natal</option>
                     </select>
 
-                    <button
-                      onClick={handleGenerateInsight}
-                      disabled={isGenerating || isCalculatingSky || !veredict}
-                      className="group relative px-4 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-300 font-bold hover:text-white hover:bg-indigo-500/40 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGenerating || isCalculatingSky ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span className="text-xs">{isCalculatingSky ? 'Calculando...' : 'Evocando...'}</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span className="text-xs">Consultar Astros</span>
-                        </div>
-                      )}
-                    </button>
+                    {isGuestUsed ? (
+                      <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200 text-[10px] font-bold">
+                        Crédito de visitante esgotado.
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleGenerateInsight}
+                        disabled={isGenerating || isCalculatingSky || !veredict}
+                        className="group relative px-4 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-300 font-bold hover:text-white hover:bg-indigo-500/40 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isGenerating || isCalculatingSky ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span className="text-xs">{isCalculatingSky ? 'Calculando...' : 'Evocando...'}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span className="text-xs">Consultar Astros</span>
+                          </div>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
 

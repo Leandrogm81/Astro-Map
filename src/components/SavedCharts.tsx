@@ -13,6 +13,14 @@ interface SavedChartsProps {
 export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsProps) {
   const [charts, setCharts] = useState<SavedChart[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>('guest');
+
+  useEffect(() => {
+    const match = document.cookie.match(/astromap_role=([^;]+)/);
+    if (match) setUserRole(match[1]);
+  }, []);
+
+  const isGuest = userRole.startsWith('guest:');
 
   useEffect(() => {
     loadCharts();
@@ -131,13 +139,15 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
                   >
                     <Pencil className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   </button>
-                  <button
-                    onClick={(e) => handleDelete(savedChart.id, e)}
-                    className="h-9 w-9 md:h-auto md:w-auto flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                    title="Excluir"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                  </button>
+                    {!isGuest && (
+                      <button
+                        onClick={(e) => handleDelete(savedChart.id, e)}
+                        className="h-9 w-9 md:h-auto md:w-auto flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                      </button>
+                    )}
                   
                   <ChevronRight className="w-5 h-5 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>

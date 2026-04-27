@@ -112,6 +112,33 @@ export default function Home() {
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
   const [solarReportText, setSolarReportText] = useState<string>('');
+  const [userRole, setUserRole] = useState<string>('guest');
+
+  useEffect(() => {
+    const checkRole = () => {
+      const match = document.cookie.match(/astromap_role=([^;]+)/);
+      const role = match ? match[1] : 'guest';
+      console.log('[AstroMap] User Role:', role);
+      setUserRole(role);
+    };
+
+    checkRole();
+    // Monitorar mudanças no cookie (ex: após geração de relatório)
+    const interval = setInterval(checkRole, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isGuest = userRole.startsWith('guest:');
+
+  const allMenuItems = useMemo(() => [
+    { id: 'chart', label: 'Visão Geral', icon: Star },
+    { id: 'traditional', label: 'Tradicional', icon: Sparkles },
+    { id: 'houses', label: 'Casas', icon: Moon },
+    { id: 'aspects', label: 'Aspectos', icon: Sun },
+    { id: 'report', label: 'Relatório IA', icon: Sparkles },
+    { id: 'revolution', label: 'Rev. Solar', icon: Sun },
+    { id: 'elective', label: 'Eletiva', icon: Zap }
+  ], []);
 
   useEffect(() => {
     initSweph()
@@ -142,6 +169,17 @@ export default function Home() {
 
     setLoading(true);
     setError(null);
+
+    // Bloqueio de criação de múltiplos usuários para visitantes
+    if (isGuest) {
+      const { getSavedCharts } = await import('@/lib/storage');
+      const saved = getSavedCharts();
+      if (saved.length > 0 && !editingChartId) {
+        setError('Visitantes podem criar apenas um perfil. Exclua o atual para criar outro ou faça upgrade.');
+        setLoading(false);
+        return;
+      }
+    }
 
     try {
       const calculatedChart = await calculateNatalChart(birthData);
@@ -330,29 +368,29 @@ export default function Home() {
       </div>
 
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
-        <button
-          onClick={() => toggleSection('saved')}
-          className="w-full px-4 py-2.5 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Save className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-semibold text-purple-200">
-              Mapas Salvos
-            </h2>
-          </div>
-          {expandedSections.has('saved') ? (
-            <ChevronUp className="w-5 h-5 text-slate-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-slate-400" />
-          )}
-        </button>
+          <button
+            onClick={() => toggleSection('saved')}
+            className="w-full px-4 py-2.5 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Save className="w-5 h-5 text-purple-400" />
+              <h2 className="text-lg font-semibold text-purple-200">
+                Mapas Salvos
+              </h2>
+            </div>
+            {expandedSections.has('saved') ? (
+              <ChevronUp className="w-5 h-5 text-slate-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-slate-400" />
+            )}
+          </button>
 
-        {expandedSections.has('saved') && (
-          <div className="p-4 md:p-6">
-            <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
-          </div>
-        )}
-      </div>
+          {expandedSections.has('saved') && (
+            <div className="p-4 md:p-6">
+              <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
+            </div>
+          )}
+        </div>
     </>
   );
 
@@ -481,39 +519,17 @@ export default function Home() {
                     <UnifiedMenu 
                       activeTab={activeTab} 
                       onTabChange={(id: string) => setActiveTab(id as typeof activeTab)}
-                      items={[
-                        { id: 'chart', label: 'Visão Geral', icon: Star },
-                        { id: 'traditional', label: 'Tradicional', icon: Sparkles },
-                        { id: 'houses', label: 'Casas', icon: Moon },
-                        { id: 'aspects', label: 'Aspectos', icon: Sun },
-                        { id: 'report', label: 'Relatório IA', icon: Sparkles },
-                        { id: 'revolution', label: 'Rev. Solar', icon: Sun },
-                        { id: 'elective', label: 'Eletiva', icon: Zap },
-                      ]}
+                      items={allMenuItems}
                     />
                   </div>
 
                   {/* Desktop: Layout original com tabs e dropdown parcial */}
                   <div className="hidden md:flex items-center gap-2 overflow-x-auto scrollbar-none">
-                    <UnifiedMenu activeTab={activeTab} onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} />
-                    {[
-                      { id: 'traditional', label: 'Tradicional', icon: Sparkles },
-                      { id: 'revolution', label: 'Revolução Solar', icon: Sun },
-                      { id: 'elective', label: 'Eletiva Magística', icon: Zap },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                        className={`px-6 py-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
-                          activeTab === tab.id
-                            ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/5'
-                            : 'text-slate-400 border-transparent hover:text-slate-100 hover:bg-white/5'
-                        }`}
-                      >
-                        <tab.icon className="w-3.5 h-3.5" />
-                        {tab.label}
-                      </button>
-                    ))}
+                    <UnifiedMenu 
+                      activeTab={activeTab} 
+                      onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} 
+                      items={allMenuItems}
+                    />
                   </div>
                   
                   {/* Separador visual */}
