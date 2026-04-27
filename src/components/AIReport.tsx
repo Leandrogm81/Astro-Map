@@ -7,13 +7,14 @@ import {
   AlertCircle,
   Loader2,
   Trash2,
-  ScrollText
+  ScrollText,
+  Brain
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
-import { DEFAULT_MODEL_ID } from '@/lib/aiConfig';
+import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 
 interface AIReportProps {
   chart: NatalChart;
@@ -37,8 +38,9 @@ export default function AIReport({
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modelId] = useState(DEFAULT_MODEL_ID);
+  const [modelId, setModelId] = useState(DEFAULT_MODEL_ID);
   const [userRole, setUserRole] = useState<string>('admin');
+
 
   useEffect(() => {
     const match = document.cookie.match(/astromap_role=([^;]+)/);
@@ -235,6 +237,7 @@ export default function AIReport({
                 GERAR RELATÓRIO COM IA
               </button>
             )}
+
           </div>
         )}
 

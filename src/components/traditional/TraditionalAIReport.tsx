@@ -31,7 +31,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modelId] = useState(DEFAULT_MODEL_ID);
+
   const [userRole, setUserRole] = useState<string>('admin');
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
           chart,
           assessments,
           reportMode: 'traditional',
-          model: modelId,
+          model: DEFAULT_MODEL_ID,
         }),
       });
 
@@ -152,6 +152,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
                   <History className="w-5 h-5" />
                 </button>
               )}
+
 
 
               {isGuestUsed ? (

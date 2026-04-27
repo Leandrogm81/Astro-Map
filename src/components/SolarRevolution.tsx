@@ -48,6 +48,7 @@ export default function SolarRevolution({
   const [reportText, setReportText] = useState<string>('');
   const [generatingReport, setGeneratingReport] = useState(false);
 
+
   const getAspectSymbol = (type: string): string => {
     const symbols: Record<string, string> = {
       'conjunção': '☌', 'sextil': '⚹', 'quadratura': '◻', 'trígono': '△', 'oposição': '☍',
@@ -389,11 +390,14 @@ export default function SolarRevolution({
                 <Sparkles className="w-5 h-5 text-purple-400" />
                 <h4 className="font-bold text-slate-100 font-serif">Guia Anual Inteligente</h4>
               </div>
-              {reportText && !generatingReport && (
-                <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+
+                {reportText && !generatingReport && (
+                  <button onClick={handleDeleteReport} title="Apagar Relatório" className="text-slate-500 hover:text-red-400 transition-colors p-1">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="p-6 md:p-8">

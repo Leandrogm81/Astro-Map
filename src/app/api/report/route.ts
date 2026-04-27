@@ -209,9 +209,16 @@ export async function POST(request: NextRequest) {
           { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
-        max_tokens: 8000,
+        max_tokens: 12000,
         stream: true,
+        ...(model.includes('grok-4.1') ? {
+          reasoning: {
+            effort: 'high',
+            exclude: false
+          }
+        } : {})
       }),
+
     });
 
     if (!response.ok) {

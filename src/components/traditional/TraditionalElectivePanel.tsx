@@ -848,10 +848,12 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                   <div className="flex-1 flex flex-col">
                     {/* Scroll progress bar */}
                     {!isGenerating && scrollProgress > 0 && scrollProgress < 100 && (
-                      <div className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden">
+                      <div 
+                        className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden"
+                        style={{ '--scroll-width': `${scrollProgress}%` } as React.CSSProperties}
+                      >
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200"
-                          style={{ width: `${scrollProgress}%` }}
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200 w-[var(--scroll-width)]"
                         />
                       </div>
                     )}
