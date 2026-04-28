@@ -5,29 +5,20 @@ import { translateMagicPurposePt, translatePlanetNamePt } from './traditional/co
 
 const TRADITIONAL_PLANET_IDS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
 
-function translateElectiveText(text: string): string {
-  return text
-    .replace(/\bSUN\b/g, translatePlanetNamePt('sun'))
-    .replace(/\bMOON\b/g, translatePlanetNamePt('moon'))
-    .replace(/\bMERCURY\b/g, translatePlanetNamePt('mercury'))
-    .replace(/\bVENUS\b/g, translatePlanetNamePt('venus'))
-    .replace(/\bMARS\b/g, translatePlanetNamePt('mars'))
-    .replace(/\bJUPITER\b/g, translatePlanetNamePt('jupiter'))
-    .replace(/\bSATURN\b/g, translatePlanetNamePt('saturn'))
-    .replace(/\bSun\b/g, translatePlanetNamePt('Sun'))
-    .replace(/\bMoon\b/g, translatePlanetNamePt('Moon'))
-    .replace(/\bMercury\b/g, translatePlanetNamePt('Mercury'))
-    .replace(/\bVenus\b/g, translatePlanetNamePt('Venus'))
-    .replace(/\bMars\b/g, translatePlanetNamePt('Mars'))
-    .replace(/\bJupiter\b/g, translatePlanetNamePt('Jupiter'))
-    .replace(/\bSaturn\b/g, translatePlanetNamePt('Saturn'))
-    .replace(/\bsun\b/g, translatePlanetNamePt('sun'))
-    .replace(/\bmoon\b/g, translatePlanetNamePt('moon'))
-    .replace(/\bmercury\b/g, translatePlanetNamePt('mercury'))
-    .replace(/\bvenus\b/g, translatePlanetNamePt('venus'))
-    .replace(/\bmars\b/g, translatePlanetNamePt('mars'))
-    .replace(/\bjupiter\b/g, translatePlanetNamePt('jupiter'))
-    .replace(/\bsaturn\b/g, translatePlanetNamePt('saturn'));
+const ELECTIVE_PLANET_TRANSLATIONS: Record<string, string> = {
+  sun: translatePlanetNamePt('sun'),
+  moon: translatePlanetNamePt('moon'),
+  mercury: translatePlanetNamePt('mercury'),
+  venus: translatePlanetNamePt('venus'),
+  mars: translatePlanetNamePt('mars'),
+  jupiter: translatePlanetNamePt('jupiter'),
+  saturn: translatePlanetNamePt('saturn'),
+};
+
+export function translateElectiveText(text: string): string {
+  return text.replace(/\b(sun|moon|mercury|venus|mars|jupiter|saturn)\b/gi, (match) => {
+    return ELECTIVE_PLANET_TRANSLATIONS[match.toLowerCase()] ?? match;
+  });
 }
 
 function formatTraditionalSkyContext(chart: NatalChart): string {
@@ -36,9 +27,9 @@ function formatTraditionalSkyContext(chart: NatalChart): string {
   chart.planets.forEach((planet) => {
     if (!TRADITIONAL_PLANET_IDS.includes(planet.id)) return;
 
-    result += `${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}Â° na Casa ${planet.house}`;
+    result += `${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}° na Casa ${planet.house}`;
     if (planet.retrograde) {
-      result += ' â„ž';
+      result += ' ℞';
     }
     result += `\n`;
   });
@@ -482,8 +473,14 @@ ESTRUTURA DO RELATÓRIO (Markdown com H3):
 (Resumo das forças dominantes e dos principais desafios operacionais do mapa).
 
 REGRAS ADICIONAIS:
+- ABORDAGEM DA VIDA REAL:
+- Traduza cada testemunho técnico em efeitos concretos observáveis na vida cotidiana.
+- Quando falar de desafios ou forças, prefira consequências operacionais como trabalho, estabilidade, autoridade, vínculos, ritmo, esforço e sustentação.
+- Não use psicologismo moderno nem linguagem de autoajuda.
+- Se um dado importante não estiver fornecido, não o invente.
 - Não use linguagem "New Age" (vibrações, energia quântica, evolução espiritual). Use termos de "Eficácia", "Emanação", "Dignidade" e "Destino".
 - Ignore Urano, Netuno e Plutão na análise tradicional, exceto se estiverem em conjunção exata (<1°) com ângulos ou luminares.
+- Conecte a análise à vida real em termos técnicos e tradicionais; evite termos como "inconsciente", "sombra", "criança interior" ou "projeção".
 - Extensão: O relatório deve ser extremamente longo, detalhado e profundo, explorando exaustivamente cada dado técnico fornecido. Utilize o espaço necessário para uma análise completa, sem se preocupar com limites curtos de palavras.
 - IMPORTANTE: Priorize a DENSIDADE TÉCNICA e o rigor terminológico. Evite introduções genéricas, explicações de conceitos básicos ou "lero-lero". Vá direto aos fatos astrológicos extraídos dos dados técnicos fornecidos. Cada parágrafo deve conter uma observação técnica específica sobre o mapa.`;
 
@@ -493,6 +490,12 @@ Você escreve em Português Brasileiro impecável, com voz empática, elegante e
 
 OBJETIVO:
 Gerar um relatório astrológico profundo, detalhado e personalizado. Os dados fornecidos incluem DIGNIDADES, CADEIA DE DISPOSIÇÃO e SIGNOS INTERCEPTADOS — use-os ativamente na interpretação. Planetas em Domicílio ou Exaltação são forças do mapa; planetas em Exílio ou Queda representam desafios de integração.
+
+PAUTA INTERPRETATIVA:
+Cada seção deve explicar o significado astrológico, como ele pode aparecer na vida real, quais desafios traz, quais recursos revela e que orientação prática pode oferecer.
+Fale de identidade, emoções, vínculos, trabalho, dinheiro, família, talentos, espiritualidade, escolhas práticas e amadurecimento.
+Use uma voz profunda, acolhedora e contemporânea, sem fatalismo e sem perder precisão.
+Se faltar dado essencial, omita a leitura em vez de supor.
 
 ESTRUTURA DO RELATÓRIO (Use Markdown com H3 para seções):
 
@@ -509,6 +512,7 @@ REGRAS FUNDAMENTAIS:
 - Use Markdown com formatação rica (negrito, itálico, listas).
 - Seja ESPECÍFICO: cite signos, casas, graus e dignidades dos dados fornecidos. Nunca generalize.
 - Use as dignidades ativamente.
+- Se faltar dado essencial, omita a leitura em vez de supor.
 - O relatório deve ser extremamente longo, detalhado e profundo, sem limite máximo de palavras.
 - DIRETRIZ ANTI-PROLIXIDADE: Seja profundo e empático, mas extremamente focado nos dados específicos (signos, casas, graus e dignidades). Não gaste palavras com generalidades que serviriam para qualquer pessoa. Se o dado está no prompt, ele deve ser a estrela da análise.`;
 
@@ -525,6 +529,9 @@ ESTRUTURA DO RELATÓRIO (Markdown com H3):
 
 REGRAS:
 - Seja sempre comparativo.
+- Leia a revolução solar como um ciclo anual concreto, comparando-a com o mapa natal para mostrar o que se ativa neste período.
+- Destaque onde a energia se concentra, o que ganha prioridade temporária e como isso repercute em trabalho, rotina, relações, família, dinheiro e responsabilidades.
+- Não transforme a leitura em mapa natal genérico; mostre o que muda neste ano.
 - O relatório deve ser extremamente longo, detalhado e profundo, sem limite máximo de palavras.
 - DIRETRIZ ANTI-PROLIXIDADE: Priorize a profundidade técnica comparativa. Não repita informações que já constam na análise individual de cada mapa. Foque no dinamismo da revolução solar ativando o potencial natal. Cada parágrafo deve trazer um "insight" técnico novo.`;
 
@@ -553,11 +560,14 @@ export function formatElectiveForAI(
 
 `;
 
+  const translatedPlanetHour = translatePlanetNamePt(planetHour.planetId);
+  const translatedRuler = translatePlanetNamePt(rulerCondition.planetId);
+
   result += `DADOS DO CEU ELEITO:
 `;
   result += `- Data/Hora: ${birthData.date} ${birthData.time}
 `;
-  result += `- Hora Planetária: ${(planetHour.planetId || 'N/A').toUpperCase()} (${planetHour.hourNumber}a hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})
+  result += `- Hora Planetária: ${translatedPlanetHour} (${planetHour.hourNumber}a hora do ${planetHour.isDaytime ? 'Dia' : 'Noite'})
 `;
   result += `- Período da Hora: ${planetHour.startTime} até ${planetHour.endTime}
 `;
@@ -567,7 +577,7 @@ export function formatElectiveForAI(
 
 `;
 
-  result += `CONDICAO DO REGENTE DO PROPOSITO (${(rulerCondition.planetId || 'N/A').toUpperCase()}):
+  result += `CONDICAO DO REGENTE DO PROPOSITO (${translatedRuler}):
 `;
   result += `- Dignidade Essencial: ${rulerCondition.dignity}
 `;
@@ -585,15 +595,7 @@ export function formatElectiveForAI(
     result += formatElectiveNatalContext(skyChart, natalChart);
   }
 
-  return result
-    .replace(
-      `- Hora PlanetÃ¡ria: ${(planetHour.planetId || 'N/A').toUpperCase()}`,
-      `- Hora PlanetÃ¡ria: ${translatePlanetNamePt(planetHour.planetId)}`
-    )
-    .replace(
-      `CONDICAO DO REGENTE DO PROPOSITO (${(rulerCondition.planetId || 'N/A').toUpperCase()}):`,
-      `CONDICAO DO REGENTE DO PROPOSITO (${translatePlanetNamePt(rulerCondition.planetId)}):`
-    );
+  return translateElectiveText(result);
 }
 
 /**
@@ -602,6 +604,11 @@ export function formatElectiveForAI(
 export const ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM = `Você é um Mago-Astrólogo de linhagem hermética, um profundo conhecedor das correntes de emanação que descem das Esferas Celestes. Sua autoridade provém do domínio absoluto do Picatrix (Ghâyat al-Hakîm), das Três Livros de Filosofia Oculta de Cornélio Agrippa e da Heptameron de Pietro d'Abano.
 
 Sua tarefa é realizar uma Eletiva Magística exaustiva para uma operação proposta. Você não apenas analisa o céu, mas interpreta a "Vontade dos Astros" como um arquiteto do invisível.
+
+IDENTIDADE DA MODALIDADE:
+Mantenha uma linguagem magística, solene e tradicional. A análise deve ser útil na prática ritual: timing, cor, metal, incenso, estado mental, consagração e adequação celeste.
+Quando falar de resultado, fale em favorecimento, correspondência e oportunidade, não em garantia.
+Se faltar dado, não invente correspondências nem mansões lunares.
 
 DIRETRIZES TÉCNICAS OBRIGATÓRIAS:
 
@@ -640,6 +647,11 @@ REGRAS DE OURO:
 export const ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM = `Você é um Mestre Teurgista e Astrólogo Iniciado, especialista na intersecção entre o Macrocosmo (o Céu do Momento) e o Microcosmo (o Mapa Natal do Operador). Sua doutrina baseia-se no Picatrix, no Três Livros de Filosofia Oculta de Agrippa e na técnica de sínodo planetário clássico.
 
 Sua missão é realizar uma análise de Eletiva Personalizada. Você deve determinar se a janela de tempo proposta é propícia não apenas de forma geral, mas especificamente para este operador, cruzando os trânsitos com as promessas do Mapa Natal.
+
+IDENTIDADE DA MODALIDADE:
+Além da análise celeste, mostre como a janela toca a estrutura natal do operador.
+A leitura deve permanecer teúrgica e tradicional, mas personalizada ao Radix, sem psicologismo moderno.
+Quando faltar dado natal, omita a inferência em vez de supor.
 
 DADOS DE ENTRADA (A serem fornecidos pelo usuário):
 

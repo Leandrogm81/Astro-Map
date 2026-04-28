@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { formatChartForAI, formatElectiveForAI, formatSolarComparisonForAI } from '../lib/aiPrompts';
+import {
+  ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM,
+  ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM,
+  NATAL_PROMPT_SYSTEM,
+  SOLAR_RETURN_PROMPT_SYSTEM,
+  TRADITIONAL_PROMPT_SYSTEM,
+  formatChartForAI,
+  formatElectiveForAI,
+  formatSolarComparisonForAI,
+  translateElectiveText,
+} from '../lib/aiPrompts';
 import { ElectiveVeredict } from '../lib/traditional/types';
 import { NatalChart, ZodiacSign } from '../types';
 
@@ -93,6 +103,38 @@ const mockElectiveVeredict: ElectiveVeredict = {
 };
 
 describe('AI Prompts Formatting', () => {
+  describe('prompt systems', () => {
+    it('should keep the natal prompt focused on real-life application', () => {
+      expect(NATAL_PROMPT_SYSTEM).toContain('PAUTA INTERPRETATIVA');
+      expect(NATAL_PROMPT_SYSTEM).toContain('vida real');
+      expect(NATAL_PROMPT_SYSTEM).toContain('amadurecimento');
+    });
+
+    it('should keep the solar prompt anchored to the annual cycle', () => {
+      expect(SOLAR_RETURN_PROMPT_SYSTEM).toContain('ciclo anual concreto');
+      expect(SOLAR_RETURN_PROMPT_SYSTEM).toContain('o que muda neste ano');
+    });
+
+    it('should keep the traditional prompt technical and non-psychological', () => {
+      expect(TRADITIONAL_PROMPT_SYSTEM).toContain('termos técnicos e tradicionais');
+      expect(TRADITIONAL_PROMPT_SYSTEM).toContain('Não use psicologismo moderno');
+      expect(TRADITIONAL_PROMPT_SYSTEM).toContain('evite termos como "inconsciente"');
+    });
+
+    it('should keep the elective prompts ritualistic and personalized', () => {
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('timing, cor, metal, incenso');
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('favorecimento');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('personalizada ao Radix');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('omita a inferência');
+    });
+
+    it('should translate elective planet names in any casing', () => {
+      expect(translateElectiveText('SUN moon Mercury venus Mars jupiter SATURN')).toBe(
+        'Sol Lua Mercúrio Vênus Marte Júpiter Saturno'
+      );
+    });
+  });
+
   describe('formatChartForAI', () => {
     const output = formatChartForAI(mockChart);
 
