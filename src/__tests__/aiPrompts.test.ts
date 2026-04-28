@@ -56,6 +56,7 @@ const mockChart: NatalChart = {
 
 const mockSolarChart: NatalChart = {
   ...mockChart,
+  isDayChart: false,
   birthData: {
     ...mockChart.birthData,
     date: '2026-05-15',
@@ -64,10 +65,17 @@ const mockSolarChart: NatalChart = {
   planets: [
     { id: 'sun', name: 'Sol', symbol: '☉', longitude: 54.2, latitude: 0, speed: 0.98, sign: 'Touro', degree: 24.2, house: 4, retrograde: false },
     { id: 'moon', name: 'Lua', symbol: '☽', longitude: 250.1, latitude: 0, speed: 12.0, sign: 'Sagitário', degree: 10.1, house: 11, retrograde: false },
+    { id: 'mercury', name: 'Mercúrio', symbol: '☿', longitude: 20.7, latitude: 0, speed: 0.4, sign: 'Áries', degree: 20.7, house: 3, retrograde: false },
+    { id: 'venus', name: 'Vênus', symbol: '♀', longitude: 64.8, latitude: 0, speed: 1.1, sign: 'Gêmeos', degree: 4.8, house: 4, retrograde: false },
+    { id: 'mars', name: 'Marte', symbol: '♂', longitude: 14.2, latitude: 0, speed: 0.7, sign: 'Áries', degree: 14.2, house: 3, retrograde: false },
     { id: 'jupiter', name: 'Júpiter', symbol: '♃', longitude: 125.5, latitude: 0, speed: 0.1, sign: 'Leão', degree: 5.5, house: 7, retrograde: false },
+    { id: 'saturn', name: 'Saturno', symbol: '♄', longitude: 8.8, latitude: 0, speed: 0.04, sign: 'Áries', degree: 8.8, house: 3, retrograde: false },
   ],
   aspects: [
     { planet1: 'Sol', planet2: 'Lua', type: 'trine', angle: 195.9, orb: 5.9, applying: false },
+    { planet1: 'Marte', planet2: 'Vênus', type: 'square', angle: 40.5, orb: 4.5, applying: false },
+    { planet1: 'Saturno', planet2: 'Marte', type: 'conjunction', angle: 6.0, orb: 6.0, applying: true },
+    { planet1: 'Lua', planet2: 'Júpiter', type: 'sextile', angle: 68.0, orb: 8.0, applying: false },
   ],
   ascendant: 355.0,
   mc: 265.0,
@@ -93,7 +101,7 @@ const mockElectiveVeredict: ElectiveVeredict = {
   moonStatus: {
     phase: 'Gibosa Minguante',
     isVoidOfCourse: false,
-    aspects: ['Lua sextil Venus'],
+    aspects: [],
   },
   rulerCondition: {
     planetId: 'venus',
@@ -126,6 +134,14 @@ describe('AI Prompts Formatting', () => {
       expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('favorecimento');
       expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('personalizada ao Radix');
       expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('omita a inferência');
+    });
+
+    it('should keep elective prompts guarded against hallucinations', () => {
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('REGRAS DE CONFIABILIDADE');
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('EXEMPLOS DE COMPORTAMENTO');
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('Não infira Ascendente');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('REGRAS DE CONFIABILIDADE');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('Curso Vazio');
     });
 
     it('should translate elective planet names in any casing', () => {
@@ -220,6 +236,25 @@ describe('AI Prompts Formatting', () => {
       expect(output).toContain('MODO DE LEITURA: CEU DO MOMENTO + MAPA NATAL');
       expect(output).toContain('DADOS NATAIS DE REFER');
       expect(output).toContain('cai na Casa');
+    });
+
+    it('should include guarded calculated context for the elective sky', () => {
+      const output = formatElectiveForAI(mockElectiveVeredict, mockSolarChart, 'sky_only');
+
+      expect(output).toContain('REGRAS DE CONFIABILIDADE');
+      expect(output).toContain('DADOS CALCULADOS PELO ASTROMAP');
+      expect(output).toContain('Ascendente da eleição');
+      expect(output).toContain('Regente do Ascendente');
+      expect(output).toContain('Casa 3:');
+      expect(output).toContain('(Cadente)');
+      expect(output).toContain('OS SETE GOVERNADORES');
+      expect(output).toContain('Saturno');
+      expect(output).toContain('Mercúrio');
+      expect(output).toContain('ASPECTOS TRADICIONAIS REAIS');
+      expect(output).toContain('DADOS NÃO CALCULADOS');
+      expect(output).toContain('Curso Vazio da Lua: NÃO CALCULADO');
+      expect(output).toContain('Aspectos da Lua: NÃO CALCULADOS');
+      expect(output).toContain('EXEMPLOS DE COMPORTAMENTO');
     });
   });
 });
