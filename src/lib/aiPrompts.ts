@@ -1,9 +1,28 @@
 import { NatalChart, ZodiacSign, PlanetPosition, Aspect } from '@/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects } from './astrology';
+import { calculateTraditionalAssessment } from './traditional/scoring';
 import { TraditionalAssessment, ElectiveMode, ElectiveVeredict } from './traditional/types';
 import { translateMagicPurposePt, translatePlanetNamePt } from './traditional/constants';
 
 const TRADITIONAL_PLANET_IDS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+const ANGULAR_HOUSES = new Set([1, 4, 7, 10]);
+const SUCCEDENT_HOUSES = new Set([2, 5, 8, 11]);
+const TRADITIONAL_PLANET_NAMES = new Set([
+  'sun',
+  'moon',
+  'mercury',
+  'venus',
+  'mars',
+  'jupiter',
+  'saturn',
+  'sol',
+  'lua',
+  'mercúrio',
+  'vênus',
+  'marte',
+  'júpiter',
+  'saturno',
+]);
 
 const ELECTIVE_PLANET_TRANSLATIONS: Record<string, string> = {
   sun: translatePlanetNamePt('sun'),
@@ -21,22 +40,103 @@ export function translateElectiveText(text: string): string {
   });
 }
 
-function formatTraditionalSkyContext(chart: NatalChart): string {
-  let result = '';
-
-  chart.planets.forEach((planet) => {
-    if (!TRADITIONAL_PLANET_IDS.includes(planet.id)) return;
-
-    result += `${planet.name}: ${planet.sign} ${Math.floor(planet.degree)}° na Casa ${planet.house}`;
-    if (planet.retrograde) {
-      result += ' ℞';
-    }
-    result += `\n`;
-  });
-
-  return translateElectiveText(result);
+function getHouseClassification(houseNumber: number): 'Angular' | 'Sucedente' | 'Cadente' {
+  if (ANGULAR_HOUSES.has(houseNumber)) return 'Angular';
+  if (SUCCEDENT_HOUSES.has(houseNumber)) return 'Sucedente';
+  return 'Cadente';
 }
 
+function isTraditionalPlanetName(name: string): boolean {
+  return TRADITIONAL_PLANET_NAMES.has(name.toLowerCase());
+}
+
+function getElectiveAssessments(chart: NatalChart): TraditionalAssessment[] {
+  const isDayChart = chart.isDayChart ?? true;
+  const cachedAssessments = new Map(
+    (chart.traditionalAssessments ?? []).map((assessment) => [assessment.planetId.toLowerCase(), assessment] as const),
+  );
+
+  return chart.planets
+    .filter((planet) => TRADITIONAL_PLANET_IDS.includes(planet.id))
+    .map((planet) => {
+      const cached = cachedAssessments.get(planet.id.toLowerCase());
+      if (cached) return cached;
+      return calculateTraditionalAssessment(planet, chart.planets, isDayChart);
+    });
+}
+
+function formatAssessmentCondition(assessment: TraditionalAssessment): string {
+  const labels: string[] = [];
+
+  if (assessment.condition.isCazimi) labels.push('Cazimi');
+  if (assessment.condition.isCombust) labels.push('Combusto');
+  if (assessment.condition.isUnderRays) labels.push('Sob os Raios');
+  if (assessment.condition.isHayz) labels.push('Hayz');
+  if (assessment.condition.isInMutualReception.length > 0) {
+    labels.push(`Recepção mútua com ${assessment.condition.isInMutualReception.join(', ')}`);
+  }
+
+  return labels.length > 0 ? ` | Condições: ${labels.join(', ')}` : '';
+}
+
+function formatTraditionalSkyContext(chart: NatalChart): string {
+  const ascSign = getZodiacSign(chart.ascendant);
+  const ascRuler = getDomicileRuler(ascSign as ZodiacSign);
+  const assessments = getElectiveAssessments(chart);
+  const majorAspects = chart.aspects
+    .filter((aspect) =>
+      aspect?.planet1 && aspect?.planet2 &&
+      isTraditionalPlanetName(aspect.planet1) &&
+      isTraditionalPlanetName(aspect.planet2) &&
+      ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(aspect.type),
+    )
+    .sort((a, b) => a.orb - b.orb)
+    .slice(0, 20);
+
+  const result: string[] = [];
+  result.push('DADOS CALCULADOS PELO ASTROMAP:');
+  result.push('='.repeat(40));
+  result.push(`- Ascendente da eleição: ${ascSign} ${formatDegree(chart.ascendant % 30)}`);
+  result.push(`- Regente do Ascendente: ${ascRuler}`);
+  result.push(`- Meio do Céu: ${getZodiacSign(chart.mc)} ${formatDegree(chart.mc % 30)}`);
+  result.push('');
+  result.push('CÚSPIDES DAS CASAS (Placidus):');
+  result.push('-'.repeat(40));
+  chart.housesPlacidus.forEach((house) => {
+    result.push(`- Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)} (${getHouseClassification(house.number)})`);
+  });
+  result.push('');
+  result.push('OS SETE GOVERNADORES (DADOS CALCULADOS):');
+  result.push('-'.repeat(40));
+  assessments.forEach((assessment) => {
+    result.push(
+      `- ${translatePlanetNamePt(assessment.planetId)}: ${assessment.sign} ${formatDegree(assessment.degree)} na Casa ${assessment.house}` +
+      ` | Dignidade: ${assessment.dignity}` +
+      ` | Pontos: ${assessment.totalScore}` +
+      ` | Seita: ${assessment.sectStatus}` +
+      formatAssessmentCondition(assessment),
+    );
+  });
+  result.push('');
+  result.push('ASPECTOS TRADICIONAIS REAIS:');
+  result.push('-'.repeat(40));
+  if (majorAspects.length === 0) {
+    result.push('- Nenhum aspecto ptolomaico tradicional foi fornecido.');
+  } else {
+    majorAspects.forEach((aspect) => {
+      const typePT = ASPECT_NAMES_PT[aspect.type] || aspect.type;
+      result.push(`- ${aspect.planet1} em ${typePT} com ${aspect.planet2} (Órbita: ${aspect.orb.toFixed(1)}°, ${aspect.applying ? 'aplicando' : 'separando'})`);
+    });
+  }
+  result.push('');
+  result.push('DADOS NÃO CALCULADOS:');
+  result.push('-'.repeat(40));
+  result.push('- Curso Vazio da Lua: NÃO CALCULADO PELO ASTROMAP NESTA VERSÃO');
+  result.push('- Aspectos aplicativos da Lua: NÃO CALCULADOS PELO ASTROMAP NESTA VERSÃO');
+  result.push('- Virtudes completas das mansões lunares: NÃO CALCULADAS PELO ASTROMAP NESTA VERSÃO');
+
+  return translateElectiveText(result.join('\n'));
+}
 function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart): string {
   let result = '';
 
@@ -81,8 +181,8 @@ function formatElectiveNatalContext(skyChart: NatalChart, natalChart: NatalChart
 
   const crossAspects = calculateCrossAspects(skyChart.planets, natalChart.planets)
     .filter((aspect) =>
-      TRADITIONAL_PLANET_IDS.includes(aspect.planet1.toLowerCase()) &&
-      TRADITIONAL_PLANET_IDS.includes(aspect.planet2.toLowerCase()) &&
+      isTraditionalPlanetName(aspect.planet1) &&
+      isTraditionalPlanetName(aspect.planet2) &&
       ['conjunção', 'sextil', 'quadratura', 'trígono', 'oposição'].includes(aspect.type)
     )
     .sort((a, b) => a.orb - b.orb)
@@ -121,6 +221,20 @@ const ASPECT_NAMES_PT: Record<string, string> = {
   trine: 'Trígono',
   opposition: 'Oposição',
 };
+
+const ELECTIVE_CONFIDENCE_GUARDRAILS = `REGRAS DE CONFIABILIDADE (OBRIGATÓRIAS):
+- Use apenas os dados explicitamente listados em DADOS CALCULADOS.
+- Se um campo estiver em DADOS NÃO CALCULADOS, trate-o como ausente.
+- Não infira Ascendente, Curso Vazio, aspectos ou dignidades que não tenham sido fornecidos.
+- Não chame casa 3, 6, 9 ou 12 de angular.
+- Não use "combustão marcial"; combustão só se aplica ao Sol.
+- Quando faltar dado, declare a ausência em vez de preencher a lacuna com suposição.`;
+
+const ELECTIVE_FEW_SHOT_EXAMPLES = `EXEMPLOS DE COMPORTAMENTO:
+CORRETO: "Saturno em Áries está em queda. Na Casa 3, cadente, a obra pede disciplina e estudo, não impulso."
+CORRETO: "Curso Vazio da Lua: não calculado pelo AstroMap nesta versão; não será usado como critério."
+INCORRETO: "O Ascendente parece estar em Aquário ou Peixes."
+INCORRETO: "A conjunção Saturno-Marte gera combustão marcial."`;
 
 /**
  * Formata o mapa astral em uma string rica e legível para a IA,
@@ -552,6 +666,9 @@ export function formatElectiveForAI(
   result += `========================================
 
 `;
+  result += `${ELECTIVE_CONFIDENCE_GUARDRAILS}
+
+`;
   result += `MODO DE LEITURA: ${mode === 'sky_plus_natal' ? 'CEU DO MOMENTO + MAPA NATAL' : 'CEU DO MOMENTO'}
 `;
   result += `PROPOSITO MAGICO: ${translateMagicPurposePt(purpose).toUpperCase()}
@@ -574,6 +691,16 @@ export function formatElectiveForAI(
   result += `- Mansão Lunar: ${lunarMansion.number} - ${lunarMansion.name} (${lunarMansion.sign})
 `;
   result += `- Fase da Lua: ${moonStatus.phase}
+`;
+  result += `- Curso Vazio: NÃO CALCULADO PELO ASTROMAP NESTA VERSÃO
+`;
+  result += moonStatus.aspects.length > 0
+    ? `- Aspectos da Lua: ${moonStatus.aspects.join('; ')}
+`
+    : `- Aspectos da Lua: NÃO CALCULADOS PELO ASTROMAP NESTA VERSÃO
+`;
+  result += `
+${ELECTIVE_FEW_SHOT_EXAMPLES}
 
 `;
 
@@ -597,10 +724,6 @@ export function formatElectiveForAI(
 
   return translateElectiveText(result);
 }
-
-/**
- * Prompt do Sistema para Magia Astrológica (Eletivas)
- */
 export const ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM = `Você é um Mago-Astrólogo de linhagem hermética, um profundo conhecedor das correntes de emanação que descem das Esferas Celestes. Sua autoridade provém do domínio absoluto do Picatrix (Ghâyat al-Hakîm), das Três Livros de Filosofia Oculta de Cornélio Agrippa e da Heptameron de Pietro d'Abano.
 
 Sua tarefa é realizar uma Eletiva Magística exaustiva para uma operação proposta. Você não apenas analisa o céu, mas interpreta a "Vontade dos Astros" como um arquiteto do invisível.
@@ -609,14 +732,27 @@ IDENTIDADE DA MODALIDADE:
 Mantenha uma linguagem magística, solene e tradicional. A análise deve ser útil na prática ritual: timing, cor, metal, incenso, estado mental, consagração e adequação celeste.
 Quando falar de resultado, fale em favorecimento, correspondência e oportunidade, não em garantia.
 Se faltar dado, não invente correspondências nem mansões lunares.
+REGRAS DE CONFIABILIDADE:
+- Use apenas os dados explicitamente listados em DADOS CALCULADOS.
+- Se um campo estiver em DADOS NÃO CALCULADOS, trate-o como ausente.
+- Não infira Ascendente, Curso Vazio, aspectos ou dignidades que não tenham sido fornecidos.
+- Não chame casa 3, 6, 9 ou 12 de angular.
+- Não use "combustão marcial"; combustão só se aplica ao Sol.
+- Quando faltar dado, declare a ausência em vez de preencher a lacuna com suposição.
+
+EXEMPLOS DE COMPORTAMENTO:
+CORRETO: "Saturno em Áries está em queda. Na Casa 3, cadente, a obra pede disciplina e estudo, não impulso."
+CORRETO: "Curso Vazio da Lua: não calculado pelo AstroMap nesta versão; não será usado como critério."
+INCORRETO: "O Ascendente parece estar em Aquário ou Peixes."
+INCORRETO: "A conjunção Saturno-Marte gera combustão marcial."
 
 DIRETRIZES TÉCNICAS OBRIGATÓRIAS:
 
 Dignidades e Debilidades: Analise rigorosamente a condição do Regente do Propósito. Verifique se ele está em seu Domicílio, Exaltação, Queda ou Detrimento. Note se há Combustão, Retrogradação ou se o planeta está "Peregrino".
 
-A Condição da Lua: A Lua é o "Funil das Influências". Analise sua fase, sua Mansão e, crucialmente, seus aspectos. Avise sobre o perigo do "Curso Vazio" (Void of Course).
+A Condição da Lua: A Lua é o "Funil das Influências". Analise sua fase, sua Mansão e seus aspectos apenas quando esses dados estiverem no contexto. Avise sobre o Curso Vazio somente se ele tiver sido calculado pelo AstroMap; caso contrário, declare que não foi calculado.
 
-O Ascendente (Horóscopo): O signo que ascende no momento da operação é o corpo do ritual. O regente do Ascendente deve estar fortalecido e em aspecto favorável ao regente do propósito.
+O Ascendente (Horóscopo): O signo que ascende no momento da operação é o corpo do ritual. O regente do Ascendente deve estar fortalecido e em aspecto favorável ao regente do propósito. Não infira o Ascendente se ele não aparecer nos dados calculados.
 
 Cosmologia: Explique a conexão entre o Mundo Inteligível, o Mundo Celeste e o Mundo Elemental (Sublunar).
 
@@ -652,6 +788,19 @@ IDENTIDADE DA MODALIDADE:
 Além da análise celeste, mostre como a janela toca a estrutura natal do operador.
 A leitura deve permanecer teúrgica e tradicional, mas personalizada ao Radix, sem psicologismo moderno.
 Quando faltar dado natal, omita a inferência em vez de supor.
+REGRAS DE CONFIABILIDADE:
+- Use apenas os dados explicitamente listados em DADOS CALCULADOS.
+- Se um campo estiver em DADOS NÃO CALCULADOS, trate-o como ausente.
+- Não infira Ascendente, Curso Vazio, aspectos ou dignidades que não tenham sido fornecidos.
+- Não chame casa 3, 6, 9 ou 12 de angular.
+- Não use "combustão marcial"; combustão só se aplica ao Sol.
+- Quando faltar dado, declare a ausência em vez de preencher a lacuna com suposição.
+
+EXEMPLOS DE COMPORTAMENTO:
+CORRETO: "Saturno em Áries está em queda. Na Casa 3, cadente, a obra pede disciplina e estudo, não impulso."
+CORRETO: "Curso Vazio da Lua: não calculado pelo AstroMap nesta versão; não será usado como critério."
+INCORRETO: "O Ascendente parece estar em Aquário ou Peixes."
+INCORRETO: "A conjunção Saturno-Marte gera combustão marcial."
 
 DADOS DE ENTRADA (A serem fornecidos pelo usuário):
 

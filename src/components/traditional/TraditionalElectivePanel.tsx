@@ -757,7 +757,13 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Fase da Lua</div>
                 <div className="text-white font-bold text-lg">{veredict?.moonStatus.phase ?? '--'}</div>
                 <div className="text-[10px] text-slate-400 mt-1 uppercase">
-                  {veredict?.moonStatus.isVoidOfCourse ? <span className="text-red-400">Curso Vazio!</span> : <span className="text-emerald-400">Em curso ativo</span>}
+                  {veredict?.moonStatus?.isVoidOfCourse ? (
+                    <span className="text-red-400">Curso Vazio!</span>
+                  ) : veredict?.moonStatus?.aspects.length ? (
+                    <span className="text-emerald-400">Em curso ativo</span>
+                  ) : (
+                    <span className="text-amber-400">Curso Vazio não calculado</span>
+                  )}
                 </div>
               </div>
 
