@@ -32,20 +32,8 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [userRole, setUserRole] = useState<string>('admin');
-
-  useEffect(() => {
-    const match = document.cookie.match(/astromap_role=([^;]+)/);
-    if (match) setUserRole(match[1]);
-  }, []);
-
-  const isGuest = userRole.startsWith('guest:');
-  const isGuestUsed = (() => {
-    if (!isGuest) return false;
-    const credits = userRole.split(':')[1];
-    const match = credits.match(/t(\d)/);
-    return match ? match[1] === '0' : true;
-  })();
+  const canDeleteReport = true;
+  const reportLimitReached = false;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -143,7 +131,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
             </div>
 
             <div className="flex items-center gap-3">
-              {reportText && !isGuest && (
+              {reportText && canDeleteReport && (
                 <button
                   onClick={clearReport}
                   className="p-2.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all"
@@ -155,7 +143,7 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
 
 
 
-              {isGuestUsed ? (
+              {reportLimitReached ? (
                 <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-200 text-xs max-w-[200px]">
                   Crédito de visitante para o Tratado utilizado.
                 </div>
@@ -270,4 +258,3 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
     </div>
   );
 }
-

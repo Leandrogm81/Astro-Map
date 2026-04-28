@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { BirthData, NatalChart, AIReport as AIReportType, SavedChart } from '@/types';
 import { initSweph, calculateNatalChart } from '@/lib/ephemeris';
-import { saveChart, updateChart, getReportKey, getReportKeyLegacy } from '@/lib/storage';
+import { saveChartSynced, updateChartSynced, getReportKey, getReportKeyLegacy } from '@/lib/storage';
 import BirthForm from '@/components/BirthForm';
 import AstroChart from '@/components/AstroChart';
 import PlanetTable from '@/components/PlanetTable';
@@ -12,6 +12,10 @@ import HousesTable from '@/components/HousesTable';
 import AspectsList from '@/components/AspectsList';
 import SavedCharts from '@/components/SavedCharts';
 import UnifiedMenu from '@/components/UnifiedMenu';
+import LogoutButton from '@/components/LogoutButton';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { getTierLimits } from '@/lib/limits';
 
 // Carregamento dinâmico de componentes pesados para otimização de performance
 const AIReport = dynamic(() => import('@/components/AIReport'), {
@@ -112,12 +116,14 @@ export default function Home() {
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
   const [solarReportText, setSolarReportText] = useState<string>('');
-  const [userRole, setUserRole] = useState<string>('guest');
+  const { user } = useAuth();
+  const { profile, loading: profileLoading, refreshProfile } = useProfile();
+  const [, setUserRole] = useState<string>('user');
 
   useEffect(() => {
     const checkRole = () => {
-      const match = document.cookie.match(/astromap_role=([^;]+)/);
-      const role = match ? match[1] : 'guest';
+      const match: RegExpMatchArray | null = null;
+      const role = match ? match[1] : 'user';
       console.log('[AstroMap] User Role:', role);
       setUserRole(role);
     };
@@ -128,7 +134,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const isGuest = userRole.startsWith('guest:');
+  const hasLocalCreationLimit = false;
 
   const allMenuItems = useMemo(() => [
     { id: 'chart', label: 'Visão Geral', icon: Star },
@@ -139,6 +145,8 @@ export default function Home() {
     { id: 'revolution', label: 'Rev. Solar', icon: Sun },
     { id: 'elective', label: 'Eletiva', icon: Zap }
   ], []);
+
+  const tierLimits = useMemo(() => getTierLimits(profile?.tier), [profile?.tier]);
 
   useEffect(() => {
     initSweph()
@@ -171,7 +179,21 @@ export default function Home() {
     setError(null);
 
     // Bloqueio de criação de múltiplos usuários para visitantes
-    if (isGuest) {
+    if (user && profile) {
+      if (profile.is_suspended || profile.tier === 'blocked') {
+        setError(profile.is_suspended ? 'Sua conta está suspensa. Entre em contato com o suporte.' : 'Seu plano atual não permite criar ou salvar novos mapas.');
+        setLoading(false);
+        return;
+      }
+
+      const { getSavedChartsSynced } = await import('@/lib/storage');
+      const saved = await getSavedChartsSynced(user);
+      if (saved.length >= tierLimits.charts && !editingChartId) {
+        setError(`Você atingiu o limite de ${tierLimits.charts} mapas salvos para o seu plano (${profile.tier}).`);
+        setLoading(false);
+        return;
+      }
+    } else if (hasLocalCreationLimit) {
       const { getSavedCharts } = await import('@/lib/storage');
       const saved = getSavedCharts();
       if (saved.length > 0 && !editingChartId) {
@@ -198,21 +220,27 @@ export default function Home() {
       setMobileSidebarOpen(false);
       
       try {
-        if (editingChartId) {
-          updateChart(editingChartId, { 
+        if (editingChartId && !profile?.is_demo) {
+          await updateChartSynced(editingChartId, { 
             chart: hydrated, 
             name: `${birthData.name} - ${birthData.date}`,
             aiReport: undefined,
             solarRevolution: undefined,
             solarYear: undefined,
             solarReport: undefined 
-          });
+          }, user);
           setSavedChartId(editingChartId);
           setEditingChartId(null);
           setInitialFormData(undefined);
-        } else {
-          const saved = saveChart(`${birthData.name} - ${birthData.date}`, hydrated);
+        } else if (!profile?.is_demo) {
+          const saved = await saveChartSynced(`${birthData.name} - ${birthData.date}`, hydrated, user);
           setSavedChartId(saved.id);
+          // Atualizar perfil para refletir possível mudança no contador se necessário 
+          void refreshProfile();
+        } else {
+          console.log('[AstroMap] Modo Demo: Salvamento persistente ignorado.');
+          // Gerar um ID temporário apenas para manter a UI funcional (como os botões de PDF que podem depender disso)
+          setSavedChartId(`demo-${Date.now()}`);
         }
       } catch (saveErr) {
         console.warn('Failed to save chart:', saveErr);
@@ -223,7 +251,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [initialized, editingChartId]);
+  }, [initialized, editingChartId, hasLocalCreationLimit, user]);
 
   const handleNewChart = useCallback(() => {
     setChart(null);
@@ -290,18 +318,18 @@ export default function Home() {
 
   const handleReportGenerated = useCallback((report: AIReportType | null) => {
     setAiReport(report);
-    if (savedChartId && report) {
-      updateChart(savedChartId, { aiReport: report });
+    if (savedChartId && report && !profile?.is_demo) {
+      void updateChartSynced(savedChartId, { aiReport: report }, user);
     }
-  }, [savedChartId]);
+  }, [savedChartId, user, profile?.is_demo]);
 
   const handleRevolutionCalculated = useCallback((rev: NatalChart | null, year: number) => {
     setSolarRevolution(rev);
     setSolarYear(year);
-    if (savedChartId && rev) {
-      updateChart(savedChartId, { solarRevolution: rev, solarYear: year });
+    if (savedChartId && rev && !profile?.is_demo) {
+      void updateChartSynced(savedChartId, { solarRevolution: rev, solarYear: year }, user);
     }
-  }, [savedChartId]);
+  }, [savedChartId, user, profile?.is_demo]);
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSections(prev => {
@@ -323,10 +351,30 @@ export default function Home() {
 
   const sidebarContent = (
     <>
+      {profile?.is_suspended && (
+        <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-200 text-sm mb-6">
+          <div className="flex items-center gap-2 font-bold mb-1 text-red-400">
+            <X className="w-4 h-4" />
+            CONTA SUSPENSA
+          </div>
+          Seu acesso a novos mapas e relatórios foi temporariamente bloqueado.
+        </div>
+      )}
+
+      {profile?.is_demo && (
+        <div className="p-4 bg-blue-500/20 border border-blue-500/30 rounded-xl text-blue-200 text-sm mb-6">
+          <div className="flex items-center gap-2 font-bold mb-1 text-blue-400">
+            <Sparkles className="w-4 h-4" />
+            MODO DEMONSTRAÇÃO
+          </div>
+          Você está explorando o AstroMap. Seus dados e mapas são temporários.
+        </div>
+      )}
+
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
         <button
           onClick={() => toggleSection('form')}
-          className="w-full px-4 py-2.5 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+          className="w-full px-3 py-2 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Moon className="w-5 h-5 text-purple-400" />
@@ -342,7 +390,7 @@ export default function Home() {
         </button>
 
         {expandedSections.has('form') && (
-          <div className="p-4 md:p-6">
+          <div className="p-3 md:p-6">
             {!initialized ? (
               <div className="text-center py-8">
                 <Loader2 className="w-8 h-8 text-purple-400 animate-spin mx-auto mb-4" />
@@ -370,7 +418,7 @@ export default function Home() {
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('saved')}
-            className="w-full px-4 py-2.5 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+            className="w-full px-3 py-2 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
           >
             <div className="flex items-center gap-2">
               <Save className="w-5 h-5 text-purple-400" />
@@ -386,7 +434,7 @@ export default function Home() {
           </button>
 
           {expandedSections.has('saved') && (
-            <div className="p-4 md:p-6">
+            <div className="p-3 md:p-6">
               <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
             </div>
           )}
@@ -431,17 +479,19 @@ export default function Home() {
                   <span className="hidden md:inline">Calcular Novo Mapa</span>
                 </button>
               )}
-              <button
-                onClick={async () => {
-                  await fetch('/api/auth/logout', { method: 'POST' });
-                  window.location.href = '/login';
-                }}
-                className="text-xs font-bold text-red-400/70 hover:text-red-400 transition-colors flex items-center gap-1.5"
-                title="Sair do AstroMap"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                <span className="hidden md:inline">Sair</span>
-              </button>
+              
+              {user && profile && !profileLoading && (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
+                  <div className={`w-2 h-2 rounded-full ${profile.tier === 'premium' ? 'bg-gold-500' : profile.tier === 'admin' ? 'bg-purple-500' : 'bg-slate-500'}`} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">
+                    {profile.tier || 'Free'}
+                  </span>
+                </div>
+              )}
+              
+
+
+              <LogoutButton />
             </div>
           </div>
         </div>
@@ -466,7 +516,7 @@ export default function Home() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {sidebarContent}
                 </div>
               </div>
@@ -575,6 +625,7 @@ export default function Home() {
                     <AIReport 
                       chart={chart} 
                       reportMode="natal"
+                      chartId={savedChartId}
                       onReportGenerated={handleReportGenerated}
                       onReportUpdated={setNatalReportText}
                     />

@@ -11,7 +11,8 @@ Aplicativo web completo para cálculo e interpretação de mapas astrais, com re
 - **Revolução Solar**: Cálculo de trânsitos e previsões anuais
 - **Astrologia Tradicional**: Análise helenística/medieval com Almuten, Hyleg, dignidades
 - **Exportar PDF**: Download do relatório completo
-- **Salvar Localmente**: Mapas salvos no localStorage (privacidade total)
+- **Autenticação Real**: Login, cadastro e recuperação de senha via Supabase Auth
+- **Persistência Híbrida**: PostgreSQL/Supabase com localStorage como cache local
 
 ## Quick Start
 
@@ -19,9 +20,13 @@ Aplicativo web completo para cálculo e interpretação de mapas astrais, com re
 # Instalar dependências
 npm install
 
-# Configurar API Key
+# Configurar API Key e Supabase
 cp .env.local.example .env.local
-# Edite .env.local e adicione sua chave OpenRouter
+# Edite .env.local e adicione OPENROUTER_API_KEY,
+# NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Aplicar schema no Supabase
+# Use o SQL em supabase/migrations/001_initial_schema.sql no SQL Editor do projeto
 
 # Rodar em desenvolvimento
 npm run dev
@@ -51,6 +56,7 @@ Acesse [http://localhost:3000](http://localhost:3000)
 - **Estilização**: Tailwind CSS 4
 - **Efemérides**: astronomy-engine (MIT)
 - **IA**: OpenRouter API (Streaming SSE)
+- **Auth/Banco**: Supabase Auth + PostgreSQL
 - **PDF**: @react-pdf/renderer
 - **Estado**: Zustand
 - **Testes**: Vitest

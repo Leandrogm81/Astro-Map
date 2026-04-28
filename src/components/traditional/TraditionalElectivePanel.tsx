@@ -17,7 +17,8 @@ import { getTimezoneOffsetForDate, getTimezoneFromCoordinates } from '@/lib/geoc
 import { useGeocoding } from '@/hooks/useGeocoding';
 import { PLANETARY_CORRESPONDENCES, RITUAL_INTENTIONS, RITUAL_CATEGORIES, PlanetKey, RitualCategoryId } from '@/lib/traditional/magic-correspondences';
 import { translatePlanetKeyPt, translatePlanetNamePt } from '@/lib/traditional/constants';
-import { saveElective, getSavedElectives, deleteElective, SavedElective } from '@/lib/storage';
+import { deleteElectiveSynced, getSavedElectivesSynced, saveElectiveSynced, SavedElective } from '@/lib/storage';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Moon,
   Clock,
@@ -103,20 +104,9 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   const [savedElectives, setSavedElectives] = useState<SavedElective[]>([]);
   const [saveToast, setSaveToast] = useState(false);
   
-  const [userRole, setUserRole] = useState<string>('admin');
-
-  useEffect(() => {
-    const match = document.cookie.match(/astromap_role=([^;]+)/);
-    if (match) setUserRole(match[1]);
-  }, []);
-
-  const isGuest = userRole.startsWith('guest:');
-  const isGuestUsed = (() => {
-    if (!isGuest) return false;
-    const credits = userRole.split(':')[1];
-    const match = credits.match(/e(\d)/);
-    return match ? match[1] === '0' : true;
-  })();
+  const { user } = useAuth();
+  const canPersistElectives = true;
+  const reportLimitReached = false;
   
   // Time Machine States
   const [isRealTime, setIsRealTime] = useState(true);
@@ -235,9 +225,6 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
         setSkyChart(calculatedSkyChart);
         setSkyTimestamp(moment);
         setError(null);
-        // Atualizar role após tentativa de geração (pode ter mudado para guest:used)
-      const match = document.cookie.match(/astromap_role=([^;]+)/);
-      if (match) setUserRole(match[1]);
     } catch (err) {
         if (!active) return;
         console.error(err);
@@ -405,11 +392,11 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {veredict && !isCalculatingSky && !isGuest && (
+          {veredict && !isCalculatingSky && canPersistElectives && (
             <button
-              onClick={() => {
+              onClick={async () => {
                 const intention = RITUAL_INTENTIONS.find(i => i.id === intentionId);
-                saveElective({
+                await saveElectiveSynced({
                   label: `${intention?.ruler ?? '?'} — ${intention?.label ?? '?'} — ${targetDateStr} ${targetTimeStr}`,
                   dateStr: targetDateStr,
                   timeStr: targetTimeStr,
@@ -423,8 +410,8 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                   score: resolvedScore as 'propitious' | 'neutral' | 'adverse',
                   rulerPlanet: intention?.ruler ?? 'Sun',
                   magicInsight,
-                });
-                setSavedElectives(getSavedElectives());
+                }, user);
+                setSavedElectives(await getSavedElectivesSynced(user));
                 setSaveToast(true);
                 setTimeout(() => setSaveToast(false), 2500);
               }}
@@ -437,8 +424,8 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
             </button>
           )}
           <button
-            onClick={() => {
-              setSavedElectives(getSavedElectives());
+            onClick={async () => {
+              setSavedElectives(await getSavedElectivesSynced(user));
               setShowSavedDrawer(!showSavedDrawer);
             }}
             title="Eletivas salvas"
@@ -504,11 +491,11 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                       {new Date(el.savedAt).toLocaleDateString('pt-BR')} • {el.score === 'propitious' ? '✅ Auspicioso' : el.score === 'neutral' ? '⚖️ Neutro' : '⛔ Hostil'}
                     </p>
                   </button>
-                  {!isGuest && (
+                  {canPersistElectives && (
                     <button
-                      onClick={() => {
-                        deleteElective(el.id);
-                        setSavedElectives(getSavedElectives());
+                      onClick={async () => {
+                        await deleteElectiveSynced(el.id, user);
+                        setSavedElectives(await getSavedElectivesSynced(user));
                       }}
                       title="Excluir eletiva"
                       aria-label="Excluir eletiva salva"
@@ -982,7 +969,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                       <option value="sky_plus_natal">Céu Eletivo + Mapa Natal</option>
                     </select>
 
-                    {isGuestUsed ? (
+                    {reportLimitReached ? (
                       <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200 text-[10px] font-bold">
                         Crédito de visitante esgotado.
                       </div>

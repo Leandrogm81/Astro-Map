@@ -1,4 +1,7 @@
 import { SavedChart, NatalChart, BirthData, AIReport } from '@/types';
+import type { User } from '@supabase/supabase-js';
+import { deleteRemoteChart, listRemoteCharts, saveRemoteChart, updateRemoteChart } from '@/lib/supabase/charts';
+import { deleteRemoteElective, listRemoteElectives, saveRemoteElective } from '@/lib/supabase/electives';
 
 const STORAGE_KEY = 'astromap_saved_charts';
 
@@ -67,6 +70,84 @@ export function updateChart(id: string, updates: Partial<SavedChart>): SavedChar
   localStorage.setItem(STORAGE_KEY, JSON.stringify(charts));
   
   return charts[index];
+}
+
+export async function getSavedChartsSynced(user: User | null): Promise<SavedChart[]> {
+  const localCharts = getSavedCharts();
+
+  if (!user) return localCharts;
+
+  try {
+    const remoteCharts = await listRemoteCharts(user);
+    if (remoteCharts.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteCharts));
+      return remoteCharts;
+    }
+  } catch (error) {
+    console.warn('Supabase chart sync failed, using local cache:', error);
+  }
+
+  return localCharts;
+}
+
+export async function saveChartSynced(
+  name: string,
+  chart: NatalChart,
+  user: User | null,
+  aiReport?: AIReport | null,
+  solarReport?: AIReport | null,
+  solarRevolution?: NatalChart | null,
+  solarYear?: number | null
+): Promise<SavedChart> {
+  const local = saveChart(name, chart, aiReport, solarReport, solarRevolution, solarYear);
+
+  if (!user) return local;
+
+  try {
+    const remote = await saveRemoteChart(local.name, chart, user);
+    if (remote) {
+      updateChart(local.id, { id: remote.id, createdAt: remote.createdAt });
+      return { ...local, id: remote.id, createdAt: remote.createdAt };
+    }
+  } catch (error) {
+    console.warn('Supabase save chart failed, kept local chart:', error);
+  }
+
+  return local;
+}
+
+export async function updateChartSynced(
+  id: string,
+  updates: Partial<SavedChart>,
+  user: User | null
+): Promise<SavedChart | null> {
+  const local = updateChart(id, updates);
+
+  if (!user || !local?.chart) return local;
+
+  try {
+    const remote = await updateRemoteChart(id, local.name, local.chart, user);
+    return remote ?? local;
+  } catch (error) {
+    console.warn('Supabase update chart failed, kept local update:', error);
+  }
+
+  return local;
+}
+
+export async function deleteChartSynced(id: string, user: User | null): Promise<boolean> {
+  const localDeleted = deleteChart(id);
+
+  if (!user) return localDeleted;
+
+  try {
+    await deleteRemoteChart(id, user);
+    return true;
+  } catch (error) {
+    console.warn('Supabase delete chart failed, local cache was updated:', error);
+  }
+
+  return localDeleted;
 }
 
 export function clearAllCharts(): void {
@@ -210,4 +291,58 @@ export function deleteElective(id: string): boolean {
 
 export function getElectiveCount(): number {
   return getSavedElectives().length;
+}
+
+export async function getSavedElectivesSynced(user: User | null): Promise<SavedElective[]> {
+  const localElectives = getSavedElectives();
+
+  if (!user) return localElectives;
+
+  try {
+    const remoteElectives = await listRemoteElectives(user);
+    if (remoteElectives.length > 0) {
+      localStorage.setItem(ELECTIVE_STORAGE_KEY, JSON.stringify(remoteElectives));
+      return remoteElectives;
+    }
+  } catch (error) {
+    console.warn('Supabase elective sync failed, using local cache:', error);
+  }
+
+  return localElectives;
+}
+
+export async function saveElectiveSynced(elective: Omit<SavedElective, 'id' | 'savedAt'>, user: User | null): Promise<SavedElective> {
+  const local = saveElective(elective);
+
+  if (!user) return local;
+
+  try {
+    const remote = await saveRemoteElective(elective, user);
+    if (remote) {
+      return {
+        ...local,
+        id: remote.id,
+        savedAt: remote.created_at ?? local.savedAt,
+      };
+    }
+  } catch (error) {
+    console.warn('Supabase save elective failed, kept local elective:', error);
+  }
+
+  return local;
+}
+
+export async function deleteElectiveSynced(id: string, user: User | null): Promise<boolean> {
+  const localDeleted = deleteElective(id);
+
+  if (!user) return localDeleted;
+
+  try {
+    await deleteRemoteElective(id, user);
+    return true;
+  } catch (error) {
+    console.warn('Supabase delete elective failed, local cache was updated:', error);
+  }
+
+  return localDeleted;
 }

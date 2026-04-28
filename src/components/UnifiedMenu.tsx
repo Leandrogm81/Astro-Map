@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Moon, Sun, Sparkles, ChevronDown, Star, Zap } from 'lucide-react';
+import { Moon, Sun, Sparkles, ChevronDown, Star, LogOut } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 interface MenuItem {
   id: string;
@@ -22,6 +23,8 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const supabase = createClient();
 
   const toggleMenu = () => {
     if (!isOpen && buttonRef.current) {
@@ -42,6 +45,11 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
 
   const closeMenu = () => {
     setIsOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
   };
 
   const handleItemClick = (tabId: string) => {
@@ -80,13 +88,19 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
       window.addEventListener('resize', handleScrollOrResize);
     }
 
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserEmail(user?.email || null);
+    };
+    getUser();
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEsc);
       window.removeEventListener('scroll', handleScrollOrResize);
       window.removeEventListener('resize', handleScrollOrResize);
     };
-  }, [isOpen]);
+  }, [isOpen, supabase]);
 
   const defaultItems = [
     { id: 'chart', label: 'Visão Geral', icon: Star },
@@ -130,10 +144,16 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
           ref={dropdownRef}
           id="analysis-menu"
           role="menu"
-          /* eslint-disable-next-line react/forbid-dom-props */
           style={dropdownStyle}
           className="w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
         >
+          {userEmail && (
+            <div className="px-4 py-2 border-b border-white/5 mb-1" role="none">
+              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">Conta</p>
+              <p className="text-[11px] text-slate-300 font-bold truncate lowercase">{userEmail}</p>
+            </div>
+          )}
+
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -150,6 +170,20 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
               {item.label}
             </button>
           ))}
+
+          {userEmail && (
+            <div className="mt-1 pt-1 border-t border-white/5" role="none">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleLogout}
+                className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                Sair
+              </button>
+            </div>
+          )}
         </div>,
         document.body
       )}

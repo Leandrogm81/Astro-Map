@@ -202,3 +202,16 @@ export const ASPECT_ORBS: Record<AspectType, { angle: number; orb: number }> = {
   quincunx: { angle: 150, orb: 3 },
   opposition: { angle: 180, orb: 8 },
 };
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  role: 'user' | 'admin';
+  tier: 'free' | 'standard' | 'premium' | 'admin' | 'blocked';
+  is_suspended: boolean;
+  is_demo: boolean;
+  ai_reports_limit: number;
+  ai_reports_used: number;
+  created_at: string | null;
+  updated_at: string | null;
+}

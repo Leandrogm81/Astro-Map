@@ -15,12 +15,17 @@ import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
 import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { getTierLimits } from '@/lib/limits';
+import { saveRemoteReport } from '@/lib/supabase/reports';
 
 interface AIReportProps {
   chart: NatalChart;
   reportMode?: 'natal' | 'solar' | 'traditional';
   solarRevolution?: NatalChart | null;
   solarYear?: number;
+  chartId?: string | null;
   onReportGenerated?: (report: AIReportType | null) => void;
   onReportUpdated?: (text: string) => void;
 }
@@ -30,6 +35,7 @@ export default function AIReport({
   reportMode = 'natal',
   solarRevolution,
   solarYear,
+  chartId,
   onReportGenerated,
   onReportUpdated,
 }: AIReportProps) {
@@ -39,22 +45,11 @@ export default function AIReport({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelId, setModelId] = useState(DEFAULT_MODEL_ID);
-  const [userRole, setUserRole] = useState<string>('admin');
-
-
-  useEffect(() => {
-    const match = document.cookie.match(/astromap_role=([^;]+)/);
-    if (match) setUserRole(match[1]);
-  }, []);
-
-  const isGuest = userRole.startsWith('guest:');
-  const isGuestUsed = (() => {
-    if (!isGuest) return false;
-    const credits = userRole.split(':')[1];
-    const code = reportMode === 'solar' ? 'r' : 'n';
-    const match = credits.match(new RegExp(`${code}(\\d)`));
-    return match ? match[1] === '0' : true;
-  })();
+  const { user } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
+  
+  const tierLimits = getTierLimits(profile?.tier);
+  const reportLimitReached = profile ? (profile.ai_reports_used || 0) >= (profile.ai_reports_limit || tierLimits.ai_reports_per_month) : false;
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -79,6 +74,16 @@ export default function AIReport({
   }, [reportText, isStreaming]);
 
   const handleGenerateReport = async () => {
+    if (profile?.is_suspended || profile?.tier === 'blocked') {
+      setError(profile?.is_suspended ? 'Sua conta está suspensa.' : 'Seu plano atual não permite gerar relatórios de IA.');
+      return;
+    }
+
+    if (reportLimitReached) {
+      setError('Você atingiu o limite de relatórios de IA para o seu plano.');
+      return;
+    }
+
     setLoading(true);
     setIsStreaming(true);
     setError(null);
@@ -133,6 +138,14 @@ export default function AIReport({
       const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
       localStorage.setItem(reportKey, accumulatedText);
 
+      await saveRemoteReport({
+        user,
+        chartId: chartId ?? null,
+        type: isSolarMode ? 'solar' : 'natal',
+        content: accumulatedText,
+        modelId,
+      });
+
       if (onReportGenerated) {
         onReportGenerated({
           sections: [], // Compatibilidade com tipo antigo
@@ -146,9 +159,6 @@ export default function AIReport({
     } finally {
       setLoading(false);
       setIsStreaming(false);
-      // Atualizar role após tentativa de geração (pode ter mudado para guest:used)
-      const match = document.cookie.match(/astromap_role=([^;]+)/);
-      if (match) setUserRole(match[1]);
     }
   };
 
@@ -189,7 +199,7 @@ export default function AIReport({
           </div>
         </div>
 
-        {reportText && !isStreaming && !isGuest && (
+        {reportText && !isStreaming && (
           <button
             onClick={handleDeleteReport}
             className="p-2 text-slate-500 hover:text-red-400 transition-colors"
@@ -220,22 +230,41 @@ export default function AIReport({
 
 
 
-            {isGuestUsed ? (
+            {profile?.tier === 'blocked' ? (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                <p className="text-red-200 text-sm">
+                  Sua conta está com restrição de acesso a recursos premium.
+                  <br />
+                  <span className="text-[10px] opacity-70 mt-1 block">Entre em contato com o administrador para regularizar seu acesso.</span>
+                </p>
+              </div>
+            ) : reportLimitReached ? (
               <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
                 <p className="text-amber-200 text-sm">
-                  Seu crédito de visitante para este relatório ({reportMode === 'solar' ? 'Revolução Solar' : 'Mapa Natal'}) foi utilizado. 
-                  Para gerar relatórios ilimitados, considere o acesso completo.
+                  {profile?.tier === 'free' || profile?.tier === 'standard'
+                    ? `Seu limite de relatórios gratuitos (${tierLimits.ai_reports_per_month}) foi atingido este mês.` 
+                    : 'Você atingiu o limite de relatórios de IA do seu plano.'}
+                  <br />
+                  <span className="text-[10px] opacity-70 mt-1 block">Considere fazer upgrade para continuar explorando.</span>
                 </p>
               </div>
             ) : (
-              <button
-                onClick={handleGenerateReport}
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-white font-bold shadow-lg shadow-purple-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-3"
-              >
-                <Sparkles className="w-5 h-5 animate-pulse" />
-                GERAR RELATÓRIO COM IA
-              </button>
+              <div className="space-y-4">
+                {profile && (
+                  <div className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                    <Brain className="w-3 h-3" />
+                    <span>Uso Mensal: {profile.ai_reports_used || 0} / {profile.ai_reports_limit || tierLimits.ai_reports_per_month}</span>
+                  </div>
+                )}
+                <button
+                  onClick={handleGenerateReport}
+                  disabled={loading}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-white font-bold shadow-lg shadow-purple-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-3"
+                >
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                  GERAR RELATÓRIO COM IA
+                </button>
+              </div>
             )}
 
           </div>

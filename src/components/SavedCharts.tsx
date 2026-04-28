@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { SavedChart, NatalChart } from '@/types';
-import { getSavedCharts, loadChart, deleteChart } from '@/lib/storage';
+import { deleteChartSynced, getSavedChartsSynced } from '@/lib/storage';
 import { Calendar, MapPin, Trash2, ChevronRight, Pencil } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { getTierLimits } from '@/lib/limits';
 
 interface SavedChartsProps {
   onSelectChart: (savedChart: SavedChart) => void;
@@ -13,22 +16,20 @@ interface SavedChartsProps {
 export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsProps) {
   const [charts, setCharts] = useState<SavedChart[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string>('guest');
+  const { user, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
+
+  const tierLimits = getTierLimits(profile?.tier);
 
   useEffect(() => {
-    const match = document.cookie.match(/astromap_role=([^;]+)/);
-    if (match) setUserRole(match[1]);
-  }, []);
+    if (!authLoading) {
+      void loadCharts();
+    }
+  }, [authLoading, user]);
 
-  const isGuest = userRole.startsWith('guest:');
-
-  useEffect(() => {
-    loadCharts();
-  }, []);
-
-  const loadCharts = () => {
+  const loadCharts = async () => {
     try {
-      const saved = getSavedCharts();
+      const saved = await getSavedChartsSynced(user);
       const validCharts = saved.filter((c) => 
         c && c.chart && c.chart.birthData && c.chart.birthData.name
       );
@@ -41,11 +42,11 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
     }
   };
 
-  const handleDelete = (id: string, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Tem certeza que deseja excluir este mapa astral?')) {
-      deleteChart(id);
-      loadCharts();
+      await deleteChartSynced(id, user);
+      await loadCharts();
     }
   };
 
@@ -94,23 +95,28 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
   }
 
   return (
-    <div className="space-y-3 md:space-y-4">
-      <h3 className="text-lg font-medium text-purple-200">
-        Mapas Astrais Salvos ({charts.length})
-      </h3>
+    <div className="space-y-2 md:space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-purple-200">
+          Mapas Astrais Salvos
+        </h3>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white/5 px-2 py-1 rounded-md border border-white/5">
+          {charts.length} / {tierLimits.charts}
+        </span>
+      </div>
 
-      <div className="space-y-2 md:space-y-3 max-h-96 overflow-y-auto">
+      <div className="space-y-1.5 md:space-y-3 max-h-96 overflow-y-auto">
         {charts
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .map((savedChart) => (
             <div
               key={savedChart.id}
               onClick={() => handleSelect(savedChart)}
-              className="group p-2.5 md:p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/50 transition-all"
+              className="group p-2 md:p-4 bg-slate-900/50 border border-purple-500/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/50 transition-all"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-slate-200 truncate">
+                    <h4 className="font-medium text-slate-200 truncate text-sm md:text-base">
                       {savedChart.name || 'Mapa sem nome'}
                     </h4>
                     
@@ -134,22 +140,20 @@ export default function SavedCharts({ onSelectChart, onEditChart }: SavedChartsP
                 <div className="flex items-center gap-1 md:gap-2 ml-2 md:ml-4">
                   <button
                     onClick={(e) => handleEdit(savedChart, e)}
-                    className="h-9 w-9 md:h-auto md:w-auto flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                    className="h-8 w-8 md:h-9 md:w-9 flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
                     title="Editar Dados e Recalcular"
                   >
-                    <Pencil className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                    <Pencil className="w-3 h-3 md:w-4 md:h-4" />
                   </button>
-                    {!isGuest && (
-                      <button
-                        onClick={(e) => handleDelete(savedChart.id, e)}
-                        className="h-9 w-9 md:h-auto md:w-auto flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                      </button>
-                    )}
+                  <button
+                    onClick={(e) => void handleDelete(savedChart.id, e)}
+                    className="h-8 w-8 md:h-9 md:w-9 flex items-center justify-center p-0 md:p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                    title="Excluir"
+                  >
+                    <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
+                  </button>
                   
-                  <ChevronRight className="w-5 h-5 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </div>
             </div>

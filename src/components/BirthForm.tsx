@@ -98,11 +98,11 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3 md:space-y-4">
       <div className="space-y-3 md:space-y-4">
         {/* Nome */}
         <div>
-          <label htmlFor="birthName" className="block text-xs md:text-sm font-medium text-purple-200 mb-1.5 md:mb-2">
+          <label htmlFor="birthName" className="block text-[10px] md:text-sm font-medium text-purple-200 mb-1 md:mb-2">
             <User className="inline w-4 h-4 mr-2" />
             Nome Completo
           </label>
@@ -111,16 +111,16 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
             type="text"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            className="w-full px-4 py-2 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+            className="w-full px-3 py-1.5 md:px-4 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-sm md:text-base"
             placeholder="Digite seu nome"
             required
           />
         </div>
 
         {/* Data e Hora */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-4">
           <div>
-            <label htmlFor="birthDate" className="block text-xs md:text-sm font-medium text-purple-200 mb-1.5 md:mb-2">
+            <label htmlFor="birthDate" className="block text-[10px] md:text-sm font-medium text-purple-200 mb-1 md:mb-2">
               <Calendar className="inline w-4 h-4 mr-2" />
               Data de Nascimento
             </label>
@@ -129,13 +129,13 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
               type="date"
               value={formData.date}
               onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              className="w-full px-4 py-2 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all cursor-pointer"
+              className="w-full px-3 py-1.5 md:px-4 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all cursor-pointer text-sm md:text-base"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="birthTime" className="block text-xs md:text-sm font-medium text-purple-200 mb-1.5 md:mb-2">
+            <label htmlFor="birthTime" className="block text-[10px] md:text-sm font-medium text-purple-200 mb-1 md:mb-2">
               <Clock className="inline w-4 h-4 mr-2" />
               Hora de Nascimento
             </label>
@@ -144,7 +144,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
               type="time"
               value={formData.time}
               onChange={(e) => setFormData(prev => ({ ...prev, time: e.target.value }))}
-              className="w-full px-4 py-2 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all cursor-pointer"
+              className="w-full px-3 py-1.5 md:px-4 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all cursor-pointer text-sm md:text-base"
               required
             />
           </div>
@@ -152,8 +152,8 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
         {/* Localização */}
         <div className="relative">
-          <div className="flex justify-between items-end mb-1.5 md:mb-2">
-            <label htmlFor="birthLocation" className="text-xs md:text-sm font-medium text-purple-200">
+          <div className="flex justify-between items-end mb-1 md:mb-2">
+            <label htmlFor="birthLocation" className="text-[10px] md:text-sm font-medium text-purple-200">
               <MapPin className="inline w-4 h-4 mr-2 mb-0.5" />
               Local de Nascimento
             </label>
@@ -167,7 +167,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), onSearchClick())}
-              className="flex-1 px-4 py-2 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+              className="flex-1 px-3 py-1.5 md:px-4 md:py-3 bg-slate-900/80 border border-purple-500/30 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all text-sm md:text-base"
               placeholder="Ex: São Paulo, SP, Brasil"
             />
             <button
@@ -176,7 +176,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
               disabled={isSearching || searchQuery.length < 3}
               title="Pesquisar local"
               aria-label="Pesquisar local"
-              className="px-4 py-2 md:py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800/50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+              className="px-3 py-1.5 md:px-4 md:py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-800/50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -212,7 +212,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
 
         {/* Coordenadas selecionadas */}
         {(formData.latitude !== 0 || formData.longitude !== 0) && (
-          <div className="p-3 md:p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+          <div className="p-2 md:p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-purple-200">
                 <MapPin className="inline w-4 h-4 mr-2" />
@@ -262,7 +262,7 @@ export default function BirthForm({ onSubmit, initialData, loading }: BirthFormP
       <button
         type="submit"
         disabled={loading || !formData.latitude || !formData.longitude}
-        className="w-full py-2.5 md:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800/50 disabled:to-indigo-800/50 disabled:cursor-not-allowed rounded-lg text-white font-semibold text-base md:text-lg shadow-lg shadow-purple-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+        className="w-full py-2 md:py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:from-purple-800/50 disabled:to-indigo-800/50 disabled:cursor-not-allowed rounded-lg text-white font-semibold text-sm md:text-lg shadow-lg shadow-purple-500/25 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
       >
         {loading ? (
           <span className="flex items-center justify-center">

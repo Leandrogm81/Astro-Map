@@ -1,38 +1,44 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-export function middleware(request: NextRequest) {
+const PUBLIC_PATHS = [
+  '/login',
+  '/auth/callback',
+  '/_next',
+  '/assets',
+  '/favicon.ico',
+];
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
-  // Rotas públicas que não precisam de autenticação
-  if (
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/api/auth') ||
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/assets') ||
-    pathname === '/favicon.ico'
-  ) {
-    return NextResponse.next();
+
+  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
+    return updateSession(request).then(({ response }) => response);
   }
 
-  const sessionCookie = request.cookies.get('astromap_session');
-  const sessionValue = sessionCookie?.value;
+  const { response, user, isConfigured } = await updateSession(request);
 
-  const isAuthenticated = sessionValue === 'admin' || sessionValue?.startsWith('guest:');
-
-  // Se não estiver autenticado e tentar acessar uma rota protegida
-  if (!isAuthenticated) {
-    // Se for rota de API, retorna 401
+  if (!isConfigured) {
     if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return NextResponse.json({ error: 'Supabase nao configurado' }, { status: 500 });
     }
-    
-    // Se for rota normal (como a home), redireciona pro login
+
     const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('error', 'supabase_not_configured');
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  if (!user) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 });
+    }
+
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirectTo', `${pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return response;
 }
 
 export const config = {
