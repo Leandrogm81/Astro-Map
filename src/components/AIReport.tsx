@@ -14,11 +14,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import Image from 'next/image';
 import { getReportKey, getReportKeyLegacy } from '@/lib/storage';
-import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
-import { useAuth } from '@/hooks/useAuth';
+import { DEFAULT_MODEL_ID } from '@/lib/aiConfig';
 import { useProfile } from '@/hooks/useProfile';
 import { getTierLimits } from '@/lib/limits';
-import { saveRemoteReport } from '@/lib/supabase/reports';
 
 interface AIReportProps {
   chart: NatalChart;
@@ -35,7 +33,6 @@ export default function AIReport({
   reportMode = 'natal',
   solarRevolution,
   solarYear,
-  chartId,
   onReportGenerated,
   onReportUpdated,
 }: AIReportProps) {
@@ -44,9 +41,7 @@ export default function AIReport({
   const [loading, setLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modelId, setModelId] = useState(DEFAULT_MODEL_ID);
-  const { user } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile } = useProfile();
   
   const tierLimits = getTierLimits(profile?.tier);
   const reportLimitReached = profile ? (profile.ai_reports_used || 0) >= (profile.ai_reports_limit || tierLimits.ai_reports_per_month) : false;
@@ -99,7 +94,7 @@ export default function AIReport({
           reportMode,
           solarChart: isSolarMode ? solarRevolution : undefined,
           solarYear: isSolarMode ? solarYear : undefined,
-          model: modelId,
+          model: DEFAULT_MODEL_ID,
         }),
       });
 
@@ -137,14 +132,6 @@ export default function AIReport({
       // Salvar no localStorage ao finalizar
       const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
       localStorage.setItem(reportKey, accumulatedText);
-
-      await saveRemoteReport({
-        user,
-        chartId: chartId ?? null,
-        type: isSolarMode ? 'solar' : 'natal',
-        content: accumulatedText,
-        modelId,
-      });
 
       if (onReportGenerated) {
         onReportGenerated({

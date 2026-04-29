@@ -100,6 +100,7 @@ const mockElectiveVeredict: ElectiveVeredict = {
   },
   moonStatus: {
     phase: 'Gibosa Minguante',
+    voidOfCourseStatus: 'not_void',
     isVoidOfCourse: false,
     aspects: [],
   },
@@ -107,6 +108,31 @@ const mockElectiveVeredict: ElectiveVeredict = {
     planetId: 'venus',
     totalScore: 9,
     dignity: 'Domicilio',
+  },
+  planetConditions: {
+    venus: {
+      planetId: 'venus',
+      totalScore: 9,
+      dignity: 'Domicilio',
+      sign: 'Touro',
+      degree: 15.5,
+      house: 2
+    },
+    moon: {
+      planetId: 'moon',
+      totalScore: 5,
+      dignity: 'Exaltacao',
+      sign: 'Touro',
+      degree: 3.2,
+      house: 2
+    }
+  },
+  ritualCorrespondences: {
+    colors: ['Verde-esmeralda', 'Rosa'],
+    metals: ['Cobre'],
+    incenses: ['Rosa', 'Sândalo'],
+    charity: 'Apoio a mulheres vulneráveis.',
+    intentions: ['Amor', 'Atração'],
   },
 };
 
@@ -142,6 +168,15 @@ describe('AI Prompts Formatting', () => {
       expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('Não infira Ascendente');
       expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('REGRAS DE CONFIABILIDADE');
       expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('Curso Vazio');
+    });
+
+    it('should include ritual data rules and audit sections in elective prompts', () => {
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('REGRAS PARA CORRESPONDÊNCIAS RITUALÍSTICAS');
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('Correspondências Ritualísticas Fornecidas');
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('Termos permitidos quando aplicáveis');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('REGRAS PARA CORRESPONDÊNCIAS RITUALÍSTICAS');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('Correspondências Ritualísticas Fornecidas');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('Termos permitidos quando aplicáveis');
     });
 
     it('should translate elective planet names in any casing', () => {
@@ -252,9 +287,57 @@ describe('AI Prompts Formatting', () => {
       expect(output).toContain('Mercúrio');
       expect(output).toContain('ASPECTOS TRADICIONAIS REAIS');
       expect(output).toContain('DADOS NÃO CALCULADOS');
-      expect(output).toContain('Curso Vazio da Lua: NÃO CALCULADO');
-      expect(output).toContain('Aspectos da Lua: NÃO CALCULADOS');
+      expect(output).toContain('RESUMO BÁSICO FORNECIDO PELO ASTROMAP');
+      expect(output).toContain('Curso Vazio: NÃO');
+      expect(output).toContain('Aspectos Ativos da Lua:');
       expect(output).toContain('EXEMPLOS DE COMPORTAMENTO');
+      expect(output).not.toContain('Marte Quadratura Vênus');
+    });
+
+    it('should include lunar mansion details and ritual correspondences', () => {
+      const output = formatElectiveForAI(mockElectiveVeredict, mockSolarChart, 'sky_only');
+
+      expect(output).toContain('Faixa da Mansão Lunar');
+      expect(output).toContain('Virtude/Sumário da Mansão Lunar');
+      expect(output).toContain('CORRESPONDÊNCIAS RITUALÍSTICAS FORNECIDAS PELO ASTROMAP');
+      expect(output).toContain('Verde-esmeralda');
+      expect(output).toContain('Cobre');
+    });
+
+    it('should treat missing void of course status as not calculated', () => {
+      const verdict = {
+        ...mockElectiveVeredict,
+        moonStatus: {
+          ...mockElectiveVeredict.moonStatus,
+          voidOfCourseStatus: undefined as unknown as ElectiveVeredict['moonStatus']['voidOfCourseStatus'],
+        },
+      } as ElectiveVeredict;
+
+      const output = formatElectiveForAI(verdict, mockSolarChart, 'sky_only');
+      expect(output).toContain('Curso Vazio: NÃO CALCULADO');
+    });
+
+    it('should include not_calculated void of course as not calculated', () => {
+      const verdict = {
+        ...mockElectiveVeredict,
+        moonStatus: {
+          ...mockElectiveVeredict.moonStatus,
+          voidOfCourseStatus: 'not_calculated' as const,
+        },
+      };
+
+      const output = formatElectiveForAI(verdict, mockSolarChart, 'sky_only');
+      expect(output).toContain('Curso Vazio: NÃO CALCULADO');
+    });
+
+    it('should omit ritual correspondences when none are provided', () => {
+      const verdict = {
+        ...mockElectiveVeredict,
+        ritualCorrespondences: undefined,
+      } as ElectiveVeredict;
+
+      const output = formatElectiveForAI(verdict, mockSolarChart, 'sky_only');
+      expect(output).not.toContain('CORRESPONDÊNCIAS RITUALÍSTICAS FORNECIDAS PELO ASTROMAP');
     });
   });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TraditionalPoints } from '@/types';
-import { Crown, Sparkles, Shield, Zap, TrendingUp, Heart } from 'lucide-react';
+import { Crown, Sparkles, Shield, Heart } from 'lucide-react';
 
 interface TraditionalSpecialPointsProps {
   points: TraditionalPoints;

@@ -45,22 +45,13 @@ const TraditionalElectivePanel = dynamic(() => import('@/components/traditional/
 });
 import Image from 'next/image';
 import {
-  MapPin,
-  Calendar,
-  Clock,
-  Navigation,
-  Globe,
   Star,
   Moon,
   Sun,
   Sparkles,
-  ChevronRight,
   Menu,
   ChevronDown,
   X,
-  Plus,
-  Trash2,
-  List,
   Zap,
   ChevronUp,
   Save,
@@ -111,7 +102,6 @@ export default function Home() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
   const [initialFormData, setInitialFormData] = useState<BirthData | undefined>(undefined);
-  const [aiReport, setAiReport] = useState<AIReportType | null>(null);
   const [natalReportText, setNatalReportText] = useState<string>('');
   const [solarRevolution, setSolarRevolution] = useState<NatalChart | null>(null);
   const [solarYear, setSolarYear] = useState<number | undefined>(undefined);
@@ -212,7 +202,6 @@ export default function Home() {
       
       const hydrated = hydrateNatalChart(calculatedChart); 
       setChart(hydrated);
-      setAiReport(null);
       setSolarRevolution(null);
       setSolarYear(undefined);
       setSolarReportText('');
@@ -251,12 +240,11 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [initialized, editingChartId, hasLocalCreationLimit, user]);
+  }, [initialized, editingChartId, hasLocalCreationLimit, user, profile, refreshProfile, tierLimits.charts]);
 
   const handleNewChart = useCallback(() => {
     setChart(null);
     setSavedChartId(null);
-    setAiReport(null);
     setSolarRevolution(null);
     setSolarYear(undefined);
     setSolarReportText('');
@@ -271,17 +259,6 @@ export default function Home() {
     if (savedChart.chart) {
       const currentChart = hydrateNatalChart(savedChart.chart);
       setChart(currentChart);
-      
-      // Carrega relatório natal se existir cache
-      const reportKey = getReportKey(currentChart.birthData);
-      const legacyKey = getReportKeyLegacy(currentChart.birthData.name, currentChart.birthData.date);
-      const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
-      
-      if (savedReport) {
-        setAiReport({ sections: [], summary: savedReport, generatedAt: new Date().toISOString() });
-      } else {
-        setAiReport(null);
-      }
       
       setSolarRevolution(savedChart.solarRevolution || null);
       setSolarYear(savedChart.solarYear || undefined);
@@ -317,7 +294,6 @@ export default function Home() {
   }, []);
 
   const handleReportGenerated = useCallback((report: AIReportType | null) => {
-    setAiReport(report);
     if (savedChartId && report && !profile?.is_demo) {
       void updateChartSynced(savedChartId, { aiReport: report }, user);
     }

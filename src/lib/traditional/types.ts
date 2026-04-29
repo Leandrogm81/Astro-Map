@@ -87,13 +87,31 @@ export interface ElectiveVeredict {
   lunarMansion: LunarMansion;
   moonStatus: {
     phase: string;
-    isVoidOfCourse: boolean;
+    voidOfCourseStatus: 'not_calculated' | 'void' | 'not_void';
+    /** @deprecated Use voidOfCourseStatus */
+    isVoidOfCourse?: boolean | null;
     aspects: string[];
+    nextMajorAspect?: string;
   };
   rulerCondition: {
     planetId: string;
     totalScore: number;
     dignity: string;
+  };
+  planetConditions: Record<string, {
+    planetId: string;
+    totalScore: number;
+    dignity: string;
+    sign: string;
+    degree: number;
+    house: number;
+  }>;
+  ritualCorrespondences?: {
+    colors?: string[];
+    metals?: string[];
+    incenses?: string[];
+    charity?: string;
+    intentions?: string[];
   };
 }
 

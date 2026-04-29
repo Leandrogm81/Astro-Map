@@ -149,6 +149,8 @@ function LoginPageContent() {
                   onChange={(event) => setEmail(event.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-gold-500 focus:border-gold-500 sm:text-sm transition-all"
                   placeholder="voce@email.com"
+                  id="email"
+                  name="email"
                   autoComplete="email"
                 />
               </div>
@@ -169,7 +171,9 @@ function LoginPageContent() {
                     onChange={(event) => setPassword(event.target.value)}
                     className="block w-full pl-10 pr-10 py-3 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-gold-500 focus:border-gold-500 sm:text-sm transition-all"
                     placeholder="••••••••"
-                    autoComplete={activeTab === 'login' ? 'current-password' : 'new-password'}
+                    id="password"
+                    name="password"
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
@@ -220,7 +224,7 @@ function LoginPageContent() {
                     if (demoError) throw demoError;
                     router.replace(redirectTo);
                     router.refresh();
-                  } catch (err) {
+                  } catch {
                     setError('Erro ao acessar demonstração. Verifique se o usuário demo@astromap.com existe.');
                     setLoading(false);
                   }

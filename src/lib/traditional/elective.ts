@@ -2,6 +2,8 @@ import { MagicPurpose, PlanetHour, LunarMansion, ElectiveVeredict, ElectiveScore
 import { ZodiacSign } from '@/types';
 import { calculateTraditionalAssessment } from './scoring';
 import { PlanetPosition } from '@/types';
+import { calculateTraditionalAspects, calculateMoonVoidOfCourse, getPlanetNamePT } from './aspects';
+import { PLANETARY_CORRESPONDENCES, PlanetKey } from './magic-correspondences';
 
 /**
  * Ordem Caldeia de Regência (descendente de velocidade/distância)
@@ -24,6 +26,16 @@ export const PURPOSE_RULER: Record<MagicPurpose, string> = {
   conflict: 'mars',
   expansion: 'jupiter',
   structure: 'saturn',
+};
+
+const PLANET_ID_TO_KEY: Partial<Record<string, PlanetKey>> = {
+  sun: 'Sun',
+  moon: 'Moon',
+  mercury: 'Mercury',
+  venus: 'Venus',
+  mars: 'Mars',
+  jupiter: 'Jupiter',
+  saturn: 'Saturn',
 };
 
 /**
@@ -178,12 +190,16 @@ export function getElectiveVeredict(
   const ruler = targetPlanets.find(p => p.id?.toLowerCase() === rulerId.toLowerCase());
   const moon = targetPlanets.find(p => p.id?.toLowerCase() === 'moon')!;
   const sun = targetPlanets.find(p => p.id?.toLowerCase() === 'sun')!;
+  const planetKey = PLANET_ID_TO_KEY[rulerId];
+  const correspondences = planetKey ? PLANETARY_CORRESPONDENCES[planetKey] : undefined;
   
   if (!ruler) throw new Error(`Regente ${rulerId} não encontrado.`);
   if (!sun) throw new Error(`Sol não encontrado.`);
 
   const assessment = calculateTraditionalAssessment(ruler, targetPlanets, isDayChart);
   const moonAssessment = calculateTraditionalAssessment(moon, targetPlanets, isDayChart);
+  const voc = calculateMoonVoidOfCourse(moon, targetPlanets);
+  const aspects = calculateTraditionalAspects(targetPlanets);
 
   let points = 0;
 
@@ -213,14 +229,53 @@ export function getElectiveVeredict(
     lunarMansion: moonMansion,
     moonStatus: {
       phase: getMoonPhaseName(moon.longitude, sun.longitude),
-      isVoidOfCourse: false, // TODO: Implementar lógica VOC
-      aspects: [], // TODO: Listar aspectos aplicativos
+      voidOfCourseStatus: voc.isVoid ? 'void' : 'not_void',
+      isVoidOfCourse: voc.isVoid,
+      aspects: aspects
+        .filter(a => a.p1 === 'moon' || a.p2 === 'moon')
+        .map(a => {
+          const other = a.p1 === 'moon' ? a.p2 : a.p1;
+          const status = a.isApplying ? 'aplicativo' : 'separativo';
+          return `${getPlanetNamePT(other)} (${status})`;
+        }),
+      nextMajorAspect: voc.nextAspect,
     },
     rulerCondition: {
       planetId: rulerId,
       totalScore: assessment.score.total,
       dignity: assessment.dignity,
     },
+    planetConditions: ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].reduce((acc, id) => {
+      const p = targetPlanets.find(pl => pl.id?.toLowerCase() === id.toLowerCase());
+      if (p) {
+        const ass = calculateTraditionalAssessment(p, targetPlanets, isDayChart);
+        acc[id] = {
+          planetId: id,
+          totalScore: ass.score.total,
+          dignity: ass.dignity,
+          sign: p.sign,
+          degree: p.degree,
+          house: p.house,
+        };
+      }
+      return acc;
+    }, {} as Record<string, {
+      planetId: string;
+      totalScore: number;
+      dignity: string;
+      sign: string;
+      degree: number;
+      house: number;
+    }>),
+    ritualCorrespondences: correspondences
+      ? {
+          colors: correspondences.colors,
+          metals: correspondences.metals,
+          incenses: correspondences.incense,
+          charity: correspondences.charity,
+          intentions: correspondences.intentions,
+        }
+      : undefined,
   };
 }
 

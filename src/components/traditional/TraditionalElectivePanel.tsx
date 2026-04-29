@@ -99,6 +99,21 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   const [isCopied, setIsCopied] = useState(false);
   const insightScrollRef = useRef<HTMLDivElement>(null);
 
+  const handleScrollProgress = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const progress = el.scrollHeight <= el.clientHeight ? 100 : Math.round((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100);
+    setScrollProgress(progress);
+  }, []);
+
+  const handleCopyInsight = useCallback(async () => {
+    if (!magicInsight) return;
+    try {
+      await navigator.clipboard.writeText(magicInsight);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch { /* fallback silencioso */ }
+  }, [magicInsight]);
+
   // Frente 2: Save/Load states
   const [showSavedDrawer, setShowSavedDrawer] = useState(false);
   const [savedElectives, setSavedElectives] = useState<SavedElective[]>([]);
@@ -803,63 +818,185 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
           </div>
 
           {/* O CONSELHO DO MESTRE (IA) — Frente 3: Expanded UI */}
-          {(() => {
-            const handleScrollProgress = (e: React.UIEvent<HTMLDivElement>) => {
-              const el = e.currentTarget;
-              const progress = el.scrollHeight <= el.clientHeight ? 100 : Math.round((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100);
-              setScrollProgress(progress);
-            };
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-6 shadow-xl flex-1 flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Droplets className="w-5 h-5 text-indigo-400" />
+                O Conselho do Mestre
+              </h3>
 
-            const handleCopyInsight = async () => {
-              if (!magicInsight) return;
-              try {
-                await navigator.clipboard.writeText(magicInsight);
-                setIsCopied(true);
-                setTimeout(() => setIsCopied(false), 2000);
-              } catch { /* fallback silencioso */ }
-            };
-
-            const reportContent = (
-              <>
-                {error && (
-                  <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-                    <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-xs text-red-200 font-medium">{error}</p>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2">
+                {magicInsight && !isGenerating && (
+                  <>
+                    <button
+                      onClick={handleCopyInsight}
+                      title={isCopied ? 'Copiado!' : 'Copiar texto'}
+                      aria-label="Copiar texto do conselho"
+                      className="p-1.5 text-slate-500 hover:text-indigo-300 transition-colors rounded-lg hover:bg-white/5"
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => setIsFullscreen(true)}
+                      title="Leitura imersiva"
+                      aria-label="Abrir leitura imersiva"
+                      className="p-1.5 text-slate-500 hover:text-indigo-300 transition-colors rounded-lg hover:bg-white/5"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
                 )}
 
-                {!magicInsight ? (
-                  <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black/20 rounded-2xl border border-dashed border-white/10 text-center min-h-[300px]">
-                    <Sparkles className="w-8 h-8 text-indigo-500/30 mb-4" />
-                    <p className="text-sm text-slate-400 max-w-md">
-                      Clique em &quot;Consultar Astros&quot; para receber o veredito completo da inteligência artificial sobre a operação mágica no tempo e espaço selecionados.
-                    </p>
+                <select
+                  aria-label="Modo Eletivo"
+                  value={electiveMode}
+                  onChange={(e) => setElectiveMode(e.target.value as ElectiveMode)}
+                  className="bg-black/40 border border-white/10 text-xs text-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500/50"
+                >
+                  <option value="sky_only">Apenas o Céu Eletivo</option>
+                  <option value="sky_plus_natal">Céu Eletivo + Mapa Natal</option>
+                </select>
+
+                {reportLimitReached ? (
+                  <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200 text-[10px] font-bold">
+                    Crédito de visitante esgotado.
                   </div>
                 ) : (
+                  <button
+                    onClick={handleGenerateInsight}
+                    disabled={isGenerating || isCalculatingSky || !veredict}
+                    className="group relative px-4 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-300 font-bold hover:text-white hover:bg-indigo-500/40 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGenerating || isCalculatingSky ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span className="text-xs">{isCalculatingSky ? 'Calculando...' : 'Evocando...'}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span className="text-xs">Consultar Astros</span>
+                      </div>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-red-200 font-medium">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {!magicInsight ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 bg-black/20 rounded-2xl border border-dashed border-white/10 text-center min-h-[300px]">
+                <Sparkles className="w-8 h-8 text-indigo-500/30 mb-4" />
+                <p className="text-sm text-slate-400 max-w-md">
+                  Clique em &quot;Consultar Astros&quot; para receber o veredito completo da inteligência artificial sobre a operação mágica no tempo e espaço selecionados.
+                </p>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col">
+                {/* Scroll progress bar */}
+                {!isGenerating && scrollProgress > 0 && scrollProgress < 100 && (
+                  <div className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200 w-[var(--progress-width)]"
+                      style={{ '--progress-width': `${scrollProgress}%` } as React.CSSProperties}
+                    />
+                  </div>
+                )}
+                <div
+                  ref={insightScrollRef}
+                  onScroll={handleScrollProgress}
+                  className={`flex-1 bg-black/30 rounded-2xl border border-indigo-500/20 overflow-y-auto custom-scrollbar shadow-inner ${
+                    isFullscreen ? 'p-8 md:p-12' : 'p-6 min-h-[500px]'
+                  }`}
+                >
+                  <div className={`prose prose-invert prose-indigo max-w-none prose-p:leading-relaxed prose-headings:text-indigo-200 prose-strong:text-indigo-100 prose-hr:border-indigo-500/20 ${
+                    isFullscreen ? 'prose-base md:prose-lg' : 'prose-sm md:prose-base'
+                  }`}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {magicInsight}
+                    </ReactMarkdown>
+                  </div>
+                  {isGenerating && (
+                    <div className="flex items-center gap-2 text-indigo-400 mt-6 animate-pulse text-[10px] font-bold uppercase tracking-widest border-t border-indigo-500/20 pt-4">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>O Mestre continua a escrever...</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Fullscreen overlay Portal */}
+          {isFullscreen && magicInsight && typeof document !== 'undefined' && createPortal(
+            <div
+              className="fixed inset-0 z-[9998] bg-black/90 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
+              onKeyDown={(e) => e.key === 'Escape' && setIsFullscreen(false)}
+              tabIndex={-1}
+              ref={(el) => el?.focus()}
+            >
+              {/* Fullscreen Header */}
+              <div className="flex items-center justify-between px-6 md:px-10 py-4 border-b border-indigo-500/20 bg-slate-950/80">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Droplets className="w-5 h-5 text-indigo-400" />
+                  O Conselho do Mestre
+                </h3>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleCopyInsight}
+                    title="Copiar texto"
+                    aria-label="Copiar texto do conselho"
+                    className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                  >
+                    {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={() => setIsFullscreen(false)}
+                    title="Fechar leitura imersiva"
+                    aria-label="Fechar leitura imersiva"
+                    className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Fullscreen Content */}
+              <div className="flex-1 overflow-hidden px-4 md:px-10 py-6">
+                <div className="max-w-3xl mx-auto h-full flex flex-col">
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                      <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-xs text-red-200 font-medium">{error}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex-1 flex flex-col">
                     {/* Scroll progress bar */}
                     {!isGenerating && scrollProgress > 0 && scrollProgress < 100 && (
-                      <div 
-                        className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden"
-                        style={{ '--scroll-width': `${scrollProgress}%` } as React.CSSProperties}
-                      >
+                      <div className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200 w-[var(--scroll-width)]"
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200 w-[var(--progress-width)]"
+                          style={{ '--progress-width': `${scrollProgress}%` } as React.CSSProperties}
                         />
                       </div>
                     )}
                     <div
                       ref={insightScrollRef}
                       onScroll={handleScrollProgress}
-                      className={`flex-1 bg-black/30 rounded-2xl border border-indigo-500/20 overflow-y-auto custom-scrollbar shadow-inner ${
-                        isFullscreen ? 'p-8 md:p-12' : 'p-6 min-h-[500px]'
-                      }`}
+                      className="flex-1 bg-black/30 rounded-2xl border border-indigo-500/20 overflow-y-auto custom-scrollbar shadow-inner p-8 md:p-12"
                     >
-                      <div className={`prose prose-invert prose-indigo max-w-none prose-p:leading-relaxed prose-headings:text-indigo-200 prose-strong:text-indigo-100 prose-hr:border-indigo-500/20 ${
-                        isFullscreen ? 'prose-base md:prose-lg' : 'prose-sm md:prose-base'
-                      }`}>
+                      <div className="prose prose-invert prose-indigo max-w-none prose-p:leading-relaxed prose-headings:text-indigo-200 prose-strong:text-indigo-100 prose-hr:border-indigo-500/20 prose-base md:prose-lg">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {magicInsight}
                         </ReactMarkdown>
@@ -872,139 +1009,23 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                       )}
                     </div>
                   </div>
-                )}
-              </>
-            );
-
-            // ── Fullscreen overlay ──
-            if (isFullscreen && magicInsight) {
-              return createPortal(
-                <div
-                  className="fixed inset-0 z-[9998] bg-black/90 backdrop-blur-xl flex flex-col animate-in fade-in duration-300"
-                  onKeyDown={(e) => e.key === 'Escape' && setIsFullscreen(false)}
-                  tabIndex={-1}
-                  ref={(el) => el?.focus()}
-                >
-                  {/* Fullscreen Header */}
-                  <div className="flex items-center justify-between px-6 md:px-10 py-4 border-b border-indigo-500/20 bg-slate-950/80">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <Droplets className="w-5 h-5 text-indigo-400" />
-                      O Conselho do Mestre
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={handleCopyInsight}
-                        title="Copiar texto"
-                        aria-label="Copiar texto do conselho"
-                        className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-                      >
-                        {isCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={() => setIsFullscreen(false)}
-                        title="Fechar leitura imersiva"
-                        aria-label="Fechar leitura imersiva"
-                        className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Fullscreen Content */}
-                  <div className="flex-1 overflow-hidden px-4 md:px-10 py-6">
-                    <div className="max-w-3xl mx-auto h-full flex flex-col">
-                      {reportContent}
-                    </div>
-                  </div>
-
-                  {/* Fullscreen Footer */}
-                  <div className="px-6 md:px-10 py-3 border-t border-indigo-500/10 bg-slate-950/60 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500">{scrollProgress}% lido</span>
-                    <button
-                      onClick={() => setIsFullscreen(false)}
-                      className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
-                    >
-                      <Minimize2 className="w-3.5 h-3.5 inline mr-1" />
-                      Voltar ao painel
-                    </button>
-                  </div>
-                </div>,
-                document.body
-              );
-            }
-
-            // ── Inline (padrão) ──
-            return (
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-6 shadow-xl flex-1 flex flex-col">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Droplets className="w-5 h-5 text-indigo-400" />
-                    O Conselho do Mestre
-                  </h3>
-
-                  <div className="flex items-center gap-2">
-                    {magicInsight && !isGenerating && (
-                      <>
-                        <button
-                          onClick={handleCopyInsight}
-                          title={isCopied ? 'Copiado!' : 'Copiar texto'}
-                          aria-label="Copiar texto do conselho"
-                          className="p-1.5 text-slate-500 hover:text-indigo-300 transition-colors rounded-lg hover:bg-white/5"
-                        >
-                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-                        <button
-                          onClick={() => setIsFullscreen(true)}
-                          title="Leitura imersiva"
-                          aria-label="Abrir leitura imersiva"
-                          className="p-1.5 text-slate-500 hover:text-indigo-300 transition-colors rounded-lg hover:bg-white/5"
-                        >
-                          <Maximize2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-
-                    <select
-                      aria-label="Modo Eletivo"
-                      value={electiveMode}
-                      onChange={(e) => setElectiveMode(e.target.value as ElectiveMode)}
-                      className="bg-black/40 border border-white/10 text-xs text-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-indigo-500/50"
-                    >
-                      <option value="sky_only">Apenas o Céu Eletivo</option>
-                      <option value="sky_plus_natal">Céu Eletivo + Mapa Natal</option>
-                    </select>
-
-                    {reportLimitReached ? (
-                      <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200 text-[10px] font-bold">
-                        Crédito de visitante esgotado.
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleGenerateInsight}
-                        disabled={isGenerating || isCalculatingSky || !veredict}
-                        className="group relative px-4 py-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-300 font-bold hover:text-white hover:bg-indigo-500/40 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isGenerating || isCalculatingSky ? (
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span className="text-xs">{isCalculatingSky ? 'Calculando...' : 'Evocando...'}</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span className="text-xs">Consultar Astros</span>
-                          </div>
-                        )}
-                      </button>
-                    )}
-                  </div>
                 </div>
-
-                {reportContent}
               </div>
-            );
-          })()}
+
+              {/* Fullscreen Footer */}
+              <div className="px-6 md:px-10 py-3 border-t border-indigo-500/10 bg-slate-950/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-500">{scrollProgress}% lido</span>
+                <button
+                  onClick={() => setIsFullscreen(false)}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  <Minimize2 className="w-3.5 h-3.5 inline mr-1" />
+                  Voltar ao painel
+                </button>
+              </div>
+            </div>,
+            document.body
+          )}
 
         </div>
       </div>

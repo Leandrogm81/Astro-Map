@@ -1,5 +1,5 @@
 import { Aspect } from '@/types';
-import { normalizePlanetKey, planetLabelPtBr, PlanetId } from '@/lib/planetNaming';
+import { normalizePlanetKey, planetLabelPtBr } from '@/lib/planetNaming';
 
 export const TRADITIONAL_CLASSIC_PLANET_IDS = [
   'sun',

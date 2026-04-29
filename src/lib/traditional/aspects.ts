@@ -49,12 +49,14 @@ export function calculateTraditionalAspects(planets: PlanetPosition[]): Traditio
         const orb = Math.abs(angle - a.angle);
         
         if (orb <= combinedOrb) {
-          // Determina se é aplicativo ou separativo
-          // Simplificação: Se a velocidade relativa está diminuindo a distância
-          const relativeSpeed = p1.speed - p2.speed;
-          // Ajuste para o ângulo do aspecto
-          const distProgress = angle - a.angle;
-          const isApplying = (distProgress > 0 && relativeSpeed < 0) || (distProgress < 0 && relativeSpeed > 0);
+          // Determina se é aplicativo ou separativo comparando o orbe agora com o orbe em um curto intervalo futuro
+          const p1Future = p1.longitude + p1.speed * 0.01;
+          const p2Future = p2.longitude + p2.speed * 0.01;
+          const diffFuture = Math.abs(p1Future - p2Future);
+          const angleFuture = Math.min(diffFuture, 360 - diffFuture);
+          const orbFuture = Math.abs(angleFuture - a.angle);
+          
+          const isApplying = orbFuture < orb;
 
           aspects.push({
             p1: p1.id,
@@ -108,4 +110,74 @@ export function getTraditionalAspectInterpretation(type: string, p1: string, p2:
 
   return templates[type] || `Interação entre ${n1} e ${n2}.`;
 }
+
+/**
+ * Calcula se a Lua está Fora de Curso (Void of Course)
+ * Definição: A Lua não fará nenhum aspecto Ptolomeico exato antes de sair do signo atual.
+ */
+export function calculateMoonVoidOfCourse(
+  moon: PlanetPosition,
+  planets: PlanetPosition[]
+): { isVoid: boolean; nextAspect?: string; remainingDegrees: number } {
+  const moonLon = moon.longitude;
+  const signIndex = Math.floor(moonLon / 30);
+  const signEndLon = (signIndex + 1) * 30;
+  const remainingDegrees = signEndLon - moonLon;
+
+  const classicPlanets = planets.filter(p => 
+    ['sun', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(p.id?.toLowerCase() || '')
+  );
+
+  const ptolemaicAngles = [0, 60, 90, 120, 180];
+  let earliestT = Infinity;
+  let aspectDesc = '';
+
+  for (const p of classicPlanets) {
+    // Velocidade relativa em graus/hora
+    const relSpeed = moon.speed - p.speed;
+    if (relSpeed <= 0) continue; // Lua precisa estar "alcançando" ou se movendo em direção ao aspecto
+
+    for (const targetAngle of ptolemaicAngles) {
+      // Calculamos as duas possíveis posições relativas para o ângulo (ex: 60 e 300)
+      const targets = [targetAngle, (360 - targetAngle) % 360];
+      
+      for (const target of targets) {
+        const currentRelLon = (moon.longitude - p.longitude + 360) % 360;
+        const distToCover = (target - currentRelLon + 360) % 360;
+        
+        // Se a distância é muito grande e a velocidade relativa é baixa, pode não acontecer
+        // Mas a Lua é rápida, então geralmente acontece em poucos dias.
+        // O limite é o fim do signo (máximo ~30 graus, ~60 horas).
+        
+        const t = distToCover / relSpeed; // tempo em horas
+        
+        if (t > 0 && t < 100) { // Limite de busca razoável (aprox 4 dias)
+          const moonLonAtT = moon.longitude + moon.speed * t;
+          
+          if (moonLonAtT < signEndLon) {
+            if (t < earliestT) {
+              earliestT = t;
+              const typePT = ASPECT_TYPES.find(a => a.angle === targetAngle)?.name || 'aspecto';
+              aspectDesc = `${getPlanetNamePT(p.id!)} (${ASPECT_NAMES_PT[typePT] || typePT})`;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    isVoid: earliestT === Infinity,
+    nextAspect: earliestT === Infinity ? undefined : aspectDesc,
+    remainingDegrees: parseFloat(remainingDegrees.toFixed(2))
+  };
+}
+
+const ASPECT_NAMES_PT: Record<string, string> = {
+  conjunction: 'conjunção',
+  sextile: 'sextil',
+  square: 'quadratura',
+  trine: 'trígono',
+  opposition: 'oposição'
+};
 

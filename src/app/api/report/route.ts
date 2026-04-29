@@ -11,34 +11,18 @@ import {
   TRADITIONAL_PROMPT_SYSTEM,
 } from '@/lib/aiPrompts';
 import { AVAILABLE_MODELS, DEFAULT_MODEL_ID } from '@/lib/aiConfig';
-import { calculateTraditionalPoints } from '@/lib/traditional/points';
-import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
 import { createClient } from '@/lib/supabase/server';
 import { getTierLimits } from '@/lib/limits';
-import { UserProfile, NatalChart } from '@/types';
-import type { ElectiveVeredict } from '@/lib/traditional/types';
+import { NatalChart, UserProfile } from '@/types';
+import { ElectiveMode, ElectiveVeredict } from '@/lib/traditional/types';
 
 export const maxDuration = 90;
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const AVAILABLE_MODEL_IDS = new Set(AVAILABLE_MODELS.map((item) => item.id));
 
-function ensureTraditionalChart(chart: NatalChart) {
-  if (!chart.traditionalPoints) {
-    chart.traditionalPoints = calculateTraditionalPoints(
-      chart.ascendant,
-      chart.planets,
-      chart.housesPlacidus,
-      chart.isDayChart ?? true,
-      chart.prenatalSyzygy
-    );
-  }
-
-  if (!chart.traditionalAssessments) {
-    chart.traditionalAssessments = chart.planets
-      .filter((planet) => ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].includes(planet.id))
-      .map((planet) => calculateTraditionalAssessment(planet, chart.planets, chart.isDayChart ?? true));
-  }
+function isElectiveMode(value: unknown): value is ElectiveMode {
+  return value === 'sky_only' || value === 'sky_plus_natal';
 }
 
 async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isDemo: boolean = false) {
@@ -120,7 +104,28 @@ export async function POST(request: NextRequest) {
     }
 
     const chart = body.chart as NatalChart | undefined;
-    if (!chart?.birthData) {
+    const reportMode = body.reportMode as string | undefined;
+    const natalChart = body.natalChart as NatalChart | undefined;
+    const electiveModeValue = body.electiveMode as string | undefined;
+    const veredict = body.veredict as ElectiveVeredict | undefined;
+    const contextChart = body.contextChart as NatalChart | undefined;
+    const skyChart = contextChart ?? chart;
+
+    if (reportMode === 'elective_magic') {
+      if (!veredict || !isElectiveMode(electiveModeValue) || !skyChart?.birthData) {
+        return NextResponse.json(
+          { error: 'Dados da eletiva são obrigatórios: veredito, modo de leitura e céu do momento.' },
+          { status: 400 }
+        );
+      }
+
+      if (electiveModeValue === 'sky_plus_natal' && !natalChart?.birthData) {
+        return NextResponse.json(
+          { error: 'Mapa natal obrigatório para o modo céu do momento + mapa natal.' },
+          { status: 400 }
+        );
+      }
+    } else if (!chart?.birthData) {
       return NextResponse.json({ error: 'Dados do mapa natal são obrigatórios.' }, { status: 400 });
     }
 
@@ -134,7 +139,8 @@ export async function POST(request: NextRequest) {
 
     const requestedModel = body.model as string | undefined;
     const model = requestedModel && AVAILABLE_MODEL_IDS.has(requestedModel) ? requestedModel : DEFAULT_MODEL_ID;
-    const prompt = await buildPrompt(body, chart, profile?.is_demo ?? false);
+    const promptChart = reportMode === 'elective_magic' ? skyChart! : chart!;
+    const prompt = await buildPrompt(body, promptChart, profile?.is_demo ?? false);
 
     if ('error' in prompt) return prompt.error;
 
@@ -157,14 +163,14 @@ export async function POST(request: NextRequest) {
           },
           { role: 'user', content: prompt.userMessage },
         ],
-        temperature: 0.7,
+        temperature: reportMode === 'elective_magic' ? 0.35 : 0.7,
         max_tokens: profile?.is_demo ? 1200 : 12000,
         stream: true,
         ...(model.includes('grok-4.1')
           ? {
               reasoning: {
                 effort: 'high',
-                exclude: false,
+                exclude: true,
               },
             }
           : {}),

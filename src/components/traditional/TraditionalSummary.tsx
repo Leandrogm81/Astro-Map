@@ -1,7 +1,7 @@
 import React from 'react';
 import { NatalChart } from '@/types';
 import { TraditionalAssessment } from '@/lib/traditional/types';
-import { Sun, Moon, Star, Shield, Zap, TrendingUp } from 'lucide-react';
+import { Sun, Moon, Shield, Zap, TrendingUp } from 'lucide-react';
 
 interface TraditionalSummaryProps {
   chart: NatalChart;

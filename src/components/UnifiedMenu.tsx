@@ -115,10 +115,9 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
   const activeItem = menuItems.find(item => item.id === activeTab) || menuItems[0];
 
   const dropdownStyle = useMemo(() => ({
-    position: 'fixed' as const,
-    top: coords ? `${coords.top}px` : 0,
-    left: coords ? `${coords.left}px` : 0,
-  }), [coords]);
+    '--menu-top': coords ? `${coords.top}px` : '0px',
+    '--menu-left': coords ? `${coords.left}px` : '0px',
+  } as React.CSSProperties), [coords]);
 
   return (
     <div className="relative shrink-0" ref={menuRef}>
@@ -145,7 +144,7 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
           id="analysis-menu"
           role="menu"
           style={dropdownStyle}
-          className="w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
+          className="fixed top-[var(--menu-top)] left-[var(--menu-left)] w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
         >
           {userEmail && (
             <div className="px-4 py-2 border-b border-white/5 mb-1" role="none">

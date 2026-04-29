@@ -1,6 +1,6 @@
 import React from 'react';
 import { TraditionalAssessment } from '@/lib/traditional/types';
-import { ShieldCheck, ShieldAlert, Zap, Star } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Star } from 'lucide-react';
 
 interface TraditionalPlanetTableProps {
   assessments: Record<string, TraditionalAssessment>;

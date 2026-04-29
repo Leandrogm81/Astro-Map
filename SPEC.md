@@ -309,6 +309,7 @@ interface NatalChart {
 1. Usuário clica no botão **"Salvar Mapa"**.
 2. Sistema gera identificador único (timestamp ISO ou UUID).
 3. Sistema constrói objeto `SavedChart`:
+
    ```typescript
    interface SavedChart {
        id: string;
@@ -322,6 +323,7 @@ interface NatalChart {
        solarRevolution?: NatalChart;
    }
    ```
+
 4. Sistema recupera array existente de `localStorage` (chave: `astromap-saved-charts`).
 5. Sistema adiciona novo item ao array.
 6. Sistema persiste array atualizado no `localStorage`.
@@ -421,6 +423,7 @@ interface NatalChart {
 2. Sistema aguarda 300ms de inatividade (debounce).
 3. Se texto.length < 3, sistema limpa sugestões e não faz chamada.
 4. Se texto.length >= 3, sistema chama Nominatim:
+
    ```
    GET https://nominatim.openstreetmap.org/search
        ?q={query}
@@ -430,6 +433,7 @@ interface NatalChart {
        &accept-language=pt-BR
        &countrycodes=br
    ```
+
    Headers: `User-Agent: AstroMap/1.0 (astrology app)`
 5. Sistema processa resposta:
    - Extrai `display_name`, `lat`, `lon`
@@ -1027,6 +1031,7 @@ interface AIReport {
 **Local**: `src/app/api/report/route.ts`
 
 1. Adicionar entrada ao array `AVAILABLE_MODELS`:
+
    ```typescript
    {
        id: 'anthropic/claude-3-haiku',
@@ -1035,13 +1040,14 @@ interface AIReport {
        cost: 'R$ 0,003'
    }
    ```
+
 2. O modelo está automaticamente disponível na UI (listado via `GET /api/report`).
 
 ### 10.4 Adicionar Novo Tipo de Relatório
 
 **Locais**: `src/lib/aiPrompts.ts` + `src/app/api/report/route.ts`
 
-1. Criar novo `const PROMPT_SYSTEM = \`...\``; em `aiPrompts.ts`.
+1. Criar novo `const PROMPT_SYSTEM = \`...\``; em`aiPrompts.ts`.
 2. Criar função de formatação `formatXForAI(data): string`.
 3. Em `route.ts`, adicionar lógica de seleção de prompt no handler POST (novo campo `reportType` ou similar).
 
