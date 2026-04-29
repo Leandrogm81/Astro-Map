@@ -1,7 +1,7 @@
-import { NatalChart, ZodiacSign, PlanetPosition, Aspect } from '@/types';
+import { NatalChart, Aspect } from '@/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects, getZodiacSign, formatDegree } from './astrology';
 import { calculateTraditionalAssessment } from './traditional/scoring';
-import { calculateTraditionalAspects, getPlanetNamePT } from './traditional/aspects';
+import { calculateTraditionalAspects } from './traditional/aspects';
 import { TraditionalAssessment, ElectiveMode, ElectiveVeredict } from './traditional/types';
 import { translateMagicPurposePt, translatePlanetNamePt } from './traditional/constants';
 
@@ -56,8 +56,8 @@ export function translateElectiveText(text: string): string {
  * Formata o status de Curso Vazio de forma clara para a IA
  */
 function formatVoidOfCourseStatus(status: ElectiveVeredict['moonStatus']['voidOfCourseStatus']): string {
-  if (status === 'yes') return 'SIM';
-  if (status === 'no') return 'NÃO';
+  if (status === 'void') return 'SIM';
+  if (status === 'not_void') return 'NÃO';
   return 'NÃO CALCULADO';
 }
 
@@ -95,23 +95,29 @@ export const ELECTIVE_MAGIC_RITUAL_DATA_RULES = `REGRAS PARA CORRESPONDÊNCIAS R
  * Formata o contexto do céu tradicional (para Eletiva)
  */
 function formatTraditionalSkyContext(skyChart: NatalChart): string {
-  const assessment = calculateTraditionalAssessment(skyChart);
+  const isDay = skyChart.isDayChart ?? true;
+  const assessment: TraditionalAssessment[] = skyChart.planets
+    .filter(p => TRADITIONAL_PLANET_IDS.includes(p.id))
+    .map(p => calculateTraditionalAssessment(p, skyChart.planets, isDay));
+  
   const aspects = calculateTraditionalAspects(skyChart.planets);
 
   let result = `DADOS CALCULADOS PELO ASTROMAP (CÉU DO MOMENTO):\n`;
   result += `-`.repeat(40) + '\n';
   
-  result += `Ascendente da eleição: ${skyChart.housesPlacidus[0].sign} a ${formatDegree(skyChart.housesPlacidus[0].degree)}\n`;
-  result += `Regente do Ascendente: ${translatePlanetNamePt(getDomicileRuler(skyChart.housesPlacidus[0].sign))}\n\n`;
+  if (skyChart.housesPlacidus && skyChart.housesPlacidus.length > 0) {
+    result += `Ascendente da eleição: ${skyChart.housesPlacidus[0].sign} a ${formatDegree(skyChart.housesPlacidus[0].degree)}\n`;
+    result += `Regente do Ascendente: ${translatePlanetNamePt(getDomicileRuler(skyChart.housesPlacidus[0].sign))}\n\n`;
 
-  result += `ESTADO DAS CASAS (SISTEMA PLACIDUS):\n`;
-  skyChart.housesPlacidus.forEach(h => {
-    const type = [1,4,7,10].includes(h.number) ? '(Angular)' : [2,5,8,11].includes(h.number) ? '(Sucedente)' : '(Cadente)';
-    result += `Casa ${h.number}: ${h.sign} ${type}\n`;
-  });
+    result += `ESTADO DAS CASAS (SISTEMA PLACIDUS):\n`;
+    skyChart.housesPlacidus.forEach(h => {
+      const type = [1,4,7,10].includes(h.number) ? '(Angular)' : [2,5,8,11].includes(h.number) ? '(Sucedente)' : '(Cadente)';
+      result += `Casa ${h.number}: ${h.sign} ${type}\n`;
+    });
+  }
 
   result += `\nOS SETE GOVERNADORES (ESTADO CÓSMICO):\n`;
-  assessment.planets.forEach(p => {
+  assessment.forEach(p => {
     result += `${translatePlanetNamePt(p.planetId)}: ${p.sign} em ${p.house}a Casa. Dignidade: ${p.dignity}. Pontuação: ${p.totalScore} pts.\n`;
   });
 
@@ -119,7 +125,7 @@ function formatTraditionalSkyContext(skyChart: NatalChart): string {
   if (aspects.length > 0) {
     aspects.forEach(asp => {
       const typePT = ASPECT_NAMES_PT[asp.type] || asp.type;
-      result += `- ${translatePlanetNamePt(asp.planet1)} ${typePT} ${translatePlanetNamePt(asp.planet2)} (Órbita: ${asp.orb.toFixed(1)}°)\n`;
+      result += `- ${translatePlanetNamePt(asp.p1)} ${typePT} ${translatePlanetNamePt(asp.p2)} (Órbita: ${asp.orb.toFixed(1)}°)\n`;
     });
   } else {
     result += `Nenhum aspecto tradicional relevante no momento.\n`;
@@ -210,8 +216,7 @@ export function formatElectiveForAI(
   if (moonStatus.aspects && moonStatus.aspects.length > 0) {
     result += `  * Aspectos Ativos da Lua:\n`;
     moonStatus.aspects.forEach(asp => {
-      const typePT = ASPECT_NAMES_PT[asp.type] || asp.type;
-      result += `    - ${typePT} com ${translatePlanetNamePt(asp.planet2)} (Órbita: ${asp.orb.toFixed(1)}°)\n`;
+      result += `    - ${asp}\n`;
     });
   } else {
     result += `  * Aspectos da Lua: NENHUM ASPECTO EM ÓRBITA\n`;
@@ -227,10 +232,10 @@ export function formatElectiveForAI(
     result += `CORRESPONDÊNCIAS RITUALÍSTICAS FORNECIDAS PELO ASTROMAP\n`;
     result += `======================================================\n`;
     result += `${ELECTIVE_MAGIC_RITUAL_DATA_RULES}\n\n`;
-    result += `- Intenções sugeridas: ${rc.intentions.join(', ')}\n`;
-    result += `- Cores ritualísticas: ${rc.colors.join(', ')}\n`;
-    result += `- Metais sagrados: ${rc.metals.join(', ')}\n`;
-    result += `- Incensos e Ervas: ${rc.incenses.join(', ')}\n`;
+    result += `- Intenções sugeridas: ${(rc.intentions || []).join(', ')}\n`;
+    result += `- Cores ritualísticas: ${(rc.colors || []).join(', ')}\n`;
+    result += `- Metais sagrados: ${(rc.metals || []).join(', ')}\n`;
+    result += `- Incensos e Ervas: ${(rc.incenses || []).join(', ')}\n`;
     result += `- Ações de Caridade/Oferenda: ${rc.charity}\n\n`;
   }
 
@@ -247,7 +252,11 @@ export function formatElectiveForAI(
  * Formata os dados de um mapa para a IA
  */
 export function formatChartForAI(chart: NatalChart): string {
-  const assessment = calculateTraditionalAssessment(chart);
+  const isDay = chart.isDayChart ?? true;
+  const assessment = chart.planets
+    .filter(p => TRADITIONAL_PLANET_IDS.includes(p.id))
+    .map(p => calculateTraditionalAssessment(p, chart.planets, isDay));
+    
   const { birthData, planets, housesPlacidus } = chart;
 
   let result = `DADOS CALCULADOS PELO ASTROMAP\n`;
@@ -263,9 +272,9 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `-`.repeat(40) + '\n';
   
   planets.forEach(p => {
-    const assessmentPlanet = assessment.planets.find(ap => ap.planetId === p.id);
+    const assessmentPlanet = assessment.find(ap => ap.planetId === p.id);
     const house = getHouseForPlanet(p.longitude, housesPlacidus);
-    const dignity = assessmentPlanet ? assessmentPlanet.dignity : getDignity(p.sign, p.id);
+    const dignity = assessmentPlanet ? assessmentPlanet.dignity : getDignity(p.name, p.sign);
     const ruler = getDomicileRuler(p.sign);
     
     result += `${p.name} em ${p.sign} (${formatDegree(p.degree)}) na Casa ${house}.\n`;
@@ -281,7 +290,7 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `-`.repeat(40) + '\n';
   const chain = calculateDispositorChain(planets);
   chain.forEach(node => {
-    result += `${node.planet} -> regido por ${node.ruler}\n`;
+    result += `${node.planet} -> regido por ${node.isRuledBy}\n`;
   });
 
   result += `\nCASAS E SIGNOS INTERCEPTADOS:\n`;
@@ -299,6 +308,142 @@ export function formatChartForAI(chart: NatalChart): string {
     const typePT = ASPECT_NAMES_PT[asp.type] || asp.type;
     result += `- ${asp.planet1} ${typePT} ${asp.planet2} (Órbita: ${asp.orb.toFixed(1)}°)\n`;
   });
+
+  return result;
+}
+
+
+/**
+ * Formata os dados técnicos tradicionais para a IA
+ */
+export function formatTraditionalChartForAI(chart: NatalChart, assessments: TraditionalAssessment[]): string {
+  const { birthData, housesPlacidus } = chart;
+
+  if (!birthData) {
+    return 'Erro: Dados de nascimento não encontrados.';
+  }
+
+  let result = `DADOS TÉCNICOS DE ASTROLOGIA TRADICIONAL (SETENÁRIO E HELENÍSTICA)\n`;
+  result += `===================================================================\n\n`;
+  result += `NOME: ${birthData.name}\n`;
+  result += `DADOS: ${birthData.date} às ${birthData.time}\n`;
+  result += `LOCAL: ${birthData.location}\n\n`;
+
+  // === Seita e Pontos Vitais ===
+  const isDay = chart.isDayChart ?? true;
+  result += `CONDIÇÃO GERAL:\n`;
+  result += `- SEITA DO MAPA: ${isDay ? 'DIURNO (Sol acima do horizonte)' : 'NOTURNO (Sol abaixo do horizonte)'}\n`;
+
+  if (chart.traditionalPoints) {
+    const tp = chart.traditionalPoints;
+    result += `- ALMUTEN FIGURIS: ${tp.almutenFiguris?.name || 'Não identificado'}\n`;
+    result += `- HYLEG: ${tp.hyleg?.name || 'Não identificado'}\n`;
+    result += `- ALCOCODEN: ${tp.alcocoden?.name || 'Não identificado'}\n`;
+    result += `- SENHOR DA NATIVIDADE: ${tp.lordOfNativity?.name || 'Não identificado'}\n`;
+    if (chart.prenatalSyzygy !== undefined) {
+      result += `- SIZÍGIA PRÉ-NATAL: ${getZodiacSign(chart.prenatalSyzygy)} ${formatDegree(chart.prenatalSyzygy % 30)}\n`;
+    }
+  }
+  result += `-`.repeat(60) + '\n\n';
+
+  // === Condição dos Planetas Clássicos (Dignidades e Pontuação) ===
+  result += `OS SETE GOVERNADORES (ESTADO OPERACIONAL):\n`;
+  result += `-`.repeat(60) + '\n';
+
+  const planetMapping: Record<string, string> = {
+    sun: 'Sol',
+    moon: 'Lua',
+    mercury: 'Mercúrio',
+    venus: 'Vênus',
+    mars: 'Marte',
+    jupiter: 'Júpiter',
+    saturn: 'Saturno'
+  };
+
+  const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+
+  for (const id of classicIds) {
+    const planeName = planetMapping[id];
+    const assessment = assessments.find(a => a?.planetId?.toLowerCase() === id.toLowerCase());
+    if (!assessment) continue;
+
+    const retro = assessment.isRetrograde ? ' (RETRÓGRADO — Debilidade Acidental)' : '';
+    const score = assessment.totalScore;
+    const condition = score >= 10 ? 'Soberana/Excepcional' : score >= 5 ? 'Forte' : score <= -10 ? 'Crítica/Severa' : score <= -5 ? 'Debilitada' : 'Moderada';
+
+    // Mapeamento de Debilidades se houver
+    const debilities = [];
+    if (assessment.score?.breakdown?.essential?.['Exílio']) debilities.push('Exílio (Detrimento)');
+    if (assessment.score?.breakdown?.essential?.['Queda']) debilities.push('Queda (Fall)');
+    const debilityStr = debilities.length > 0 ? ` [DEBILIDADES: ${debilities.join(', ')}]` : '';
+
+    result += `> ${planeName.toUpperCase()}:\n`;
+    result += `   * Signo/Casa: ${assessment.sign} na Casa ${assessment.house}${retro}\n`;
+    result += `   * Dignidade Essencial: ${assessment.dignity}${debilityStr}\n`;
+    result += `   * Almuten/Pontuação: ${score} pts [Condição: ${condition}]\n`;
+    result += `   * Hierarquia de Regência:\n`;
+    result += `     - Domicílio: ${assessment.dignities?.domicile || '---'}\n`;
+    result += `     - Exaltação: ${assessment.dignities?.exaltation || 'Nenhuma'}\n`;
+    result += `     - Triplicidade: ${assessment.dignities?.triplicity || '---'}\n`;
+    const termStr = assessment.interpretations?.term || "";
+    const faceStr = assessment.interpretations?.face || "";
+
+    result += `     - Termo: ${termStr}\n`;
+    result += `     - Face/Decano: ${faceStr}\n`;
+
+    const cond = assessment.condition;
+    const labels = [];
+    if (cond?.isCazimi) labels.push("Cazimi (No coração do Sol)");
+    if (cond?.isCombust) labels.push("Combusto (Queimado pelo Sol)");
+    if (cond?.isUnderRays) labels.push("Sob os Raios");
+    if (cond?.isHayz) labels.push("Hayz (Condição de Seita Ideal)");
+    if (cond?.isInMutualReception && Array.isArray(cond.isInMutualReception) && cond.isInMutualReception.length > 0) {
+      labels.push(`Recepção Mútua com ${cond.isInMutualReception.join(', ')}`);
+    }
+
+    if (labels.length > 0) {
+      result += `   * Acidentes/Recepções: ${labels.join(' | ')}\n`;
+    }
+    result += `\n`;
+  }
+
+  // === Signos das Casas ===
+  result += `CÚSPIDES DAS CASAS (DOMÍNIOS DO DESTINO):\n`;
+  result += `-`.repeat(60) + '\n';
+  if (housesPlacidus && Array.isArray(housesPlacidus)) {
+    for (const house of housesPlacidus) {
+      result += `Casa ${house.number}: ${house.sign} ${formatDegree(house.degree)}\n`;
+    }
+  }
+  result += `\n`;
+
+  // === Aspectos Tradicionais ===
+  result += `ASPECTOS TRADICIONAIS (PTOLOMEICOS):\n`;
+  result += `-`.repeat(60) + '\n';
+  const classicIdsList = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+  const traditionalAspects = (chart.aspects || []).filter((a: Aspect) =>
+    a?.planet1 && a?.planet2 &&
+    classicIdsList.includes(a.planet1.toLowerCase()) &&
+    classicIdsList.includes(a.planet2.toLowerCase()) &&
+    ['conjunction', 'sextile', 'square', 'trine', 'opposition'].includes(a.type)
+  );
+
+  for (const aspect of traditionalAspects) {
+    const typePT = ASPECT_NAMES_PT[aspect.type] || aspect.type;
+    result += `- ${aspect.planet1} em ${typePT} com ${aspect.planet2} (Órbita: ${aspect.orb.toFixed(1)}°)\n`;
+  }
+  result += `\n`;
+
+  // === Lotes Herméticos ===
+  result += `LOTES HERMÉTICOS (PONTOS DE DESTINO):\n`;
+  result += `-`.repeat(60) + '\n';
+  if (chart.lots) {
+    for (const lot of chart.lots) {
+      const houseNum = housesPlacidus && housesPlacidus.length > 0 ? getHouseForPlanet(lot.degree, housesPlacidus) : '?';
+      result += `- ${lot.name}: ${lot.sign} ${formatDegree(lot.degree % 30)} na Casa ${houseNum}\n`;
+      result += `  (Propósito: ${lot.description})\n`;
+    }
+  }
 
   return result;
 }
