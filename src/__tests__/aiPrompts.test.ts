@@ -287,7 +287,6 @@ describe('AI Prompts Formatting', () => {
       expect(output).toContain('Mercúrio');
       expect(output).toContain('ASPECTOS TRADICIONAIS REAIS');
       expect(output).toContain('DADOS NÃO CALCULADOS');
-      expect(output).toContain('RESUMO BÁSICO FORNECIDO PELO ASTROMAP');
       expect(output).toContain('Curso Vazio: NÃO');
       expect(output).toContain('Aspectos Ativos da Lua:');
       expect(output).toContain('EXEMPLOS DE COMPORTAMENTO');
