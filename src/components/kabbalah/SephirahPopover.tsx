@@ -27,8 +27,9 @@ function isValid(value: string): boolean {
 function getPopoverStyle(anchorRect: DOMRect): CSSProperties {
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+  const isMobile = viewportWidth < 640;
   const maxWidth = Math.min(viewportWidth - 24, 380);
-  const maxHeight = viewportHeight * 0.7;
+  const maxHeight = isMobile ? viewportHeight * 0.6 : viewportHeight * 0.7;
 
   let left = anchorRect.right + 12;
   let top: number | undefined = Math.max(12, anchorRect.top);
@@ -177,13 +178,20 @@ export default function SephirahPopover({
         aria-label={`Detalhes de ${definition.name}`}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        drag={typeof window !== 'undefined' && window.innerWidth < 640}
+        dragConstraints={{ top: 0, left: 0, right: 0, bottom: 0 }}
+        dragElastic={0.1}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         style={style}
         className="pointer-events-auto flex max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/85 text-white shadow-2xl backdrop-blur-xl"
       >
+        {/* Drag Handle for Mobile */}
+        <div className="flex justify-center py-2 sm:hidden">
+          <div className="h-1 w-12 rounded-full bg-white/20" />
+        </div>
         <div className={`flex items-start justify-between gap-4 border-b border-t border-white/5 bg-white/5 px-4 py-3 ${accent.headerTop}`}>
           <div className="min-w-0">
             <p className="text-lg font-black tracking-tight text-white">
