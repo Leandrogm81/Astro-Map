@@ -233,6 +233,7 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                       className="cursor-pointer outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                       aria-label={`Sephirah ${name}`}
                       role="button"
+                      data-sephirah={name}
                       tabIndex={0}
                       onClick={(event) => {
                         const anchor = event.currentTarget.getBoundingClientRect();

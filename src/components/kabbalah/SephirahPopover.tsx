@@ -27,27 +27,45 @@ function isValid(value: string): boolean {
 function getPopoverStyle(anchorRect: DOMRect): CSSProperties {
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
   const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
-  const maxWidth = Math.min(viewportWidth * 0.9, 380);
+  const maxWidth = Math.min(viewportWidth - 24, 380);
   const maxHeight = viewportHeight * 0.7;
+
+  let left = anchorRect.right + 12;
+  let top: number | undefined = Math.max(12, anchorRect.top);
+  let bottom: number | undefined;
+
+  if (left + maxWidth > viewportWidth - 12) {
+    left = anchorRect.left - 12 - maxWidth;
+  }
+
+  if (left < 12) {
+    left = (viewportWidth - maxWidth) / 2;
+    top = anchorRect.bottom + 12;
+    if (top + maxHeight > viewportHeight - 12) {
+      bottom = viewportHeight - anchorRect.top + 12;
+      top = undefined;
+    }
+  }
 
   const style: CSSProperties = {
     position: 'fixed',
     width: `${maxWidth}px`,
     maxWidth: `${maxWidth}px`,
     maxHeight: `${maxHeight}px`,
-    top: `${Math.max(12, anchorRect.top)}px`,
-    left: `${anchorRect.right + 12}px`,
+    left: `${left}px`,
     zIndex: 1000,
   };
 
-  if (anchorRect.right + 12 + maxWidth > viewportWidth - 12) {
-    style.left = 'auto';
-    style.right = `${Math.max(12, viewportWidth - anchorRect.left + 12)}px`;
+  if (top !== undefined) {
+    style.top = `${top}px`;
+    if (top + maxHeight > viewportHeight - 12) {
+      delete style.top;
+      style.bottom = '12px';
+    }
   }
 
-  if (anchorRect.top + maxHeight > viewportHeight - 12) {
-    delete style.top;
-    style.bottom = '12px';
+  if (bottom !== undefined) {
+    style.bottom = `${bottom}px`;
   }
 
   return style;
@@ -104,19 +122,26 @@ export default function SephirahPopover({
       }
     };
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
       const target = event.target;
-      if (popoverRef.current && target instanceof Node && !popoverRef.current.contains(target)) {
+      if (
+        popoverRef.current && 
+        target instanceof Element && 
+        !popoverRef.current.contains(target) &&
+        !target.closest('[data-sephirah]')
+      ) {
         onClose();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown, { passive: true });
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
     };
   }, [onClose]);
 
