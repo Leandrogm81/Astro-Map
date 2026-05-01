@@ -26,6 +26,7 @@ interface AIReportProps {
   chartId?: string | null;
   onReportGenerated?: (report: AIReportType | null) => void;
   onReportUpdated?: (text: string) => void;
+  hideHeader?: boolean;
 }
 
 export default function AIReport({
@@ -33,8 +34,10 @@ export default function AIReport({
   reportMode = 'natal',
   solarRevolution,
   solarYear,
+  chartId,
   onReportGenerated,
   onReportUpdated,
+  hideHeader = false,
 }: AIReportProps) {
   const isSolarMode = reportMode === 'solar';
   const [reportText, setReportText] = useState<string>('');
@@ -163,39 +166,41 @@ export default function AIReport({
 
 
   return (
-    <div className="flex flex-col h-full max-h-[70vh] md:max-h-[85vh] bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+    <div className={`flex flex-col h-full ${hideHeader ? '' : 'max-h-[70vh] md:max-h-[85vh] bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl'}`}>
       {/* Header Premium */}
-      <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-purple-500/30">
-            <Image
-              src="/assets/logo-premium.png"
-              alt="Logo"
-              fill
-              className="object-cover"
-            />
+      {!hideHeader && (
+        <div className="p-4 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-purple-500/30">
+              <Image
+                src="/assets/logo-premium.png"
+                alt="Logo"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400" />
+                {solarYear ? `Revolução Solar ${solarYear}` : 'Interpretação IA'}
+              </h3>
+              <p className="text-xs text-slate-400">
+                {reportText ? 'Relatório Astrológico Híbrido' : 'Pronto para analisar seu mapa'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-purple-400" />
-              {solarYear ? `Revolução Solar ${solarYear}` : 'Interpretação IA'}
-            </h3>
-            <p className="text-xs text-slate-400">
-              {reportText ? 'Relatório Astrológico Híbrido' : 'Pronto para analisar seu mapa'}
-            </p>
-          </div>
-        </div>
 
-        {reportText && !isStreaming && (
-          <button
-            onClick={handleDeleteReport}
-            className="p-2 text-slate-500 hover:text-red-400 transition-colors"
-            title="Apagar Relatório"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-        )}
-      </div>
+          {reportText && !isStreaming && (
+            <button
+              onClick={handleDeleteReport}
+              className="p-2 text-slate-500 hover:text-red-400 transition-colors"
+              title="Apagar Relatório"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Content Area */}
       <div

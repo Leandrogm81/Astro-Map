@@ -131,12 +131,9 @@ export default function Home() {
   const hasLocalCreationLimit = false;
 
   const allMenuItems = useMemo(() => [
-    { id: 'chart', label: 'Visão Geral', icon: Star },
+    { id: 'chart', label: 'Mapa Natal', icon: Star },
     { id: 'traditional', label: 'Tradicional', icon: Sparkles },
     { id: 'kabbalah', label: 'Kabbalah', icon: Hexagon },
-    { id: 'houses', label: 'Casas', icon: Moon },
-    { id: 'aspects', label: 'Aspectos', icon: Sun },
-    { id: 'report', label: 'Relatório IA', icon: Sparkles },
     { id: 'revolution', label: 'Rev. Solar', icon: Sun },
     { id: 'elective', label: 'Eletiva', icon: Zap }
   ], []);
@@ -200,28 +197,28 @@ export default function Home() {
 
     try {
       const calculatedChart = await calculateNatalChart(birthData);
-      
+
       if (!isValidChart(calculatedChart)) {
         throw new Error('Dados do mapa astral inválidos');
       }
-      
-      const hydrated = hydrateNatalChart(calculatedChart); 
+
+      const hydrated = hydrateNatalChart(calculatedChart);
       setChart(hydrated);
       setSolarRevolution(null);
       setSolarYear(undefined);
       setSolarReportText('');
       setSidebarVisible(false); // Hide sidebar after calculation
       setMobileSidebarOpen(false);
-      
+
       try {
         if (editingChartId && !profile?.is_demo) {
-          await updateChartSynced(editingChartId, { 
-            chart: hydrated, 
+          await updateChartSynced(editingChartId, {
+            chart: hydrated,
             name: `${birthData.name} - ${birthData.date}`,
             aiReport: undefined,
             solarRevolution: undefined,
             solarYear: undefined,
-            solarReport: undefined 
+            solarReport: undefined
           }, user);
           setSavedChartId(editingChartId);
           setEditingChartId(null);
@@ -264,19 +261,19 @@ export default function Home() {
     if (savedChart.chart) {
       const currentChart = hydrateNatalChart(savedChart.chart);
       setChart(currentChart);
-      
+
       setSolarRevolution(savedChart.solarRevolution || null);
       setSolarYear(savedChart.solarYear || undefined);
 
       // Carrega relatório de revolução solar se existir cache
       if (savedChart.solarYear) {
-         const solarReportKey = getReportKey(currentChart.birthData, true, savedChart.solarYear);
-         const solarLegacyKey = getReportKeyLegacy(currentChart.birthData.name, currentChart.birthData.date, true, savedChart.solarYear);
-         const savedSolarReport = localStorage.getItem(solarReportKey) || localStorage.getItem(solarLegacyKey);
-         if (savedSolarReport) setSolarReportText(savedSolarReport);
-         else setSolarReportText('');
+        const solarReportKey = getReportKey(currentChart.birthData, true, savedChart.solarYear);
+        const solarLegacyKey = getReportKeyLegacy(currentChart.birthData.name, currentChart.birthData.date, true, savedChart.solarYear);
+        const savedSolarReport = localStorage.getItem(solarReportKey) || localStorage.getItem(solarLegacyKey);
+        if (savedSolarReport) setSolarReportText(savedSolarReport);
+        else setSolarReportText('');
       } else {
-         setSolarReportText('');
+        setSolarReportText('');
       }
 
       setSavedChartId(savedChart.id);
@@ -397,29 +394,29 @@ export default function Home() {
       </div>
 
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
-          <button
-            onClick={() => toggleSection('saved')}
-            className="w-full px-3 py-2 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <Save className="w-5 h-5 text-purple-400" />
-              <h2 className="text-lg font-semibold text-purple-200">
-                Mapas Salvos
-              </h2>
-            </div>
-            {expandedSections.has('saved') ? (
-              <ChevronUp className="w-5 h-5 text-slate-400" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-slate-400" />
-            )}
-          </button>
-
-          {expandedSections.has('saved') && (
-            <div className="p-3 md:p-6">
-              <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
-            </div>
+        <button
+          onClick={() => toggleSection('saved')}
+          className="w-full px-3 py-2 md:px-6 md:py-4 flex items-center justify-between bg-slate-900/80 hover:bg-slate-800/80 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Save className="w-5 h-5 text-purple-400" />
+            <h2 className="text-lg font-semibold text-purple-200">
+              Mapas Salvos
+            </h2>
+          </div>
+          {expandedSections.has('saved') ? (
+            <ChevronUp className="w-5 h-5 text-slate-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-slate-400" />
           )}
-        </div>
+        </button>
+
+        {expandedSections.has('saved') && (
+          <div className="p-3 md:p-6">
+            <SavedCharts onSelectChart={handleSelectChart} onEditChart={handleEditChart} />
+          </div>
+        )}
+      </div>
     </>
   );
 
@@ -434,9 +431,9 @@ export default function Home() {
                 <Menu className="w-5 h-5" />
               </button>
               <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-gold-500/10 border border-gold-500/20">
-                <Image 
-                  src="/assets/logo-premium.png" 
-                  alt="AstroMap Logo" 
+                <Image
+                  src="/assets/logo-premium.png"
+                  alt="AstroMap Logo"
                   fill
                   className="object-cover"
                 />
@@ -460,7 +457,7 @@ export default function Home() {
                   <span className="hidden md:inline">Calcular Novo Mapa</span>
                 </button>
               )}
-              
+
               {user && profile && !profileLoading && (
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
                   <div className={`w-2 h-2 rounded-full ${profile.tier === 'premium' ? 'bg-gold-500' : profile.tier === 'admin' ? 'bg-purple-500' : 'bg-slate-500'}`} />
@@ -469,7 +466,7 @@ export default function Home() {
                   </span>
                 </div>
               )}
-              
+
 
 
               <LogoutButton />
@@ -547,8 +544,8 @@ export default function Home() {
                 <div className="sticky top-[56px] z-40 flex items-center gap-2 p-1.5 md:p-2 bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/5 shadow-lg shadow-black/20">
                   {/* Mobile: Menu Unificado para TODAS as abas */}
                   <div className="flex md:hidden w-full">
-                    <UnifiedMenu 
-                      activeTab={activeTab} 
+                    <UnifiedMenu
+                      activeTab={activeTab}
                       onTabChange={(id: string) => setActiveTab(id as typeof activeTab)}
                       items={allMenuItems}
                     />
@@ -556,16 +553,16 @@ export default function Home() {
 
                   {/* Desktop: Layout original com tabs e dropdown parcial */}
                   <div className="hidden md:flex items-center gap-2 overflow-x-auto scrollbar-none">
-                    <UnifiedMenu 
-                      activeTab={activeTab} 
-                      onTabChange={(id: string) => setActiveTab(id as typeof activeTab)} 
+                    <UnifiedMenu
+                      activeTab={activeTab}
+                      onTabChange={(id: string) => setActiveTab(id as typeof activeTab)}
                       items={allMenuItems}
                     />
                   </div>
-                  
+
                   {/* Separador visual */}
                   <div className="w-px bg-white/10 mx-1 self-stretch shrink-0" />
-                  
+
                   {/* Botão PDF Compacto */}
                   <div className="shrink-0">
                     <ExportPDF
@@ -581,12 +578,53 @@ export default function Home() {
 
                 {/* Tab Content */}
                 <div className="glass rounded-3xl p-4 md:p-8 shadow-2xl">
-{activeTab === 'chart' && (
-                      <div className="space-y-6">
+                  {activeTab === 'chart' && (
+                    <div className="space-y-12">
+                      <section className="space-y-6">
                         <AstroChart chart={chart} />
                         <PlanetTable chart={chart} />
-                      </div>
-                    )}
+                      </section>
+
+                      <section className="space-y-6">
+                        <div className="flex items-center gap-3 px-4">
+                          <Moon className="w-5 h-5 text-purple-400" />
+                          <h3 className="text-xl font-serif font-bold text-white uppercase tracking-wider">Cúspides das Casas</h3>
+                        </div>
+                        <HousesTable chart={chart} system="placidus" />
+                      </section>
+
+                      <div className="w-full h-px bg-white/5" />
+
+                      <section className="space-y-6">
+                        <div className="flex items-center gap-3 px-4">
+                          <Sun className="w-5 h-5 text-gold-400" />
+                          <h3 className="text-xl font-serif font-bold text-white uppercase tracking-wider">Aspectos Planetários</h3>
+                        </div>
+                        <AspectsList chart={chart} />
+                      </section>
+
+                      <div className="w-full h-px bg-white/5" />
+
+                      <section className="space-y-6">
+                        <button 
+                          type="button" 
+                          className="w-full px-4 py-2.5 flex items-center gap-3 text-xs font-bold uppercase tracking-widest transition-colors bg-gold-500/10 text-gold-400 rounded-xl border border-gold-500/20"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          Relatório IA
+                        </button>
+                        
+                        <AIReport
+                          chart={chart}
+                          reportMode="natal"
+                          chartId={savedChartId}
+                          onReportGenerated={handleReportGenerated}
+                          onReportUpdated={setNatalReportText}
+                          hideHeader={true}
+                        />
+                      </section>
+                    </div>
+                  )}
 
                   {activeTab === 'traditional' && (
                     <TraditionalView chart={chart} />
@@ -596,28 +634,12 @@ export default function Home() {
                     <KabbalahView chart={chart} />
                   )}
 
-                  {activeTab === 'houses' && (
-                    <div className="space-y-6">
-                      <HousesTable chart={chart} system="placidus" />
-                    </div>
-                  )}
 
-                  {activeTab === 'aspects' && (
-                    <AspectsList chart={chart} />
-                  )}
 
-                  {activeTab === 'report' && (
-                    <AIReport 
-                      chart={chart} 
-                      reportMode="natal"
-                      chartId={savedChartId}
-                      onReportGenerated={handleReportGenerated}
-                      onReportUpdated={setNatalReportText}
-                    />
-                  )}
+
 
                   {activeTab === 'revolution' && (
-                    <SolarRevolution 
+                    <SolarRevolution
                       natalChart={chart}
                       initialYear={solarYear}
                       initialSolarRevolution={solarRevolution}
