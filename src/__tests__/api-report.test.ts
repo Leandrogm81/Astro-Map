@@ -149,7 +149,7 @@ function installSupabaseMock(profileOverrides: Partial<UserProfile> = {}) {
 }
 
 function installOpenRouterMock(content = 'Relatório eletivo pronto') {
-  const fetchMock = vi.fn(async () => new Response(
+  const fetchMock = vi.fn(async (_input: string | URL | Request, _init?: RequestInit) => new Response(
     `data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n\ndata: [DONE]\n\n`,
     {
       status: 200,
@@ -174,19 +174,19 @@ describe('/api/report elective magic', () => {
     const fetchMock = installOpenRouterMock();
     installSupabaseMock();
 
-    const response = await POST(makeRequest({
+    const response = (await POST(makeRequest({
       reportMode: 'elective_magic',
       electiveMode: 'sky_only',
       contextChart: baseChart,
       veredict: electiveVeredict,
       apiKey: 'test-key',
-    }));
+    }))) as Response;
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('Relatório eletivo pronto');
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    const [, options] = fetchMock.mock.calls[0];
+    const [, options] = fetchMock.mock.calls[0] as [string | URL | Request, RequestInit | undefined];
     const payload = JSON.parse(options?.body as string) as {
       temperature: number;
       reasoning?: { exclude?: boolean };
@@ -203,13 +203,13 @@ describe('/api/report elective magic', () => {
     const fetchMock = installOpenRouterMock();
     installSupabaseMock();
 
-    const response = await POST(makeRequest({
+    const response = (await POST(makeRequest({
       reportMode: 'elective_magic',
       electiveMode: 'sky_only',
       chart: baseChart,
       veredict: electiveVeredict,
       apiKey: 'test-key',
-    }));
+    }))) as Response;
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain('Relatório eletivo pronto');
@@ -220,13 +220,13 @@ describe('/api/report elective magic', () => {
     const fetchMock = installOpenRouterMock();
     installSupabaseMock();
 
-    const response = await POST(makeRequest({
+    const response = (await POST(makeRequest({
       reportMode: 'elective_magic',
       electiveMode: 'sky_plus_natal',
       contextChart: baseChart,
       veredict: electiveVeredict,
       apiKey: 'test-key',
-    }));
+    }))) as Response;
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
@@ -239,12 +239,12 @@ describe('/api/report elective magic', () => {
     const fetchMock = installOpenRouterMock();
     installSupabaseMock();
 
-    const response = await POST(makeRequest({
+    const response = (await POST(makeRequest({
       reportMode: 'elective_magic',
       electiveMode: 'sky_only',
       contextChart: baseChart,
       apiKey: 'test-key',
-    }));
+    }))) as Response;
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({

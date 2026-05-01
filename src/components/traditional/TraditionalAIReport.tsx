@@ -88,10 +88,10 @@ export default function TraditionalAIReport({ chart, assessments, onReportUpdate
         const chunk = decoder.decode(value, { stream: true });
         fullText += chunk;
         setReportText(fullText);
-        if (onReportUpdated) onReportUpdated(fullText);
       }
 
       saveTraditionalReportToStorage(chart.birthData, fullText);
+      onReportUpdated?.(fullText);
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ocorreu um erro inesperado';

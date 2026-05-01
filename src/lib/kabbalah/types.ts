@@ -23,22 +23,34 @@ export interface SephirahDefinition {
   readonly meaning: string;
   readonly planetId: string;
   readonly pillar: PillarName;
-  readonly color: string;
+  readonly color: string; // Base color (Queen scale usually)
   readonly description: {
     readonly pt: string;
     readonly he: string;
   };
+  readonly divineName?: string;
+  readonly archangel?: string;
+  readonly choir?: string;
 }
 
 export interface Angel72 {
   readonly number: number;
   readonly name: string;
   readonly hebrew: string;
+  readonly hebrewRoot: string;
   readonly sign: ZodiacSign;
   readonly degreesStart: number;
   readonly degreesEnd: number;
   readonly virtues: string;
-  readonly psalm: string;
+  readonly psalm: string; // Reference (e.g., Psalm 91:1)
+  readonly psalmText: string; // Full verse text
+  readonly divineName: string;
+  readonly hierarchy: string;
+  readonly correspondences?: {
+    readonly incense?: string;
+    readonly candle?: string;
+    readonly color?: string;
+  };
 }
 
 export type GematriaSystem = 'standard' | 'ordinal' | 'misparKatan' | 'latin';

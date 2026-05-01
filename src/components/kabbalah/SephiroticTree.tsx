@@ -1,11 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import type { NatalChart } from '@/types';
-import { mapChartToSephiroth, getSephirahDefinition } from '@/lib/kabbalah/sephiroth';
-import { SEPHIRAH_RADIUS, SEPHIROTH_COORDS, TREE_PATHS } from '@/lib/kabbalah/constants';
-import type { SephirahName, SephirothMapping } from '@/lib/kabbalah/types';
+import { AnimatePresence } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Hexagon } from 'lucide-react';
+import type { NatalChart } from '@/types';
+import { SEPHIRAH_RADIUS, SEPHIROTH_COORDS, TREE_PATHS } from '@/lib/kabbalah/constants';
+import { getSephirahDefinition, mapChartToSephiroth } from '@/lib/kabbalah/sephiroth';
+import type { SephirahName, SephirothMapping } from '@/lib/kabbalah/types';
+import { calculateSephirothScores, SephirahScore } from '@/lib/kabbalah/scoring';
+import { getZodiacSign } from '@/lib/astrology';
+import SephirahPopover from './SephirahPopover';
+import ScoringRanking from './ScoringRanking';
 
 interface SephiroticTreeProps {
   readonly chart?: NatalChart | null;
@@ -22,9 +27,48 @@ function getMappingSymbol(mapping: SephirothMapping | undefined, name: SephirahN
   return '—';
 }
 
+function getHaloProps(score?: SephirahScore) {
+  if (!score) return { opacity: 0, scale: 1, filter: 'none' };
+  
+  // Calculate relative intensity based on score (0-100)
+  const normalized = score.score / 100;
+  
+  if (score.score >= 80) {
+    // High power: thick, glowing
+    return { 
+      opacity: 0.8 * normalized, 
+      scale: 1.25 + (normalized * 0.15), 
+      filter: 'url(#glow)',
+      strokeWidth: 4,
+      strokeDasharray: 'none'
+    };
+  } else if (score.score <= 20) {
+    // Low power: faint, dashed
+    return { 
+      opacity: 0.3, 
+      scale: 1.1, 
+      filter: 'none',
+      strokeWidth: 1.5,
+      strokeDasharray: '4 4'
+    };
+  } else {
+    // Normal power
+    return { 
+      opacity: 0.4 * normalized, 
+      scale: 1.15 + (normalized * 0.05), 
+      filter: 'none',
+      strokeWidth: 2,
+      strokeDasharray: 'none'
+    };
+  }
+}
+
 export default function SephiroticTree({ chart }: SephiroticTreeProps) {
   const mappings = useMemo(() => (chart ? mapChartToSephiroth(chart) : []), [chart]);
   const [selectedSephirah, setSelectedSephirah] = useState<SephirahName | null>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const circleRefs = useRef<Map<SephirahName, SVGCircleElement>>(new Map());
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const mappingBySephirah = useMemo(() => {
     const map = new Map<SephirahName, SephirothMapping>();
@@ -34,6 +78,64 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
 
   const selectedMapping = selectedSephirah ? mappingBySephirah.get(selectedSephirah) : undefined;
   const selectedDefinition = selectedSephirah ? getSephirahDefinition(selectedSephirah) : undefined;
+
+  const [showHalos, setShowHalos] = useState(true);
+
+  const scores = useMemo(() => {
+    if (!chart || mappings.length === 0) return null;
+    const ascSign = getZodiacSign(chart.ascendant);
+    return calculateSephirothScores(mappings, chart.aspects, ascSign);
+  }, [chart, mappings]);
+
+  const selectedScore = selectedSephirah && scores ? scores[selectedSephirah] : undefined;
+
+  const supportsHover =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(hover: hover)').matches;
+
+  const clearHoverTimeout = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const openSephirah = (name: SephirahName, anchor: DOMRect | null) => {
+    clearHoverTimeout();
+    setAnchorRect(anchor);
+    setSelectedSephirah(name);
+  };
+
+  const closeSephirah = () => {
+    clearHoverTimeout();
+    setAnchorRect(null);
+    setSelectedSephirah(null);
+  };
+
+  const scheduleOpen = (name: SephirahName, anchor: DOMRect | null) => {
+    clearHoverTimeout();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setAnchorRect(anchor);
+      setSelectedSephirah(name);
+    }, 150);
+  };
+
+  const scheduleClose = () => {
+    clearHoverTimeout();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setAnchorRect(null);
+      setSelectedSephirah(null);
+    }, 150);
+  };
 
   return (
     <section className="rounded-[1.75rem] border border-white/10 bg-slate-900/60 backdrop-blur-xl p-5 md:p-6 shadow-2xl shadow-black/25">
@@ -59,14 +161,21 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
             {' '}| Ascendente {formatDegree(chart.ascendant)}
           </div>
 
-          <div className="mb-6 rounded-3xl border border-white/10 bg-slate-950/60 p-4">
-            <svg
-              viewBox="0 0 400 600"
-              role="img"
-              aria-label="Árvore Sephirótica com projeção planetária"
-              className="w-full h-auto"
-            >
-              <title>Árvore Sephirótica</title>
+          <div className="flex flex-col xl:flex-row gap-6 mb-6">
+            <div className="flex-1 rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <svg
+                viewBox="0 0 400 600"
+                role="img"
+                aria-label="Árvore Sephirótica com projeção planetária"
+                className="w-full h-auto"
+              >
+                <defs>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <title>Árvore Sephirótica</title>
               {TREE_PATHS.map(([from, to]) => {
                 const fromCoord = SEPHIROTH_COORDS[from];
                 const toCoord = SEPHIROTH_COORDS[to];
@@ -88,25 +197,69 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                 const definition = getSephirahDefinition(name);
                 const mapping = mappingBySephirah.get(name);
                 const isActive = selectedSephirah === name;
+                const score = scores ? scores[name] : undefined;
+                const halo = getHaloProps(score);
 
                 return (
                   <g key={name}>
+                    {showHalos && score && (
+                      <circle
+                        cx={coord.x}
+                        cy={coord.y}
+                        r={SEPHIRAH_RADIUS * halo.scale}
+                        fill="transparent"
+                        stroke={definition.color}
+                        strokeOpacity={halo.opacity}
+                        strokeWidth={halo.strokeWidth}
+                        strokeDasharray={halo.strokeDasharray}
+                        filter={halo.filter}
+                        className="transition-all duration-500 ease-in-out"
+                      />
+                    )}
                     <circle
+                      ref={(el) => {
+                        if (el) {
+                          circleRefs.current.set(name, el);
+                        } else {
+                          circleRefs.current.delete(name);
+                        }
+                      }}
                       cx={coord.x}
                       cy={coord.y}
                       r={SEPHIRAH_RADIUS}
                       fill={isActive ? definition.color : 'rgba(15, 23, 42, 0.9)'}
                       stroke={definition.color}
                       strokeWidth={isActive ? 3 : 2}
-                      style={{ cursor: 'pointer' }}
+                      className="cursor-pointer outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                       aria-label={`Sephirah ${name}`}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setSelectedSephirah(name)}
+                      onClick={(event) => {
+                        const anchor = event.currentTarget.getBoundingClientRect();
+                        if (supportsHover) {
+                          openSephirah(name, anchor);
+                          return;
+                        }
+
+                        if (selectedSephirah === name) {
+                          closeSephirah();
+                          return;
+                        }
+
+                        openSephirah(name, anchor);
+                      }}
+                      onMouseEnter={(event) => {
+                        if (!supportsHover) return;
+                        scheduleOpen(name, event.currentTarget.getBoundingClientRect());
+                      }}
+                      onMouseLeave={() => {
+                        if (!supportsHover) return;
+                        scheduleClose();
+                      }}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
-                          setSelectedSephirah(name);
+                          openSephirah(name, event.currentTarget.getBoundingClientRect());
                         }
                       }}
                     />
@@ -135,20 +288,32 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
               })}
             </svg>
           </div>
-
-          {selectedMapping && selectedDefinition && (
-            <section className="mb-6 rounded-2xl border border-gold-500/20 bg-gold-500/8 p-4" aria-live="polite">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-gold-200 font-bold">Detalhe da Sephirah</p>
-              <h4 className="mt-1 text-xl font-bold text-white">{selectedDefinition.name} · {selectedDefinition.meaning}</h4>
-              <p className="mt-2 text-sm text-slate-300">{selectedDefinition.description.pt}</p>
-              <p className="mt-1 text-sm text-gold-100">
-                {'planetName' in selectedMapping ? selectedMapping.planetName : 'Ascendente'} · {selectedMapping.sign} {formatDegree(selectedMapping.degree)} · Casa {selectedMapping.house}
-              </p>
-              <p className="text-sm text-slate-300">
-                Anjo regente: <span className="text-gold-200 font-semibold">{selectedMapping.angel.name}</span> · {selectedMapping.angel.psalm}
-              </p>
-            </section>
+          
+          {scores && (
+            <div className="xl:w-80 shrink-0">
+              <ScoringRanking 
+                scores={scores} 
+                showHalos={showHalos} 
+                onToggleHalos={() => setShowHalos(!showHalos)} 
+              />
+            </div>
           )}
+        </div>
+
+          <AnimatePresence>
+            {selectedSephirah && selectedMapping && selectedDefinition && anchorRect && (
+              <SephirahPopover
+                key={selectedSephirah}
+                sephirahName={selectedSephirah}
+                mapping={selectedMapping}
+                score={selectedScore}
+                anchorRect={anchorRect}
+                onClose={closeSephirah}
+                onMouseEnter={clearHoverTimeout}
+                onMouseLeave={scheduleClose}
+              />
+            )}
+          </AnimatePresence>
 
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {mappings.map((mapping) => {
@@ -161,7 +326,7 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                 <article
                   key={mapping.sephirah.name}
                   className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
-                  style={{ boxShadow: `0 0 0 1px ${sephirah.color}22 inset` }}
+                  style={{ boxShadow: `0 0 0 1px ${sephirah.color}22 inset` }} // nosonar
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>

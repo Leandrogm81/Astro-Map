@@ -104,7 +104,7 @@ export default function KabbalahView({
         <div className="flex items-start gap-3">
           <Star className="w-4 h-4 text-gold-300 shrink-0 mt-0.5" />
           <p>
-            A projeção visual completa da árvore será refinada no próximo sprint. O núcleo atual já entrega dados, tradução e leitura gemátrica prontos para integração.
+            Passe o mouse sobre cada Sephirah para ver as correspondências rituais da Golden Dawn personalizadas pelo seu mapa natal.
           </p>
         </div>
       </footer>

@@ -234,9 +234,10 @@ describe('KabbalahView interactions', () => {
       fireEvent.click(ketherNode as Element);
     });
 
-    expect(container.textContent).toContain('Detalhe da Sephirah');
+    expect(document.body.textContent).toContain('Correspondências da Golden Dawn');
     expect(container.textContent).toContain('Kether');
-    expect(container.textContent).toContain('Anjo regente');
+    expect(document.body.textContent).toContain('Nome Divino');
+    expect(document.body.textContent).toContain('Anjo do Shemhamphorash');
 
     await act(async () => {
       findButton(container, 'Gematria').click();

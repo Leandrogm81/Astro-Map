@@ -8,20 +8,20 @@ describe('72 angels lookup', () => {
     expect(ANGELS_72[0]).toMatchObject({
       number: 1,
       name: 'Vehuiah',
-      hebrew: 'והו',
+      hebrew: 'והויה',
       sign: 'Áries',
       degreesStart: 0,
       degreesEnd: 5,
-      psalm: 'Psalm 3',
+      psalm: 'Salmo 3:3',
     });
     expect(ANGELS_72[71]).toMatchObject({
       number: 72,
       name: 'Mumiah',
-      hebrew: 'מום',
+      hebrew: 'מומיה',
       sign: 'Peixes',
       degreesStart: 355,
       degreesEnd: 360,
-      psalm: 'Psalm 114',
+      psalm: 'Salmo 114:7',
     });
   });
 
@@ -45,7 +45,7 @@ describe('72 angels lookup', () => {
     expect(angel.sign).toBe('Leão');
     expect(angel.degreesStart).toBe(120);
     expect(angel.degreesEnd).toBe(125);
-    expect(angel.psalm).toBe('Psalm 9');
+    expect(angel.psalm).toBe('Salmo 9:2');
   });
 
   it('falls back safely when longitude is not a finite number', () => {

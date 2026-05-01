@@ -4,7 +4,9 @@ import { PDFDownloadLink, Document, Font, Page, StyleSheet, Text, View } from '@
 import { Download, Loader2 } from 'lucide-react';
 import type { NatalChart } from '@/types';
 import { calculateGematria } from '@/lib/kabbalah/gematria';
-import { mapChartToSephiroth } from '@/lib/kabbalah/sephiroth';
+import { GOLDEN_DAWN_CORRESPONDENCES } from '@/lib/kabbalah/goldenDawn';
+import { getSephirahDefinition, mapChartToSephiroth } from '@/lib/kabbalah/sephiroth';
+import type { SephirahName } from '@/lib/kabbalah/types';
 
 Font.register({
   family: 'DejaVu Sans',
@@ -45,6 +47,34 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 8,
+  },
+  detailCard: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+    minPresenceAhead: 50,
+  },
+  detailAccent: {
+    borderTopWidth: 3,
+    paddingTop: 8,
+  },
+  detailLabel: {
+    fontSize: 8,
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  detailValue: {
+    fontSize: 9,
+    color: '#0f172a',
+    fontWeight: 'bold',
+  },
+  detailVerse: {
+    fontSize: 8,
+    color: '#1e293b',
+    lineHeight: 1.35,
   },
   row: {
     flexDirection: 'row',
@@ -139,6 +169,73 @@ function KabbalahDocument({ chart }: KabbalahPDFProps) {
             <Text style={styles.tableCell}>{mapping.angel.name}</Text>
           </View>
         ))}
+
+        <Text style={styles.sectionTitle}>Correspondências da Golden Dawn</Text>
+        {mappings.map((mapping) => {
+          const sephirahName: SephirahName = mapping.sephirah.name;
+          const sephirah = getSephirahDefinition(sephirahName);
+          const goldenDawn = GOLDEN_DAWN_CORRESPONDENCES[sephirahName];
+          const planetLabel = 'planetName' in mapping ? mapping.planetName : 'Ascendente';
+          const divineName = `${goldenDawn.divineName.hebrew} · ${goldenDawn.divineName.transliteration}`;
+          const archangel = `${goldenDawn.archangel.hebrew} · ${goldenDawn.archangel.transliteration}`;
+
+          return (
+            <View key={sephirahName} style={[styles.detailCard, styles.detailAccent, { borderTopColor: sephirah.color }]}>
+              <Text style={styles.value}>{sephirah.name} · {planetLabel}</Text>
+
+              {goldenDawn.divineName.hebrew !== '-' || goldenDawn.divineName.transliteration !== '-' ? (
+                <View style={styles.row}>
+                  <Text style={styles.detailLabel}>Nome Divino</Text>
+                  <Text style={styles.detailValue}>{divineName}</Text>
+                </View>
+              ) : null}
+
+              {goldenDawn.archangel.hebrew !== '-' || goldenDawn.archangel.transliteration !== '-' ? (
+                <View style={styles.row}>
+                  <Text style={styles.detailLabel}>Arcanjo</Text>
+                  <Text style={styles.detailValue}>{archangel}</Text>
+                </View>
+              ) : null}
+
+              {goldenDawn.choir.pt !== '-' ? (
+                <View style={styles.row}>
+                  <Text style={styles.detailLabel}>Coro Angélico</Text>
+                  <Text style={styles.detailValue}>{goldenDawn.choir.pt}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.row}>
+                <Text style={styles.detailLabel}>Anjo</Text>
+                <Text style={styles.detailValue}>{mapping.angel.name} · {mapping.angel.hebrew}</Text>
+              </View>
+
+              <View style={{ marginTop: 4 }}>
+                <Text style={styles.detailLabel}>Versículo</Text>
+                <Text style={styles.detailValue}>{mapping.angel.psalm}</Text>
+                <Text style={styles.detailVerse}>{mapping.angel.psalmText}</Text>
+              </View>
+
+              {goldenDawn.virtue !== '-' ? (
+                <View style={styles.row}>
+                  <Text style={styles.detailLabel}>Virtude</Text>
+                  <Text style={styles.detailValue}>{goldenDawn.virtue}</Text>
+                </View>
+              ) : null}
+
+              {goldenDawn.vice !== '-' ? (
+                <View style={styles.row}>
+                  <Text style={styles.detailLabel}>Vício</Text>
+                  <Text style={styles.detailValue}>{goldenDawn.vice}</Text>
+                </View>
+              ) : null}
+
+              <View style={styles.row}>
+                <Text style={styles.detailLabel}>Experiência Espiritual</Text>
+                <Text style={styles.detailValue}>{goldenDawn.spiritualExperience}</Text>
+              </View>
+            </View>
+          );
+        })}
       </Page>
     </Document>
   );

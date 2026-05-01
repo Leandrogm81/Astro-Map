@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { NatalChart, AIReport as AIReportType } from '@/types';
@@ -34,7 +34,6 @@ export default function AIReport({
   reportMode = 'natal',
   solarRevolution,
   solarYear,
-  chartId,
   onReportGenerated,
   onReportUpdated,
   hideHeader = false,
@@ -51,9 +50,27 @@ export default function AIReport({
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Carregar relatório salvo no início
+  const getReportStorageKeys = () => {
+    const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
+    const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
+
+    return { reportKey, legacyKey };
+  };
+
+  const clearSavedReport = () => {
+    const { reportKey, legacyKey } = getReportStorageKeys();
+    localStorage.removeItem(reportKey);
+    localStorage.removeItem(legacyKey);
+  };
+
+  const saveCurrentReport = (text: string) => {
+    const { reportKey } = getReportStorageKeys();
+    localStorage.setItem(reportKey, text);
+  };
+
+  // Carregar relatÃ³rio salvo no inÃ­cio
   useEffect(() => {
-    // Tentar carregar relatório salvo para este mapa
+    // Tentar carregar relatÃ³rio salvo para este mapa
     const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
     const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
     const savedReport = localStorage.getItem(reportKey) || localStorage.getItem(legacyKey);
@@ -71,15 +88,15 @@ export default function AIReport({
     }
   }, [reportText, isStreaming]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (): Promise<boolean> => {
     if (profile?.is_suspended || profile?.tier === 'blocked') {
-      setError(profile?.is_suspended ? 'Sua conta está suspensa.' : 'Seu plano atual não permite gerar relatórios de IA.');
-      return;
+      setError(profile?.is_suspended ? 'Sua conta estÃ¡ suspensa.' : 'Seu plano atual nÃ£o permite gerar relatÃ³rios de IA.');
+      return false;
     }
 
     if (reportLimitReached) {
-      setError('Você atingiu o limite de relatórios de IA para o seu plano.');
-      return;
+      setError('VocÃª atingiu o limite de relatÃ³rios de IA para o seu plano.');
+      return false;
     }
 
     setLoading(true);
@@ -129,12 +146,11 @@ export default function AIReport({
         const chunk = decoder.decode(value, { stream: true });
         accumulatedText += chunk;
         setReportText(accumulatedText);
-        if (onReportUpdated) onReportUpdated(accumulatedText);
+        onReportUpdated?.(accumulatedText);
       }
 
       // Salvar no localStorage ao finalizar
-      const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
-      localStorage.setItem(reportKey, accumulatedText);
+      saveCurrentReport(accumulatedText);
 
       if (onReportGenerated) {
         onReportGenerated({
@@ -143,24 +159,35 @@ export default function AIReport({
           generatedAt: new Date().toISOString()
         });
       }
+      return true;
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao gerar relatório');
+      setError(err instanceof Error ? err.message : 'Erro ao gerar relatÃ³rio');
+      return false;
     } finally {
       setLoading(false);
       setIsStreaming(false);
     }
   };
 
-  const handleDeleteReport = () => {
-    if (confirm('Tem certeza que deseja apagar permanentemente este relatório?')) {
-      const reportKey = getReportKey(chart.birthData, isSolarMode, solarYear);
-      const legacyKey = getReportKeyLegacy(chart.birthData.name, chart.birthData.date, isSolarMode, solarYear);
-      localStorage.removeItem(reportKey);
-      localStorage.removeItem(legacyKey);
-      setReportText('');
-      onReportUpdated?.('');
-      onReportGenerated?.(null);
+  const handleResetAndGenerateReport = async () => {
+    if (!window.confirm('Tem certeza que deseja apagar permanentemente este relatÃ³rio e gerar outro?')) {
+      return;
+    }
+
+    const previousReport = reportText;
+
+    clearSavedReport();
+    setReportText('');
+    onReportUpdated?.('');
+    onReportGenerated?.(null);
+
+    const generated = await handleGenerateReport();
+
+    if (!generated && previousReport) {
+      saveCurrentReport(previousReport);
+      setReportText(previousReport);
+      onReportUpdated?.(previousReport);
     }
   };
 
@@ -182,21 +209,22 @@ export default function AIReport({
             <div>
               <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-400" />
-                {solarYear ? `Revolução Solar ${solarYear}` : 'Interpretação IA'}
+                {solarYear ? `RevoluÃ§Ã£o Solar ${solarYear}` : 'InterpretaÃ§Ã£o IA'}
               </h3>
               <p className="text-xs text-slate-400">
-                {reportText ? 'Relatório Astrológico Híbrido' : 'Pronto para analisar seu mapa'}
+                {reportText ? 'RelatÃ³rio AstrolÃ³gico HÃ­brido' : 'Pronto para analisar seu mapa'}
               </p>
             </div>
           </div>
 
-          {reportText && !isStreaming && (
+          {reportText && !isStreaming && !loading && (
             <button
-              onClick={handleDeleteReport}
-              className="p-2 text-slate-500 hover:text-red-400 transition-colors"
-              title="Apagar Relatório"
+              onClick={handleResetAndGenerateReport}
+              className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-red-200 transition-colors hover:bg-red-500/20 hover:text-white"
+              title="Apagar e gerar outro relatório"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-4 h-4" />
+              Apagar e gerar outro
             </button>
           )}
         </div>
@@ -216,7 +244,7 @@ export default function AIReport({
             <div className="space-y-2">
               <h4 className="text-xl font-medium text-slate-200">Seu Mapa em Profundidade</h4>
               <p className="text-sm text-slate-400 leading-relaxed">
-                Nossa IA combina astrologia psicológica e preditiva para criar um guia único sobre seu temperamento, desafios e o momento atual.
+                Nossa IA combina astrologia psicolÃ³gica e preditiva para criar um guia Ãºnico sobre seu temperamento, desafios e o momento atual.
               </p>
             </div>
 
@@ -225,7 +253,7 @@ export default function AIReport({
             {profile?.tier === 'blocked' ? (
               <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
                 <p className="text-red-200 text-sm">
-                  Sua conta está com restrição de acesso a recursos premium.
+                  Sua conta estÃ¡ com restriÃ§Ã£o de acesso a recursos premium.
                   <br />
                   <span className="text-[10px] opacity-70 mt-1 block">Entre em contato com o administrador para regularizar seu acesso.</span>
                 </p>
@@ -234,8 +262,8 @@ export default function AIReport({
               <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
                 <p className="text-amber-200 text-sm">
                   {profile?.tier === 'free' || profile?.tier === 'standard'
-                    ? `Seu limite de relatórios gratuitos (${tierLimits.ai_reports_per_month}) foi atingido este mês.` 
-                    : 'Você atingiu o limite de relatórios de IA do seu plano.'}
+                    ? `Seu limite de relatÃ³rios gratuitos (${tierLimits.ai_reports_per_month}) foi atingido este mÃªs.` 
+                    : 'VocÃª atingiu o limite de relatÃ³rios de IA do seu plano.'}
                   <br />
                   <span className="text-[10px] opacity-70 mt-1 block">Considere fazer upgrade para continuar explorando.</span>
                 </p>
@@ -254,7 +282,7 @@ export default function AIReport({
                   className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl text-white font-bold shadow-lg shadow-purple-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-3"
                 >
                   <Sparkles className="w-5 h-5 animate-pulse" />
-                  GERAR RELATÓRIO COM IA
+                  GERAR RELATÃ“RIO COM IA
                 </button>
               </div>
             )}
@@ -281,18 +309,30 @@ export default function AIReport({
           <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <div className="text-sm text-red-200/80">
-              <p className="font-bold">Houve uma interrupção cósmica</p>
+              <p className="font-bold">Houve uma interrupÃ§Ã£o cÃ³smica</p>
               <p className="mt-1">{error}</p>
             </div>
           </div>
         )}
       </div>
 
-      {reportText && !isStreaming && (
-        <div className="p-4 border-t border-slate-800 bg-slate-900/60 flex items-center justify-center gap-4">
+{reportText && !isStreaming && (
+        <div className={`p-4 border-t border-slate-800 bg-slate-900/60 flex items-center gap-4 ${hideHeader ? 'justify-between' : 'justify-center'}`}>
           <p className="text-[10px] text-slate-500 font-medium">Este relatório está salvo no seu dispositivo.</p>
+          {hideHeader && (
+            <button
+              onClick={handleResetAndGenerateReport}
+              className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-red-200 transition-colors hover:bg-red-500/20 hover:text-white"
+              title="Apagar e gerar outro relatório"
+            >
+              <Trash2 className="w-4 h-4" />
+              Apagar e gerar outro
+            </button>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+

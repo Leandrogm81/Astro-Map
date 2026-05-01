@@ -1,6 +1,6 @@
 import type { NatalChart, PlanetPosition } from '@/types';
 import { getAngelByDegree } from './shem72';
-import { getDegreeInSign, getZodiacSignFromLongitude, normalizeLongitude, PILLAR_COLORS } from './constants';
+import { getDegreeInSign, getZodiacSignFromLongitude, normalizeLongitude } from './constants';
 import type { MalkuthMapping, SephirahDefinition, SephirahName, SephirothMapping, SephirothPlanetMapping } from './types';
 
 export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
@@ -12,7 +12,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Coroa',
     planetId: 'neptune',
     pillar: 'Equilíbrio',
-    color: '#f8fafc',
+    color: '#FFFFFF', // Brilho Branco (Escala da Rainha)
     description: {
       pt: 'A fonte da unidade e da consciência suprema.',
       he: 'הכתר העליון',
@@ -26,7 +26,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Sabedoria',
     planetId: 'uranus',
     pillar: 'Misericórdia',
-    color: '#60a5fa',
+    color: '#A9A9A9', // Cinza (Escala da Rainha)
     description: {
       pt: 'Impulso criador, sabedoria em estado puro.',
       he: 'חכמה ראשונית',
@@ -40,7 +40,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Entendimento',
     planetId: 'saturn',
     pillar: 'Severidade',
-    color: '#f87171',
+    color: '#000000', // Preto (Escala da Rainha)
     description: {
       pt: 'Estrutura, discernimento e forma.',
       he: 'בינה מעצבת',
@@ -54,7 +54,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Conhecimento',
     planetId: 'pluto',
     pillar: 'Equilíbrio',
-    color: '#8b5cf6',
+    color: '#D8BFD8', // Lavanda (Escala da Rainha)
     description: {
       pt: 'Conhecimento oculto que faz a ponte entre mente e manifestação.',
       he: 'דעת נסתרת',
@@ -68,7 +68,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Misericórdia',
     planetId: 'jupiter',
     pillar: 'Misericórdia',
-    color: '#38bdf8',
+    color: '#0000FF', // Azul (Escala da Rainha)
     description: {
       pt: 'Expansão benevolente, ordem justa e proteção.',
       he: 'חסד מתפשט',
@@ -82,7 +82,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Rigor',
     planetId: 'mars',
     pillar: 'Severidade',
-    color: '#fb7185',
+    color: '#FF0000', // Escarlate (Escala da Rainha)
     description: {
       pt: 'Força, limite e coragem para agir.',
       he: 'גבורה לוחמת',
@@ -96,7 +96,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Beleza',
     planetId: 'sun',
     pillar: 'Equilíbrio',
-    color: PILLAR_COLORS['Equilíbrio'],
+    color: '#FFD700', // Ouro/Amarelo (Escala da Rainha)
     description: {
       pt: 'Centro solar de harmonia, integridade e revelação.',
       he: 'תפארת מרכזית',
@@ -110,7 +110,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Vitória',
     planetId: 'venus',
     pillar: 'Misericórdia',
-    color: '#34d399',
+    color: '#008000', // Esmeralda (Escala da Rainha)
     description: {
       pt: 'Persistência, desejo e magnetismo.',
       he: 'נצח מנצח',
@@ -124,7 +124,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Esplendor',
     planetId: 'mercury',
     pillar: 'Severidade',
-    color: '#f59e0b',
+    color: '#FFA500', // Laranja (Escala da Rainha)
     description: {
       pt: 'Linguagem, forma mental e precisão.',
       he: 'הוד בהיר',
@@ -138,7 +138,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Fundamento',
     planetId: 'moon',
     pillar: 'Equilíbrio',
-    color: '#c084fc',
+    color: '#8A2BE2', // Violeta (Escala da Rainha)
     description: {
       pt: 'Base psíquica, memória e imaginação.',
       he: 'יסוד מחבר',
@@ -152,7 +152,7 @@ export const SEPHIRAH_DEFINITIONS: Record<SephirahName, SephirahDefinition> = {
     meaning: 'Reino',
     planetId: 'ascendant',
     pillar: 'Equilíbrio',
-    color: '#94a3b8',
+    color: '#1A1A1A', // Citrino/Oliva/Ferrugem/Preto (Escala da Rainha)
     description: {
       pt: 'Manifestação encarnada, o reino material.',
       he: 'מלכות בעולם',
