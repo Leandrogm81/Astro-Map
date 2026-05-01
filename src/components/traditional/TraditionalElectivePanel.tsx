@@ -53,6 +53,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import styles from './TraditionalElectivePanel.module.css';
 
 interface TraditionalElectivePanelProps {
   chart: NatalChart;
@@ -904,9 +905,11 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                 {/* Scroll progress bar */}
                 {!isGenerating && scrollProgress > 0 && scrollProgress < 100 && (
                   <div className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200 w-[var(--progress-width)]"
-                      style={{ '--progress-width': `${scrollProgress}%` } as React.CSSProperties}
+                    <progress
+                      className={styles.insightProgress}
+                      value={scrollProgress}
+                      max={100}
+                      aria-label="Progresso de leitura"
                     />
                   </div>
                 )}
@@ -985,9 +988,11 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                     {/* Scroll progress bar */}
                     {!isGenerating && scrollProgress > 0 && scrollProgress < 100 && (
                       <div className="h-0.5 bg-black/30 rounded-full mb-3 overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-200 w-[var(--progress-width)]"
-                          style={{ '--progress-width': `${scrollProgress}%` } as React.CSSProperties}
+                        <progress
+                          className={styles.insightProgress}
+                          value={scrollProgress}
+                          max={100}
+                          aria-label="Progresso de leitura"
                         />
                       </div>
                     )}

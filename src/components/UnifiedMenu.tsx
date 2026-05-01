@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Moon, Sun, Sparkles, ChevronDown, Star, LogOut, Hexagon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -115,10 +115,11 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
   const isAnyTabActive = menuItems.some(item => item.id === activeTab);
   const activeItem = menuItems.find(item => item.id === activeTab) || menuItems[0];
 
-  const dropdownStyle = useMemo(() => ({
-    '--menu-top': coords ? `${coords.top}px` : '0px',
-    '--menu-left': coords ? `${coords.left}px` : '0px',
-  } as React.CSSProperties), [coords]);
+  useEffect(() => {
+    if (!isOpen || !coords || !dropdownRef.current) return;
+    dropdownRef.current.style.top = `${coords.top}px`;
+    dropdownRef.current.style.left = `${coords.left}px`;
+  }, [isOpen, coords]);
 
   return (
     <div className="relative shrink-0" ref={menuRef}>
@@ -144,8 +145,7 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
           ref={dropdownRef}
           id="analysis-menu"
           role="menu"
-          style={dropdownStyle}
-          className="fixed top-[var(--menu-top)] left-[var(--menu-left)] w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
+          className="fixed w-48 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 z-[100] animate-in fade-in zoom-in-95 duration-200"
         >
           {userEmail && (
             <div className="px-4 py-2 border-b border-white/5 mb-1" role="none">
