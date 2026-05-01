@@ -1,12 +1,29 @@
 import { SephirahScore } from '@/lib/kabbalah/scoring';
 import { SephirahName } from '@/lib/kabbalah/types';
 import { Eye, EyeOff, Trophy, Flame, Sparkles } from 'lucide-react';
-import { getSephirahDefinition } from '@/lib/kabbalah/sephiroth';
 
 interface ScoringRankingProps {
   readonly scores: Record<SephirahName, SephirahScore>;
   readonly showHalos: boolean;
   readonly onToggleHalos: () => void;
+}
+
+function getAccentClasses(name: SephirahName): { readonly strip: string; readonly fill: string } {
+  const accentClassBySephirah: Record<SephirahName, { readonly strip: string; readonly fill: string }> = {
+    Kether: { strip: 'bg-[#FFFFFF]', fill: 'text-[#FFFFFF]' },
+    Chokmah: { strip: 'bg-[#A9A9A9]', fill: 'text-[#A9A9A9]' },
+    Binah: { strip: 'bg-[#000000]', fill: 'text-[#D1D5DB]' },
+    Daath: { strip: 'bg-[#D8BFD8]', fill: 'text-[#D8BFD8]' },
+    Chesed: { strip: 'bg-[#0000FF]', fill: 'text-[#3B82F6]' },
+    Geburah: { strip: 'bg-[#FF0000]', fill: 'text-[#EF4444]' },
+    Tiphereth: { strip: 'bg-[#FFD700]', fill: 'text-[#FACC15]' },
+    Netzach: { strip: 'bg-[#008000]', fill: 'text-[#22C55E]' },
+    Hod: { strip: 'bg-[#FFA500]', fill: 'text-[#F59E0B]' },
+    Yesod: { strip: 'bg-[#8A2BE2]', fill: 'text-[#A855F7]' },
+    Malkuth: { strip: 'bg-[#1A1A1A]', fill: 'text-[#9CA3AF]' },
+  };
+
+  return accentClassBySephirah[name];
 }
 
 export default function ScoringRanking({ scores, showHalos, onToggleHalos }: ScoringRankingProps) {
@@ -33,7 +50,7 @@ export default function ScoringRanking({ scores, showHalos, onToggleHalos }: Sco
 
       <div className="flex-1 overflow-y-auto pr-2 space-y-3 max-h-[500px] scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {sortedScores.map((score, index) => {
-          const def = getSephirahDefinition(score.sephirah);
+          const accent = getAccentClasses(score.sephirah);
           const isHighest = index === 0 && score.score > 0;
           
           return (
@@ -42,8 +59,7 @@ export default function ScoringRanking({ scores, showHalos, onToggleHalos }: Sco
               className="relative overflow-hidden rounded-xl border border-white/5 bg-white/5 p-3"
             >
               <div 
-                className="absolute inset-y-0 left-0 w-1 opacity-50"
-                style={{ backgroundColor: def.color }} // nosonar
+                className={`absolute inset-y-0 left-0 w-1 opacity-50 ${accent.strip}`}
               />
               
               <div className="flex items-center justify-between mb-1 pl-2">
@@ -56,16 +72,16 @@ export default function ScoringRanking({ scores, showHalos, onToggleHalos }: Sco
                 </span>
               </div>
               
-              <div className="w-full bg-black/40 h-1.5 rounded-full mt-2 overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all duration-1000 ease-out"
-                  style={{ 
-                    width: `${score.score}%`,
-                    backgroundColor: def.color,
-                    boxShadow: score.score >= 80 ? `0 0 8px ${def.color}` : 'none'
-                  }} // nosonar
-                />
-              </div>
+              <progress
+                value={score.score}
+                max={100}
+                aria-label={`Poder de ${score.sephirah}`}
+                className={`mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/40 ${accent.fill} [&::-webkit-progress-bar]:bg-black/40 [&::-webkit-progress-value]:bg-current [&::-moz-progress-bar]:bg-current ${
+                  score.score >= 80
+                    ? '[&::-webkit-progress-value]:shadow-[0_0_8px_currentColor] [&::-moz-progress-bar]:shadow-[0_0_8px_currentColor]'
+                    : ''
+                }`}
+              />
               
               {isHighest && (
                 <div className="mt-2 text-[10px] text-orange-300/80 flex items-center gap-1">

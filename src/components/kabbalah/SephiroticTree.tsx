@@ -27,6 +27,24 @@ function getMappingSymbol(mapping: SephirothMapping | undefined, name: SephirahN
   return '—';
 }
 
+function getCardInsetShadowClass(name: SephirahName): string {
+  const insetShadowClassBySephirah: Record<SephirahName, string> = {
+    Kether: 'shadow-[inset_0_0_0_1px_#FFFFFF22]',
+    Chokmah: 'shadow-[inset_0_0_0_1px_#A9A9A922]',
+    Binah: 'shadow-[inset_0_0_0_1px_#00000022]',
+    Daath: 'shadow-[inset_0_0_0_1px_#D8BFD822]',
+    Chesed: 'shadow-[inset_0_0_0_1px_#0000FF22]',
+    Geburah: 'shadow-[inset_0_0_0_1px_#FF000022]',
+    Tiphereth: 'shadow-[inset_0_0_0_1px_#FFD70022]',
+    Netzach: 'shadow-[inset_0_0_0_1px_#00800022]',
+    Hod: 'shadow-[inset_0_0_0_1px_#FFA50022]',
+    Yesod: 'shadow-[inset_0_0_0_1px_#8A2BE222]',
+    Malkuth: 'shadow-[inset_0_0_0_1px_#1A1A1A22]',
+  };
+
+  return insetShadowClassBySephirah[name];
+}
+
 function getHaloProps(score?: SephirahScore) {
   if (!score) return { opacity: 0, scale: 1, filter: 'none' };
   
@@ -318,7 +336,6 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
 
           <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {mappings.map((mapping) => {
-              const sephirah = getSephirahDefinition(mapping.sephirah.name);
               const planetName = 'planetName' in mapping ? mapping.planetName : 'Ascendente';
               const planetSymbol = 'planetSymbol' in mapping ? mapping.planetSymbol : 'ASC';
               const houseLabel = 'house' in mapping ? `Casa ${mapping.house}` : 'Casa 1';
@@ -326,8 +343,7 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
               return (
                 <article
                   key={mapping.sephirah.name}
-                  className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"
-                  style={{ boxShadow: `0 0 0 1px ${sephirah.color}22 inset` }} // nosonar
+                  className={`rounded-2xl border border-white/10 bg-slate-950/60 p-4 ${getCardInsetShadowClass(mapping.sephirah.name)}`}
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>

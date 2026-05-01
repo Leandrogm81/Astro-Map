@@ -97,6 +97,24 @@ function DetailSection({
   );
 }
 
+function getAccentClasses(name: SephirahName): { readonly headerTop: string; readonly hebrew: string } {
+  const accentClassBySephirah: Record<SephirahName, { readonly headerTop: string; readonly hebrew: string }> = {
+    Kether: { headerTop: 'border-t-[#FFFFFF]', hebrew: 'text-[#FFFFFF]' },
+    Chokmah: { headerTop: 'border-t-[#A9A9A9]', hebrew: 'text-[#A9A9A9]' },
+    Binah: { headerTop: 'border-t-[#000000]', hebrew: 'text-[#D1D5DB]' },
+    Daath: { headerTop: 'border-t-[#D8BFD8]', hebrew: 'text-[#D8BFD8]' },
+    Chesed: { headerTop: 'border-t-[#0000FF]', hebrew: 'text-[#3B82F6]' },
+    Geburah: { headerTop: 'border-t-[#FF0000]', hebrew: 'text-[#EF4444]' },
+    Tiphereth: { headerTop: 'border-t-[#FFD700]', hebrew: 'text-[#FACC15]' },
+    Netzach: { headerTop: 'border-t-[#008000]', hebrew: 'text-[#22C55E]' },
+    Hod: { headerTop: 'border-t-[#FFA500]', hebrew: 'text-[#F59E0B]' },
+    Yesod: { headerTop: 'border-t-[#8A2BE2]', hebrew: 'text-[#A855F7]' },
+    Malkuth: { headerTop: 'border-t-[#1A1A1A]', hebrew: 'text-[#9CA3AF]' },
+  };
+
+  return accentClassBySephirah[name];
+}
+
 export default function SephirahPopover({
   sephirahName,
   mapping,
@@ -108,6 +126,7 @@ export default function SephirahPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const definition = getSephirahDefinition(sephirahName);
+  const accent = getAccentClasses(sephirahName);
   const goldenDawn = GOLDEN_DAWN_CORRESPONDENCES[sephirahName];
   const style = useMemo(() => (anchorRect ? getPopoverStyle(anchorRect) : undefined), [anchorRect]);
   const planetName = 'planetName' in mapping ? mapping.planetName : 'Ascendente';
@@ -165,14 +184,11 @@ export default function SephirahPopover({
         style={style}
         className="pointer-events-auto flex max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/85 text-white shadow-2xl backdrop-blur-xl"
       >
-        <div
-          className="flex items-start justify-between gap-4 border-b border-white/5 bg-white/5 px-4 py-3"
-          style={{ boxShadow: `inset 0 1px 0 ${definition.color}` }} // nosonar
-        >
+        <div className={`flex items-start justify-between gap-4 border-b border-t border-white/5 bg-white/5 px-4 py-3 ${accent.headerTop}`}>
           <div className="min-w-0">
             <p className="text-lg font-black tracking-tight text-white">
               {definition.name} <span className="text-slate-400">·</span>{' '}
-              <span style={{ color: definition.color }} /* nosonar */>{definition.hebrew}</span>
+              <span className={accent.hebrew}>{definition.hebrew}</span>
             </p>
             <p className="mt-1 text-sm text-slate-300">{definition.meaning}</p>
           </div>
