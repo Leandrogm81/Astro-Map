@@ -43,6 +43,9 @@ const TraditionalView = dynamic(() => import('@/components/traditional/Tradition
 const TraditionalElectivePanel = dynamic(() => import('@/components/traditional/TraditionalElectivePanel'), {
   loading: () => <TabLoading />,
 });
+const KabbalahView = dynamic(() => import('@/components/kabbalah/KabbalahView'), {
+  loading: () => <TabLoading />,
+});
 import Image from 'next/image';
 import {
   Star,
@@ -55,7 +58,8 @@ import {
   Zap,
   ChevronUp,
   Save,
-  Loader2
+  Loader2,
+  Hexagon
 } from 'lucide-react';
 import { hydrateNatalChart } from '@/lib/chartHydration';
 
@@ -96,7 +100,7 @@ export default function Home() {
   const [savedChartId, setSavedChartId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'houses' | 'aspects' | 'report' | 'revolution' | 'elective'>('chart');
+  const [activeTab, setActiveTab] = useState<'chart' | 'traditional' | 'kabbalah' | 'houses' | 'aspects' | 'report' | 'revolution' | 'elective'>('chart');
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['form']));
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -129,6 +133,7 @@ export default function Home() {
   const allMenuItems = useMemo(() => [
     { id: 'chart', label: 'Visão Geral', icon: Star },
     { id: 'traditional', label: 'Tradicional', icon: Sparkles },
+    { id: 'kabbalah', label: 'Kabbalah', icon: Hexagon },
     { id: 'houses', label: 'Casas', icon: Moon },
     { id: 'aspects', label: 'Aspectos', icon: Sun },
     { id: 'report', label: 'Relatório IA', icon: Sparkles },
@@ -585,6 +590,10 @@ export default function Home() {
 
                   {activeTab === 'traditional' && (
                     <TraditionalView chart={chart} />
+                  )}
+
+                  {activeTab === 'kabbalah' && (
+                    <KabbalahView chart={chart} />
                   )}
 
                   {activeTab === 'houses' && (

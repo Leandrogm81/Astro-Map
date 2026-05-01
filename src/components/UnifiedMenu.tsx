@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Moon, Sun, Sparkles, ChevronDown, Star, LogOut } from 'lucide-react';
+import { Moon, Sun, Sparkles, ChevronDown, Star, LogOut, Hexagon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface MenuItem {
@@ -104,6 +104,7 @@ export default function UnifiedMenu({ activeTab, onTabChange, items }: UnifiedMe
 
   const defaultItems = [
     { id: 'chart', label: 'Visão Geral', icon: Star },
+    { id: 'kabbalah', label: 'Kabbalah', icon: Hexagon },
     { id: 'houses', label: 'Casas', icon: Moon },
     { id: 'aspects', label: 'Aspectos', icon: Sun },
     { id: 'report', label: 'Relatório IA', icon: Sparkles },

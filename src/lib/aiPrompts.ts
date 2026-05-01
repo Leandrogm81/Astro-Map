@@ -213,13 +213,13 @@ export function formatElectiveForAI(
   result += `  * Fase: ${moonStatus.phase}\n`;
   result += `  * Curso Vazio: ${formatVoidOfCourseStatus(moonStatus.voidOfCourseStatus)}\n`;
   
+  result += `  * Aspectos Ativos da Lua:\n`;
   if (moonStatus.aspects && moonStatus.aspects.length > 0) {
-    result += `  * Aspectos Ativos da Lua:\n`;
     moonStatus.aspects.forEach(asp => {
       result += `    - ${asp}\n`;
     });
   } else {
-    result += `  * Aspectos da Lua: NENHUM ASPECTO EM ÓRBITA\n`;
+    result += `    - NENHUM ASPECTO EM ÓRBITA\n`;
   }
 
   result += `- Regente do Propósito (${translatedRuler}):\n`;
@@ -267,6 +267,15 @@ export function formatChartForAI(chart: NatalChart): string {
   result += `- Data: ${birthData.date}\n`;
   result += `- Hora: ${birthData.time}\n`;
   result += `- Local: ${birthData.location}\n\n`;
+  result += `ASCENDENTE E REGÊNCIA:\n`;
+  result += `-`.repeat(40) + '\n';
+  if (housesPlacidus && housesPlacidus.length > 0) {
+    const ascSign = housesPlacidus[0].sign;
+    result += `Ascendente: ${ascSign} (${formatDegree(housesPlacidus[0].degree)})\n`;
+    result += `Regente do Ascendente: ${translatePlanetNamePt(getDomicileRuler(ascSign))}\n\n`;
+  } else {
+    result += `Dados de ascendente indisponíveis.\n\n`;
+  }
 
   result += `POSIÇÕES PLANETÁRIAS E DIGNIDADES:\n`;
   result += `-`.repeat(40) + '\n';
@@ -457,6 +466,7 @@ export function formatSolarComparisonForAI(natalChart: NatalChart, solarChart: N
 
   result += `INTERPOSIÇÃO DE CASAS (REVOLUÇÃO vs NATAL):\n`;
   result += `-`.repeat(40) + '\n';
+  result += `Data exata da Revolução Solar: ${solarChart.birthData.date} ${solarChart.birthData.time}\n`;
   result += `ASCENDENTE DA REVOLUÇÃO: ${solarChart.housesPlacidus[0].sign} cai na Casa ${getHouseForPlanet(solarChart.housesPlacidus[0].longitude, natalChart.housesPlacidus)} natal.\n\n`;
 
   solarChart.planets.forEach(p => {
@@ -478,6 +488,7 @@ export function formatSolarComparisonForAI(natalChart: NatalChart, solarChart: N
   });
 
   result += `\nMAPA NATAL (REFERÊNCIA):\n`;
+  result += `Mapa Natal usado como base de comparação técnica.\n`;
   result += formatChartForAI(natalChart);
 
   return result;
@@ -593,6 +604,7 @@ Quando falar de resultado, fale em favorecimento, correspondência e oportunidad
 Se faltar dado, não invente correspondências nem mansões lunares.
 
 ${ELECTIVE_CONFIDENCE_GUARDRAILS}
+${ELECTIVE_MAGIC_RITUAL_DATA_RULES}
 
 EXEMPLOS DE COMPORTAMENTO:
 CORRETO: "Saturno em Áries está em queda. Na Casa 3, cadente, a obra pede disciplina e estudo, não impulso."
@@ -647,6 +659,7 @@ A leitura deve permanecer teúrgica e tradicional, mas personalizada ao Radix, s
 Quando faltar dado natal, omita a inferência em vez de supor.
 
 ${ELECTIVE_CONFIDENCE_GUARDRAILS}
+${ELECTIVE_MAGIC_RITUAL_DATA_RULES}
 
 EXEMPLOS DE COMPORTAMENTO:
 CORRETO: "Saturno em Áries está em queda. Na Casa 3, cadente, a obra pede disciplina e estudo, não impulso."
@@ -679,6 +692,9 @@ Instruções ritualísticas baseadas na mistura das energias. Se a eleição é 
 
 ⚖️ V. O Veredito do Mestre
 Conselho final: Prosseguir, Adaptar ou Abortar. Use um tom de autoridade técnica e espiritual.
+
+🧾 VI. Correspondências Ritualísticas Fornecidas
+Use esta seção como fonte canônica para cores, metais, incensos, caridade e intenções quando os dados estiverem disponíveis.
 
 REGRAS DE OURO:
 

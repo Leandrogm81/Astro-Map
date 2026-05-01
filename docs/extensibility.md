@@ -377,3 +377,22 @@ Ao adicionar novas funcionalidades:
 - [ ] Adicionar testes unitários em `src/__tests__/`
 - [ ] Atualizar o diagrama de arquitetura em `docs/architecture.md`
 - [ ] Seguir as convenções de código do projeto ( ESLint + Prettier)
+## Extensibilidade Kabbalah
+
+### Nova Sephirah
+
+1. Adicione a definição em `src/lib/kabbalah/sephiroth.ts`.
+2. Acrescente a coordenada em `src/lib/kabbalah/constants.ts`.
+3. Atualize os testes em `src/__tests__/kabbalah/`.
+
+### Novo comportamento na Árvore
+
+1. Reaproveite `mapChartToSephiroth(chart)` como fonte única.
+2. Mantenha o SVG baseado em `viewBox` para seguir responsivo.
+3. Adicione novo detalhe no painel sem acoplar o componente ao core tradicional.
+
+### Nova correspondência de PDF
+
+1. Estenda `src/components/kabbalah/KabbalahPDF.tsx`.
+2. Preserve o fallback seguro para SSR/teste.
+3. Atualize a documentação quando o formato de exportação mudar.

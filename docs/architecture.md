@@ -258,3 +258,47 @@ interface NatalChart {
 - O servidor proxy de API impede que credenciais cheguem ao navegador
 - `.env.local` está no `.gitignore`, garantindo que nunca seja commitado
 - Opção de usar chave do cliente (armazenada apenas em memória) para usuarios que preferem não expor no servidor
+## Kabbalah Hermética
+
+### Fluxo de Cliente
+
+O módulo Kabbalah é carregado apenas quando o usuário seleciona a tab `kabbalah` no menu principal.
+
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant P as page.tsx
+    participant K as KabbalahView
+    participant G as GematriaCalculator
+    participant T as SephiroticTree
+    participant P2 as KabbalahPDF
+    participant A as /api/translate
+
+    U->>P: Seleciona "Kabbalah"
+    P->>K: dynamic import
+    K->>G: renderiza Gematria
+    K->>T: renderiza Árvore Sephirótica
+    K->>P2: oferece exportação PDF
+    G->>A: POST /api/translate
+    A-->>G: HebrewText
+    T-->>K: clique em Sephirah mostra detalhe
+```
+
+### Responsabilidades
+
+- `GematriaCalculator` traduz e calcula quatro sistemas de gematria.
+- `SephiroticTree` mapeia os planetas do `NatalChart` nas Sephiroth e mostra detalhes ao clique.
+- `KabbalahPDF` gera um PDF enxuto com o resumo da leitura.
+- `app/api/translate/route.ts` mantém a conversão em server-side e protege a chave do frontend.
+
+### Contratos de Isolamento
+
+- `lib/kabbalah/*` depende apenas de tipos compartilhados e utilitários de domínio.
+- `components/kabbalah/*` pode consumir `lib/kabbalah/*`, mas não altera o core astrológico.
+- O fluxo Kabbalah não entra em `lib/traditional/*` nem em `lib/ephemeris.ts`.
+
+### Estado da UI
+
+- A tab `gematria` mostra o calculador e o resultado.
+- A tab `tree` mostra a projeção sephirótica e o detalhe selecionado.
+- O PDF fica disponível como uma ação secundária do cabeçalho Kabbalah.
