@@ -96,3 +96,5 @@ export default function ScoringRanking({ scores, showHalos, onToggleHalos }: Sco
     </div>
   );
 }
+
+
