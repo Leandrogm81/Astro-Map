@@ -8,7 +8,7 @@ import { SEPHIRAH_RADIUS, SEPHIROTH_COORDS, TREE_PATHS } from '@/lib/kabbalah/co
 import { getSephirahDefinition, mapChartToSephiroth } from '@/lib/kabbalah/sephiroth';
 import type { SephirahName, SephirothMapping } from '@/lib/kabbalah/types';
 import { calculateSephirothScores, SephirahScore } from '@/lib/kabbalah/scoring';
-import { getZodiacSign } from '@/lib/astrology';
+import { getZodiacSign, getDomicileRuler } from '@/lib/astrology';
 import SephirahPopover from './SephirahPopover';
 import ScoringRanking from './ScoringRanking';
 
@@ -176,7 +176,7 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
           <div className="mb-5 rounded-2xl border border-gold-500/10 bg-gold-500/5 p-4 text-sm text-slate-300">
             <Hexagon className="inline-block w-4 h-4 text-gold-300 mr-2 -mt-0.5" />
             Mapa carregado: <span className="text-white font-semibold">{chart.birthData.name}</span>
-            {' '}| Ascendente {formatDegree(chart.ascendant)}
+            {' '}| Ascendente {getZodiacSign(chart.ascendant)} ({getDomicileRuler(getZodiacSign(chart.ascendant))})
           </div>
 
           <div className="flex flex-col xl:flex-row gap-6 mb-6">

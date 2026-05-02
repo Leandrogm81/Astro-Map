@@ -6,6 +6,7 @@ import type { NatalChart } from '@/types';
 import GematriaCalculator from './GematriaCalculator';
 import SephiroticTree from './SephiroticTree';
 import KabbalahPDF from './KabbalahPDF';
+import { getZodiacSign, getDomicileRuler } from '@/lib/astrology';
 
 interface KabbalahViewProps {
   readonly chart?: NatalChart | null;
@@ -52,7 +53,9 @@ export default function KabbalahView({
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
               <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">Ascendente</p>
               <p className="mt-1 text-sm text-white font-semibold">
-                {chart ? `${chart.ascendant.toFixed(1)}°` : '—'}
+                {chart 
+                  ? `${getZodiacSign(chart.ascendant)} (${getDomicileRuler(getZodiacSign(chart.ascendant))})` 
+                  : '—'}
               </p>
             </div>
             {chart && (
