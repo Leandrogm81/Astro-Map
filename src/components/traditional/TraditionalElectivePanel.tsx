@@ -15,9 +15,11 @@ import { calculateTraditionalAssessment } from '@/lib/traditional/scoring';
 import { calculateNatalChart, parseTimezoneOffset, calculateRiseSet } from '@/lib/ephemeris';
 import { getTimezoneOffsetForDate, getTimezoneFromCoordinates } from '@/lib/geocoding';
 import { useGeocoding } from '@/hooks/useGeocoding';
+import TraditionalChart from '@/components/traditional/TraditionalChart';
 import { PLANETARY_CORRESPONDENCES, RITUAL_INTENTIONS, RITUAL_CATEGORIES, PlanetKey, RitualCategoryId } from '@/lib/traditional/magic-correspondences';
 import { translatePlanetKeyPt, translatePlanetNamePt } from '@/lib/traditional/constants';
 import { deleteElectiveSynced, getSavedElectivesSynced, saveElectiveSynced, SavedElective } from '@/lib/storage';
+import { adjustDateTimeInput, formatDateTimeInput } from '@/lib/traditional/timeMachine';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Moon,
@@ -81,6 +83,10 @@ function buildMomentBirthData(baseBirthData: BirthData, moment: Date): BirthData
     time: `${String(localizedMoment.getUTCHours()).padStart(2, '0')}:${String(localizedMoment.getUTCMinutes()).padStart(2, '0')}`,
     timezone,
   };
+}
+
+function getCurrentTimeInputs(): { dateStr: string; timeStr: string } {
+  return formatDateTimeInput(new Date());
 }
 
 export default function TraditionalElectivePanel({ chart }: TraditionalElectivePanelProps) {
@@ -178,6 +184,28 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
     setIsRealTime(false);
   };
 
+  const syncToCurrentMoment = useCallback(() => {
+    const nowInputs = getCurrentTimeInputs();
+    setTargetDateStr(nowInputs.dateStr);
+    setTargetTimeStr(nowInputs.timeStr);
+    setIsRealTime(true);
+    setError(null);
+  }, [setTargetDateStr, setTargetTimeStr, setIsRealTime]);
+
+  const adjustTime = useCallback((amount: number, unit: 'day' | 'hour') => {
+    const adjustedInputs = adjustDateTimeInput(targetDateStr, targetTimeStr, amount, unit);
+
+    if (!adjustedInputs) {
+      setError('Não foi possível ajustar o momento selecionado.');
+      return;
+    }
+
+    setTargetDateStr(adjustedInputs.dateStr);
+    setTargetTimeStr(adjustedInputs.timeStr);
+    setIsRealTime(false);
+    setError(null);
+  }, [setError, setIsRealTime, targetDateStr, targetTimeStr]);
+
   const baseBirthData = useMemo<BirthData>(
     () => ({
       name: chart.birthData.name,
@@ -201,9 +229,9 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   // Initialize date/time strings on mount if empty
   useEffect(() => {
     if (!targetDateStr || !targetTimeStr) {
-      const now = new Date();
-      setTargetDateStr(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
-      setTargetTimeStr(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+      const nowInputs = getCurrentTimeInputs();
+      setTargetDateStr(nowInputs.dateStr);
+      setTargetTimeStr(nowInputs.timeStr);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -213,9 +241,9 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
     if (!isRealTime) return;
 
     const tick = () => {
-      const now = new Date();
-      setTargetDateStr(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
-      setTargetTimeStr(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+      const nowInputs = getCurrentTimeInputs();
+      setTargetDateStr(nowInputs.dateStr);
+      setTargetTimeStr(nowInputs.timeStr);
     };
 
     tick();
@@ -259,7 +287,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   // Limpar insight se mudar de modo
   useEffect(() => {
     setMagicInsight(null);
-  }, [electiveMode, intentionId, isRealTime]);
+  }, [electiveMode, intentionId]);
 
   const electiveDateTime = useMemo(() => skyTimestamp ?? new Date(), [skyTimestamp]);
 
@@ -542,12 +570,15 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                 Máquina do Tempo
               </h3>
               <button 
-                onClick={() => setIsRealTime(!isRealTime)}
+                onClick={() => setIsRealTime((prev) => !prev)}
+                aria-pressed={isRealTime}
+                aria-label={isRealTime ? 'Pausar atualização em tempo real' : 'Retomar atualização em tempo real'}
+                title={isRealTime ? 'Pausar atualização em tempo real' : 'Retomar atualização em tempo real'}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
                   isRealTime 
                     ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
                     : 'bg-white/5 text-slate-400 border-white/10 hover:text-white hover:bg-white/10'
-                }`}
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
               >
                 {isRealTime ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
                 {isRealTime ? 'Tempo Real' : 'Tempo Pausado'}
@@ -555,7 +586,60 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
             </div>
 
             <div className="space-y-4 relative z-10">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2.5" role="toolbar" aria-label="Controles rápidos da máquina do tempo">
+                <button
+                  type="button"
+                  onClick={syncToCurrentMoment}
+                  disabled={isCalculatingSky || isRealTime}
+                  title="Voltar para agora"
+                  aria-label="Voltar para agora"
+                  className="w-full sm:w-auto min-w-0 sm:min-w-[4.25rem] px-3 py-2 rounded-xl sm:rounded-2xl text-xs font-bold uppercase tracking-wider border transition-all bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  Agora
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustTime(-1, 'day')}
+                  disabled={isCalculatingSky}
+                  title="Voltar 1 dia"
+                  aria-label="Voltar 1 dia"
+                  className="w-full sm:w-auto min-w-0 sm:min-w-[4.25rem] px-3 py-2 rounded-xl sm:rounded-2xl text-xs font-bold uppercase tracking-wider border transition-all bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  -1d
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustTime(-1, 'hour')}
+                  disabled={isCalculatingSky}
+                  title="Voltar 1 hora"
+                  aria-label="Voltar 1 hora"
+                  className="w-full sm:w-auto min-w-0 sm:min-w-[4.25rem] px-3 py-2 rounded-xl sm:rounded-2xl text-xs font-bold uppercase tracking-wider border transition-all bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  -1h
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustTime(1, 'hour')}
+                  disabled={isCalculatingSky}
+                  title="Avançar 1 hora"
+                  aria-label="Avançar 1 hora"
+                  className="w-full sm:w-auto min-w-0 sm:min-w-[4.25rem] px-3 py-2 rounded-xl sm:rounded-2xl text-xs font-bold uppercase tracking-wider border transition-all bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  +1h
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustTime(1, 'day')}
+                  disabled={isCalculatingSky}
+                  title="Avançar 1 dia"
+                  aria-label="Avançar 1 dia"
+                  className="w-full sm:w-auto min-w-0 sm:min-w-[4.25rem] px-3 py-2 rounded-xl sm:rounded-2xl text-xs font-bold uppercase tracking-wider border transition-all bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                >
+                  +1d
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-slate-500 ml-1">Data Alvo</label>
                   <div className="relative">
@@ -746,6 +830,47 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
 
         {/* Coluna Direita: Contexto do Momento e Relatório IA */}
         <div className="lg:col-span-8 flex flex-col gap-6">
+          {skyChart && (
+            <div
+              className="relative overflow-hidden bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-4 md:p-6 shadow-xl flex flex-col gap-3 md:gap-4"
+              role="region"
+              aria-labelledby="moment-chart-title"
+              aria-busy={isCalculatingSky}
+            >
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-indigo-500/8 via-transparent to-cyan-500/5" />
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <h3 id="moment-chart-title" className="relative z-10 text-base md:text-lg font-bold text-white flex items-center gap-2">
+                  <Maximize2 className="w-4 h-4 md:w-5 md:h-5 text-indigo-400 shrink-0" />
+                  Mandala do Momento
+                </h3>
+                {isCalculatingSky && (
+                  <span className="relative z-10 inline-flex items-center self-start sm:self-auto gap-2 text-[10px] uppercase tracking-widest font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Recalculando
+                  </span>
+                )}
+              </div>
+
+              <div className="relative z-10">
+                <TraditionalChart chart={skyChart} />
+                {isCalculatingSky && (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-[1.75rem] md:rounded-[2rem] bg-slate-950/60 backdrop-blur-sm"
+                    role="status"
+                    aria-live="polite"
+                    aria-label="Atualizando mandala do momento"
+                  >
+                    <div className="flex flex-col items-center gap-2 md:gap-3 text-slate-200 px-4 text-center rounded-2xl border border-white/10 bg-slate-950/35 shadow-2xl backdrop-blur-md">
+                      <Loader2 className="w-7 h-7 md:w-8 md:h-8 animate-spin text-indigo-300" />
+                      <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-slate-200">
+                        Atualizando mandala
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           {/* PAINEL DE SÍNTESE ASTROLÓGICA */}
           <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-6 shadow-xl flex flex-col">
@@ -889,6 +1014,17 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                 <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="text-xs text-red-200 font-medium">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {magicInsight && !isRealTime && (
+              <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3" role="status" aria-live="polite">
+                <AlertTriangle className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs text-amber-100 font-medium leading-relaxed">
+                    Este relatório é referente ao momento anterior. Gere um novo relatório para o momento atual.
+                  </p>
                 </div>
               </div>
             )}

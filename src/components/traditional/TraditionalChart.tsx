@@ -518,8 +518,15 @@ export default function TraditionalChart({
   };
 
   return (
-    <div className="relative w-full h-[600px] md:h-[800px] lg:h-[950px] flex items-center justify-center p-4 md:p-8 bg-black/20 rounded-[2.5rem] border border-white/5">
+    <div
+      className="relative w-full h-[600px] md:h-[800px] lg:h-[950px] flex items-center justify-center p-4 md:p-8 bg-black/20 rounded-[2.5rem] border border-white/5"
+      role="region"
+      aria-label="Gráfico astral tradicional interativo"
+    >
       <div className="w-full h-full relative group">
+        <p className="sr-only">
+          Use os botões de zoom e ajustes no canto superior direito para explorar a mandala.
+        </p>
         <svg 
           ref={svgRef}
           viewBox="0 0 800 800" 
@@ -574,7 +581,7 @@ export default function TraditionalChart({
             onClick={() => setZoom(z => Math.min(z + 0.2, 3))} 
             title="Aumentar Zoom"
             aria-label="Aumentar Zoom"
-            className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg"
+            className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
           </button>
@@ -582,7 +589,7 @@ export default function TraditionalChart({
             onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} 
             title="Diminuir Zoom"
             aria-label="Diminuir Zoom"
-            className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg"
+            className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" /></svg>
           </button>
@@ -590,7 +597,7 @@ export default function TraditionalChart({
             onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} 
             title="Resetar Visualização"
             aria-label="Resetar Visualização"
-            className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg"
+            className="p-3 bg-slate-900/80 backdrop-blur border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-slate-500 transition-all shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
           </button>
@@ -599,7 +606,7 @@ export default function TraditionalChart({
             onClick={() => setShowSettings(!showSettings)} 
             title="Ajustes de Visualização"
             aria-label="Ajustes de Visualização"
-            className={`p-3 backdrop-blur border rounded-xl transition-all shadow-lg ${showSettings ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-white'}`}
+            className={`p-3 backdrop-blur border rounded-xl transition-all shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${showSettings ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-900/80 border-slate-700 text-slate-400 hover:text-white'}`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           </button>
