@@ -91,7 +91,7 @@ export const GOLDEN_DAWN_CORRESPONDENCES: Record<SephirahName, GoldenDawnData> =
     },
   },
   Daath: {
-    divineName: { hebrew: 'יהוה אלהים', transliteration: 'YHVH Eloah va-Daath' },
+    divineName: { hebrew: 'יהוה אלוה ודעת', transliteration: 'YHVH Eloah va-Daath' },
     archangel: { hebrew: '-', transliteration: '-' },
     choir: { pt: '-', he: '-' },
     chakra: { pt: 'Abismo (Plutão)', he: '-' },
@@ -225,7 +225,7 @@ export const GOLDEN_DAWN_CORRESPONDENCES: Record<SephirahName, GoldenDawnData> =
   },
   Malkuth: {
     divineName: { hebrew: 'אדני הארץ', transliteration: 'Adonai ha-Aretz' },
-    archangel: { hebrew: 'סנדלفون', transliteration: 'Sandalphon' },
+    archangel: { hebrew: 'סנדלפון', transliteration: 'Sandalphon' },
     choir: { pt: 'Ashim', he: 'אשים' },
     chakra: { pt: 'Cholem ha-Yesodoth (Elementos)', he: 'חולם היסודות' },
     psalm: {
