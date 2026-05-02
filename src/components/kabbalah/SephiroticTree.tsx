@@ -219,7 +219,47 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                 const halo = getHaloProps(score);
 
                 return (
-                  <g key={name}>
+                  <g 
+                    key={name}
+                    role="button"
+                    aria-label={`Sephirah ${name}`}
+                    tabIndex={0}
+                    className="cursor-pointer outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-slate-900 group"
+                    onClick={(event) => {
+                      const circle = circleRefs.current.get(name);
+                      const anchor = circle ? circle.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
+                      
+                      if (supportsHover) {
+                        openSephirah(name, anchor);
+                        return;
+                      }
+
+                      if (selectedSephirah === name) {
+                        closeSephirah();
+                        return;
+                      }
+
+                      openSephirah(name, anchor);
+                    }}
+                    onMouseEnter={(event) => {
+                      if (!supportsHover) return;
+                      const circle = circleRefs.current.get(name);
+                      const anchor = circle ? circle.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
+                      scheduleOpen(name, anchor);
+                    }}
+                    onMouseLeave={() => {
+                      if (!supportsHover) return;
+                      scheduleClose();
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        const circle = circleRefs.current.get(name);
+                        const anchor = circle ? circle.getBoundingClientRect() : event.currentTarget.getBoundingClientRect();
+                        openSephirah(name, anchor);
+                      }
+                    }}
+                  >
                     {showHalos && score && (
                       <circle
                         cx={coord.x}
@@ -248,39 +288,8 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                       fill={isActive ? definition.color : 'rgba(15, 23, 42, 0.9)'}
                       stroke={definition.color}
                       strokeWidth={isActive ? 3 : 2}
-                      className="cursor-pointer outline-none focus:ring-2 focus:ring-gold-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-                      aria-label={`Sephirah ${name}`}
-                      role="button"
+                      className="transition-colors duration-300"
                       data-sephirah={name}
-                      tabIndex={0}
-                      onClick={(event) => {
-                        const anchor = event.currentTarget.getBoundingClientRect();
-                        if (supportsHover) {
-                          openSephirah(name, anchor);
-                          return;
-                        }
-
-                        if (selectedSephirah === name) {
-                          closeSephirah();
-                          return;
-                        }
-
-                        openSephirah(name, anchor);
-                      }}
-                      onMouseEnter={(event) => {
-                        if (!supportsHover) return;
-                        scheduleOpen(name, event.currentTarget.getBoundingClientRect());
-                      }}
-                      onMouseLeave={() => {
-                        if (!supportsHover) return;
-                        scheduleClose();
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          openSephirah(name, event.currentTarget.getBoundingClientRect());
-                        }
-                      }}
                     />
                     <text
                       x={coord.x}
@@ -289,6 +298,7 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                       fill="rgba(255,255,255,0.95)"
                       fontSize={11}
                       fontWeight={700}
+                      className="pointer-events-none select-none"
                     >
                       {name}
                     </text>
@@ -299,6 +309,7 @@ export default function SephiroticTree({ chart }: SephiroticTreeProps) {
                       fill="rgba(212,175,55,0.95)"
                       fontSize={10}
                       fontWeight={700}
+                      className="pointer-events-none select-none"
                     >
                       {getMappingSymbol(mapping, name)}
                     </text>
