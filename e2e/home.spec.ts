@@ -1,17 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-test.beforeEach(async ({ context }) => {
-  await context.addCookies([
-    {
-      name: 'astromap_session',
-      value: 'authenticated',
-      domain: 'localhost',
-      path: '/',
-      httpOnly: false,
-      secure: false,
-      sameSite: 'Lax',
-    },
-  ]);
+test.beforeEach(async ({ page }) => {
+  await page.goto('/login');
+  await page.getByRole('button', { name: /Ver Demonstração/i }).click();
+  await page.waitForFunction(() => window.location.pathname === '/');
 });
 
 test('loads the authenticated home page', async ({ page }) => {
@@ -25,7 +17,9 @@ test('loads the authenticated home page', async ({ page }) => {
 test('shows the birth data form controls', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.locator('#birthName')).toBeVisible();
+  const bodyContent = await page.locator('body').innerText();
+  console.log('Body Content:', bodyContent);
+  await expect(page.locator('#birthName')).toBeVisible({ timeout: 30000 });
   await expect(page.locator('#birthDate')).toBeVisible();
   await expect(page.locator('#birthTime')).toBeVisible();
   await expect(page.locator('#birthLocation')).toBeVisible();

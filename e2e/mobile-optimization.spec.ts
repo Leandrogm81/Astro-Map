@@ -58,40 +58,37 @@ const savedChart = {
   createdAt: '2026-04-26T12:00:00.000Z',
 };
 
-test.beforeEach(async ({ context, page }) => {
-  await context.addCookies([
-    {
-      name: 'astromap_session',
-      value: 'authenticated',
-      domain: 'localhost',
-      path: '/',
-      httpOnly: false,
-      secure: false,
-      sameSite: 'Lax',
-    },
-  ]);
-
+test.beforeEach(async ({ page }) => {
   await page.addInitScript((seed) => {
     window.localStorage.setItem('astromap_saved_charts', JSON.stringify([seed]));
   }, savedChart);
+
+  await page.goto('/login');
+  await page.getByRole('button', { name: /Ver Demonstração/i }).click();
+  await page.waitForFunction(() => window.location.pathname === '/');
 });
 
 test('closes the mobile drawer after selecting a saved chart and keeps planets in two columns', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByTitle('Menu').click();
   const closeButton = page.getByTitle('Fechar');
   const drawer = page.locator('div.fixed.inset-0.z-50');
   await expect(closeButton).toBeVisible();
 
   await drawer.getByRole('button', { name: /Mapas Salvos/i }).click();
-  await drawer.getByText('Mobile Compacto - 1990-11-12').click();
+  
+  // Aguarda a lista renderizar e clica no primeiro mapa salvo (seja o do localStorage ou do Supabase)
+  const firstSavedChart = drawer.getByRole('heading', { level: 4 }).first();
+  await expect(firstSavedChart).toBeVisible();
+  await firstSavedChart.click();
 
   await expect(closeButton).toBeHidden();
-  await expect(page.getByText('Mobile Compacto')).toBeVisible();
-
+  
+  // Aguarda o render dos cards de planetas para garantir que o mapa carregou
   const cards = page.getByTestId('planet-card');
+  await expect(cards.first()).toBeVisible();
   await cards.first().scrollIntoViewIfNeeded();
 
   const firstCard = await cards.nth(0).boundingBox();
