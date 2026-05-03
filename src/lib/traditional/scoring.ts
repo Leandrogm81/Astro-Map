@@ -4,14 +4,20 @@ import { getFaceRuler, getTermRuler, calculateEssentialDignity, getSolarConditio
 import { calculateHayz, getSectStatus } from './sect';
 import { getDignityVibe } from './interpretations';
 import { PLANET_NAME_PT } from './constants';
-import { PlanetPosition, ZodiacSign } from '@/types';
+import { PlanetPosition, ZodiacSign, HouseCusp } from '@/types';
+import { getHouseForPlanet } from '@/lib/astrology';
 
 export function calculateTraditionalAssessment(
   planet: PlanetPosition,
   allPlanets: PlanetPosition[],
-  isDayChart: boolean
+  isDayChart: boolean,
+  houses?: HouseCusp[]
 ): TraditionalAssessment {
   const sign = planet.sign as ZodiacSign;
+  const currentHouse = houses && houses.length > 0 
+    ? getHouseForPlanet(planet.longitude, houses) 
+    : planet.house || 1;
+  
   const sun = allPlanets.find(p => p.id?.toLowerCase() === 'sun');
 
   const essential: Record<string, number> = {};
@@ -47,7 +53,7 @@ export function calculateTraditionalAssessment(
   if (solarCond.isUnderRays) accidental['Sob os Raios'] = -2;
   if (planet.retrograde) accidental['Retrógrado'] = -5;
 
-  const hayz = calculateHayz(pIdLower, planet.house || 1, sign, isDayChart);
+  const hayz = calculateHayz(pIdLower, currentHouse, sign, isDayChart);
   const sectStatus = getSectStatus(pIdLower, isDayChart);
 
   if (sectStatus === 'in_sect' || sectStatus === 'benefic') accidental['Na Seita'] = 2;
@@ -55,8 +61,8 @@ export function calculateTraditionalAssessment(
 
   const angularHouses = [1, 4, 7, 10];
   const succedentHouses = [2, 5, 8, 11];
-  if (angularHouses.includes(planet.house || 0)) accidental['Casa Angular'] = 5;
-  else if (succedentHouses.includes(planet.house || 0)) accidental['Casa Sucedente'] = 3;
+  if (angularHouses.includes(currentHouse)) accidental['Casa Angular'] = 5;
+  else if (succedentHouses.includes(currentHouse)) accidental['Casa Sucedente'] = 3;
 
   const mutualReceptions: string[] = [];
   allPlanets.forEach(other => {
@@ -87,7 +93,7 @@ export function calculateTraditionalAssessment(
     planetId: planet.id,
     sign: planet.sign,
     degree: planet.degree,
-    house: planet.house || 1,
+    house: currentHouse,
     isRetrograde: planet.retrograde,
     dignity: getPrimaryDignityLabel(essential),
     totalScore: score.total,

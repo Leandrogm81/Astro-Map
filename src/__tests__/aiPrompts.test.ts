@@ -83,6 +83,8 @@ const mockSolarChart: NatalChart = {
 
 const mockElectiveVeredict: ElectiveVeredict = {
   score: 'propitious',
+  rawScore: 8,
+  normalizedScore: 90,
   purpose: 'love',
   planetHour: {
     planetId: 'venus',
@@ -134,6 +136,49 @@ const mockElectiveVeredict: ElectiveVeredict = {
     charity: 'Apoio a mulheres vulneráveis.',
     intentions: ['Amor', 'Atração'],
   },
+  ritualContext: {
+    purpose: 'love',
+    planetId: 'venus',
+    planetKey: 'Venus',
+    sephirah: 'Netzach',
+    angel: 'Haniel',
+    hourAngel: 'Haniel',
+    olympicSpirit: {
+      name: 'Hagith',
+      description: 'Governa as coisas venéreas.',
+    },
+    intelligence: {
+      name: 'Hagiel',
+      description: 'Inteligência venérea de caráter conciliador.',
+    },
+    spirit: {
+      name: 'Qedemel',
+      description: 'Espírito associado à corrente venérea tradicional.',
+    },
+    orphicHymn: {
+      title: 'Hino Órfico a Afrodite',
+      theme: 'Graça, harmonia nos relacionamentos e magnetismo.',
+    },
+    materials: {
+      colors: ['Verde-esmeralda', 'Rosa'],
+      metals: ['Cobre'],
+      incenses: ['Rosa', 'Sândalo'],
+    },
+    remedies: {
+      stones: ['Esmeralda'],
+      plants: ['Rosa'],
+      baths: ['Rosas com mel'],
+      disclaimer: 'Estas recomendações são de caráter simbólico e tradicional. Não substituem aconselhamento médico ou terapêutico profissional.',
+    },
+    charity: 'Apoio a mulheres vulneráveis.',
+    intentions: ['Amor', 'Atração'],
+  },
+  remedyRecommendations: {
+    stones: ['Esmeralda'],
+    plants: ['Rosa'],
+    baths: ['Rosas com mel'],
+    disclaimer: 'Estas recomendações são de caráter simbólico e tradicional. Não substituem aconselhamento médico ou terapêutico profissional.',
+  },
 };
 
 describe('AI Prompts Formatting', () => {
@@ -172,10 +217,10 @@ describe('AI Prompts Formatting', () => {
 
     it('should include ritual data rules and audit sections in elective prompts', () => {
       expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('REGRAS PARA CORRESPONDÊNCIAS RITUALÍSTICAS');
-      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('Correspondências Ritualísticas Fornecidas');
+      expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('obrigatoriamente em 5 blocos');
       expect(ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM).toContain('Termos permitidos quando aplicáveis');
       expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('REGRAS PARA CORRESPONDÊNCIAS RITUALÍSTICAS');
-      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('Correspondências Ritualísticas Fornecidas');
+      expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('obrigatoriamente em 5 blocos');
       expect(ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM).toContain('Termos permitidos quando aplicáveis');
     });
 
@@ -263,6 +308,8 @@ describe('AI Prompts Formatting', () => {
       expect(output).toContain('AMOR E RELACIONAMENTOS');
       expect(output).toContain('Vênus');
       expect(output).not.toContain('LOVE');
+      expect(output).toContain('PONTUACAO BRUTA: 8');
+      expect(output).toContain('PONTUACAO NORMALIZADA: 90');
     });
 
     it('should include natal context when the combined mode is requested', () => {
@@ -301,6 +348,10 @@ describe('AI Prompts Formatting', () => {
       expect(output).toContain('CORRESPONDÊNCIAS RITUALÍSTICAS FORNECIDAS PELO ASTROMAP');
       expect(output).toContain('Verde-esmeralda');
       expect(output).toContain('Cobre');
+      expect(output).toContain('CONTEXTO RITUAL');
+      expect(output).toContain('HIERARQUIA OPERATIVA');
+      expect(output).toContain('Anjo da Hora');
+      expect(output).toContain('REMÉDIOS TRADICIONAIS');
     });
 
     it('should treat missing void of course status as not calculated', () => {
@@ -333,10 +384,28 @@ describe('AI Prompts Formatting', () => {
       const verdict = {
         ...mockElectiveVeredict,
         ritualCorrespondences: undefined,
+        ritualContext: undefined,
+        remedyRecommendations: undefined,
       } as ElectiveVeredict;
 
       const output = formatElectiveForAI(verdict, mockSolarChart, 'sky_only');
       expect(output).not.toContain('CORRESPONDÊNCIAS RITUALÍSTICAS FORNECIDAS PELO ASTROMAP');
+    });
+
+    it('should use whole sign houses for the elective sky when requested', () => {
+      const output = formatElectiveForAI(mockElectiveVeredict, mockSolarChart, 'sky_only', undefined, 'whole_sign');
+
+      expect(output).toContain('ESTADO DAS CASAS (SISTEMA SIGNOS INTEIROS)');
+      expect(output).toContain('Vênus: Gêmeos em 11a Casa');
+      expect(output).not.toContain('Vênus: Gêmeos em 4a Casa');
+    });
+
+    it('should use equal houses for the elective sky when requested', () => {
+      const output = formatElectiveForAI(mockElectiveVeredict, mockSolarChart, 'sky_only', undefined, 'equal_house');
+
+      expect(output).toContain('ESTADO DAS CASAS (SISTEMA CASAS IGUAIS)');
+      expect(output).toContain('Vênus: Gêmeos em 3a Casa');
+      expect(output).not.toContain('Vênus: Gêmeos em 4a Casa');
     });
   });
 });

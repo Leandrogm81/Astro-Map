@@ -1,3 +1,5 @@
+import type { PlanetKey } from './magic-correspondences';
+
 export interface EssentialDignities {
   domicile: string;
   exaltation: string;
@@ -53,14 +55,63 @@ export interface TraditionalStatus {
   alcocoden?: 'ready' | 'partial' | 'none';
 }
 
-export type MagicPurpose = 
-  | 'authority'    // Sol
-  | 'emotion'      // Lua
+export type MagicPurpose =
+  | 'authority' // Sol
+  | 'emotion' // Lua
   | 'communication' // Mercúrio
-  | 'love'         // Vênus
-  | 'conflict'     // Marte
-  | 'expansion'    // Júpiter
-  | 'structure';   // Saturno
+  | 'love' // Vênus
+  | 'conflict' // Marte
+  | 'expansion' // Júpiter
+  | 'structure'; // Saturno
+
+export interface ElectiveRitualMaterials {
+  colors?: string[];
+  metals?: string[];
+  incenses?: string[];
+}
+
+export interface ElectiveRitualRemedies {
+  stones?: string[];
+  plants?: string[];
+  baths?: string[];
+  disclaimer?: string;
+}
+
+export interface ElectiveRitualContext {
+  purpose?: MagicPurpose;
+  planetId?: string;
+  planetKey?: PlanetKey;
+  sephirah?: string;
+  angel?: string;
+  hourAngel?: string;
+  olympicSpirit?: {
+    name: string;
+    description: string;
+  };
+  intelligence?: {
+    name: string;
+    description: string;
+  };
+  spirit?: {
+    name: string;
+    description: string;
+  };
+  orphicHymn?: {
+    title: string;
+    theme: string;
+  };
+  materials?: ElectiveRitualMaterials;
+  remedies?: ElectiveRitualRemedies;
+  charity?: string;
+  intentions?: string[];
+}
+
+export interface ElectiveRemedyRecommendations {
+  stones: string[];
+  plants: string[];
+  baths: string[];
+  disclaimer: string;
+}
 
 export interface PlanetHour {
   planetId: string;
@@ -82,6 +133,8 @@ export type ElectiveScore = 'propitious' | 'neutral' | 'challenging';
 
 export interface ElectiveVeredict {
   score: ElectiveScore;
+  rawScore?: number;
+  normalizedScore?: number;
   purpose: MagicPurpose;
   planetHour: PlanetHour;
   lunarMansion: LunarMansion;
@@ -106,6 +159,7 @@ export interface ElectiveVeredict {
     degree: number;
     house: number;
   }>;
+  ritualContext?: ElectiveRitualContext;
   ritualCorrespondences?: {
     colors?: string[];
     metals?: string[];
@@ -113,6 +167,7 @@ export interface ElectiveVeredict {
     charity?: string;
     intentions?: string[];
   };
+  remedyRecommendations?: ElectiveRemedyRecommendations;
 }
 
 export type ElectiveMode = 'sky_only' | 'sky_plus_natal';

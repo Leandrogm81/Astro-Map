@@ -1,11 +1,12 @@
-import { NatalChart, Aspect } from '@/types';
+import { NatalChart, Aspect, HouseCusp } from '@/types';
 import { getDignity, getDomicileRuler, calculateDispositorChain, getInterceptedSigns, getHouseForPlanet, calculateCrossAspects, getZodiacSign, formatDegree } from './astrology';
 import { calculateTraditionalAssessment } from './traditional/scoring';
 import { calculateTraditionalAspects } from './traditional/aspects';
-import { TraditionalAssessment, ElectiveMode, ElectiveVeredict } from './traditional/types';
+import { TraditionalAssessment, ElectiveMode, ElectiveVeredict, ElectiveRitualContext } from './traditional/types';
 import { translateMagicPurposePt, translatePlanetNamePt } from './traditional/constants';
 
 const TRADITIONAL_PLANET_IDS = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
+type ElectiveHouseSystem = 'whole_sign' | 'equal_house';
 
 const ASPECT_NAMES_PT: Record<string, string> = {
   'conjunction': 'Conjunção',
@@ -61,6 +62,57 @@ function formatVoidOfCourseStatus(status: ElectiveVeredict['moonStatus']['voidOf
   return 'NÃO CALCULADO';
 }
 
+function formatOptionalList(values?: string[]): string {
+  if (!values || values.length === 0) {
+    return 'Dado não fornecido';
+  }
+
+  return values.join(', ');
+}
+
+function formatRitualContext(context?: ElectiveRitualContext): string {
+  if (!context) {
+    return '';
+  }
+
+  const sections: string[] = [];
+
+  sections.push(`CONTEXTO RITUAL:\n- Sephirah: ${context.sephirah || 'Dado não fornecido'}\n- Anjo: ${context.angel || 'Dado não fornecido'}\n- Anjo da Hora: ${context.hourAngel || 'Dado não fornecido'}`);
+
+  if (context.olympicSpirit || context.intelligence || context.spirit || context.orphicHymn) {
+    sections.push([
+      'HIERARQUIA OPERATIVA:',
+      `- Espírito Olímpico: ${context.olympicSpirit ? `${context.olympicSpirit.name} — ${context.olympicSpirit.description}` : 'Dado não fornecido'}`,
+      `- Inteligência: ${context.intelligence || 'Dado não fornecido'}`,
+      `- Espírito: ${context.spirit || 'Dado não fornecido'}`,
+      `- Hino Órfico: ${context.orphicHymn ? `${context.orphicHymn.title} — ${context.orphicHymn.theme}` : 'Dado não fornecido'}`,
+    ].join('\n'));
+  }
+
+  if (context.materials) {
+    sections.push([
+      'MATERIAIS RITUALÍSTICOS:',
+      `- Cores: ${formatOptionalList(context.materials.colors)}`,
+      `- Metais: ${formatOptionalList(context.materials.metals)}`,
+      `- Incensos: ${formatOptionalList(context.materials.incenses)}`,
+    ].join('\n'));
+  }
+
+  if (context.remedies) {
+    sections.push([
+      'REMÉDIOS TRADICIONAIS:',
+      `- Pedras: ${formatOptionalList(context.remedies.stones)}`,
+      `- Plantas: ${formatOptionalList(context.remedies.plants)}`,
+      `- Banhos: ${formatOptionalList(context.remedies.baths)}`,
+      `- Aviso: ${context.remedies.disclaimer || 'Dado não fornecido'}`,
+    ].join('\n'));
+  }
+
+  sections.push(`CARIDADE E INTENÇÕES:\n- Caridade: ${context.charity || 'Dado não fornecido'}\n- Intenções: ${formatOptionalList(context.intentions)}`);
+
+  return sections.join('\n\n');
+}
+
 /**
  * Constantes de Guardrails e Legendas para Eletiva
  */
@@ -94,11 +146,41 @@ export const ELECTIVE_MAGIC_RITUAL_DATA_RULES = `REGRAS PARA CORRESPONDÊNCIAS R
 /**
  * Formata o contexto do céu tradicional (para Eletiva)
  */
-function formatTraditionalSkyContext(skyChart: NatalChart): string {
+function buildEqualHouseCusps(ascendant: number): HouseCusp[] {
+  return Array.from({ length: 12 }, (_, index) => {
+    const longitude = (ascendant + index * 30) % 360;
+    return {
+      number: index + 1,
+      longitude,
+      sign: getZodiacSign(longitude),
+      degree: longitude % 30,
+    };
+  });
+}
+
+function resolveElectiveHouseCusps(skyChart: NatalChart, houseSystem: ElectiveHouseSystem): HouseCusp[] {
+  if (houseSystem === 'equal_house') {
+    return buildEqualHouseCusps(skyChart.ascendant);
+  }
+
+  return skyChart.housesWhole && skyChart.housesWhole.length > 0
+    ? skyChart.housesWhole
+    : skyChart.housesPlacidus;
+}
+
+function getElectiveHouseSystemLabel(houseSystem: ElectiveHouseSystem): string {
+  return houseSystem === 'equal_house' ? 'CASAS IGUAIS' : 'SIGNOS INTEIROS';
+}
+
+function formatTraditionalSkyContext(
+  skyChart: NatalChart,
+  houseSystem: ElectiveHouseSystem = 'whole_sign'
+): string {
   const isDay = skyChart.isDayChart ?? true;
+  const activeHouses = resolveElectiveHouseCusps(skyChart, houseSystem);
   const assessment: TraditionalAssessment[] = skyChart.planets
     .filter(p => TRADITIONAL_PLANET_IDS.includes(p.id))
-    .map(p => calculateTraditionalAssessment(p, skyChart.planets, isDay));
+    .map(p => calculateTraditionalAssessment(p, skyChart.planets, isDay, activeHouses));
   
   const aspects = calculateTraditionalAspects(skyChart.planets);
 
@@ -109,8 +191,8 @@ function formatTraditionalSkyContext(skyChart: NatalChart): string {
     result += `Ascendente da eleição: ${skyChart.housesPlacidus[0].sign} a ${formatDegree(skyChart.housesPlacidus[0].degree)}\n`;
     result += `Regente do Ascendente: ${translatePlanetNamePt(getDomicileRuler(skyChart.housesPlacidus[0].sign))}\n\n`;
 
-    result += `ESTADO DAS CASAS (SISTEMA PLACIDUS):\n`;
-    skyChart.housesPlacidus.forEach(h => {
+    result += `ESTADO DAS CASAS (SISTEMA ${getElectiveHouseSystemLabel(houseSystem)}):\n`;
+    activeHouses.forEach(h => {
       const type = [1,4,7,10].includes(h.number) ? '(Angular)' : [2,5,8,11].includes(h.number) ? '(Sucedente)' : '(Cadente)';
       result += `Casa ${h.number}: ${h.sign} ${type}\n`;
     });
@@ -180,9 +262,10 @@ export function formatElectiveForAI(
   veredict: ElectiveVeredict,
   skyChart: NatalChart,
   mode: ElectiveMode = 'sky_only',
-  natalChart?: NatalChart
+  natalChart?: NatalChart,
+  houseSystem: ElectiveHouseSystem = 'whole_sign'
 ): string {
-  const { purpose, planetHour, lunarMansion, moonStatus, rulerCondition, score } = veredict;
+  const { purpose, planetHour, lunarMansion, moonStatus, rulerCondition, score, rawScore, normalizedScore } = veredict;
   const { birthData } = skyChart;
 
   let result = `SOLICITACAO DE ANALISE DE ELETIVA MAGICA\n`;
@@ -196,6 +279,8 @@ export function formatElectiveForAI(
   result += `MODO DE LEITURA: ${mode === 'sky_plus_natal' ? 'CEU DO MOMENTO + MAPA NATAL' : 'CEU DO MOMENTO'}\n`;
   result += `PROPOSITO MAGICO: ${translateMagicPurposePt(purpose).toUpperCase()}\n`;
   result += `VEREDITO TECNICO: ${score.toUpperCase()}\n\n`;
+  result += `PONTUACAO BRUTA: ${rawScore ?? 'NÃO INFORMADA'}\n`;
+  result += `PONTUACAO NORMALIZADA: ${normalizedScore ?? 'NÃO INFORMADA'}\n\n`;
 
   const translatedPlanetHour = translatePlanetNamePt(planetHour.planetId);
   const translatedRuler = translatePlanetNamePt(rulerCondition.planetId);
@@ -226,20 +311,23 @@ export function formatElectiveForAI(
   result += `  * Dignidade: ${rulerCondition.dignity}\n`;
   result += `  * Pontuação: ${rulerCondition.totalScore} pts\n\n`;
 
-  if (veredict.ritualCorrespondences) {
-    const rc = veredict.ritualCorrespondences;
+  if (veredict.ritualContext || veredict.ritualCorrespondences) {
+    const rc = veredict.ritualContext;
+    const legacy = veredict.ritualCorrespondences;
     result += `======================================================\n`;
     result += `CORRESPONDÊNCIAS RITUALÍSTICAS FORNECIDAS PELO ASTROMAP\n`;
     result += `======================================================\n`;
     result += `${ELECTIVE_MAGIC_RITUAL_DATA_RULES}\n\n`;
-    result += `- Intenções sugeridas: ${(rc.intentions || []).join(', ')}\n`;
-    result += `- Cores ritualísticas: ${(rc.colors || []).join(', ')}\n`;
-    result += `- Metais sagrados: ${(rc.metals || []).join(', ')}\n`;
-    result += `- Incensos e Ervas: ${(rc.incenses || []).join(', ')}\n`;
-    result += `- Ações de Caridade/Oferenda: ${rc.charity}\n\n`;
+    result += formatRitualContext(rc);
+    result += `\n`;
+    result += `- Intenções sugeridas: ${formatOptionalList(rc?.intentions ?? legacy?.intentions)}\n`;
+    result += `- Cores ritualísticas: ${formatOptionalList(rc?.materials?.colors ?? legacy?.colors)}\n`;
+    result += `- Metais sagrados: ${formatOptionalList(rc?.materials?.metals ?? legacy?.metals)}\n`;
+    result += `- Incensos e Ervas: ${formatOptionalList(rc?.materials?.incenses ?? legacy?.incenses)}\n`;
+    result += `- Ações de Caridade/Oferenda: ${rc?.charity ?? legacy?.charity ?? 'Dado não fornecido'}\n\n`;
   }
 
-  result += formatTraditionalSkyContext(skyChart);
+  result += formatTraditionalSkyContext(skyChart, houseSystem);
 
   if (mode === 'sky_plus_natal' && natalChart) {
     result += `\n\n` + formatElectiveNatalContext(skyChart, natalChart);
@@ -622,26 +710,29 @@ O Ascendente (Horóscopo): O signo que ascende no momento da operação é o cor
 
 Cosmologia: Explique a conexão entre o Mundo Inteligível, o Mundo Celeste e o Mundo Elemental (Sublunar).
 
-ESTRUTURA DA RESPOSTA (Markdown Profissional):
+ESTRUTURA DA RESPOSTA (Markdown Profissional, obrigatoriamente em 5 blocos):
 
-🌌 I. O Pórtico das Estrelas (Veredito de Auspiciosidade)
-Uma visão macroscópica da janela de tempo. O céu está aberto para este desejo ou as esferas oferecem resistência? Use um tom profético e técnico.
+### 1. Veredito Técnico
+Explique o grau de auspiciosidade, usando apenas os dados fornecidos. Inclua score bruto, score normalizado quando disponível, condição do regente e estado da Lua. Se algum dado faltar, diga que ele não foi fornecido.
 
-🏛️ II. O Trono do Regente e as Dignidades
-Análise detalhada do planeta que governa o pedido. Discorra sobre sua força acidental e essencial. Se o planeta for Marte, fale do seu 'fervor'; se Júpiter, de sua 'magnanimidade'.
+### 2. Preparação
+Liste materiais, cores, metais, checklist e remédios simbólicos quando o score normalizado for inferior ao limite. Não invente itens ausentes.
 
-🌙 III. O Espelho de Prata (A Lua e a Mansão)
-Interprete a Mansão Lunar não apenas como um nome, mas como a 'Virtude' específica que está sendo destilada no reino sublunar hoje.
+### 3. Invocação
+Traga o nome divino, o anjo, o anjo da hora, o espírito olímpico, a inteligência, o espírito e o hino órfico somente quando estiverem presentes no contexto calculado.
 
-🕯️ IV. A Liturgia da Captura (Instruções Ritualísticas)
-Forneça um guia ritualístico somente com os elementos explicitamente fornecidos no dossiê técnico ou nas correspondências mágicas do AstroMap.
-Se algum item ritualístico não estiver presente no dossiê, omita ou declare: "Dado ritualístico não fornecido pelo AstroMap".
+### 4. Ação Mágica
+Descreva um procedimento prático, respeitando o propósito mágico e os materiais do contexto. Use apenas o que foi fornecido no dossiê.
 
-⚖️ V. O Selo do Mestre (Conselho Final e Adaptações)
-Veredito definitivo. Se a hora for imperfeita, ofereça remédios astrológicos apenas quando sustentados pelos dados fornecidos; caso contrário, indique a limitação com sobriedade.
+### 5. Finalização
+Feche com licença para partir, caridade planetária e a conclusão operacional da janela. Se houver remédios, inclua o disclaimer simbólico obrigatório.
 
-🧾 VI. Correspondências Ritualísticas Fornecidas
-Se houver dados no dossiê, trate esta seção como fonte canônica para cores, metais, incensos, caridade e intenções. Não amplie além do que foi fornecido pelo AstroMap.
+REGRAS ADICIONAIS:
+- Use somente os dados explicitamente fornecidos no contexto JSON.
+- Não invente correspondências, nomes rituais, anjos, espíritos, remédios ou materiais que não estejam presentes.
+- Se um dado não estiver fornecido, escreva "Dado não fornecido" em vez de supor.
+- Quando o score normalizado for inferior a 70, destaque o caráter simbólico dos remédios e mantenha o aviso de que eles não substituem cuidado profissional.
+- Mantenha o tom solene, tradicional e operativo.
 
 REGRAS DE OURO:
 
@@ -676,25 +767,29 @@ DIRETRIZES TÉCNICAS DE ANÁLISE:
 
 4. O Ascendente da Eleição: O Ascendente do momento da operação deve, preferencialmente, cair em uma casa favorável do Mapa Natal ou estar em harmonia com o Almuten Figuris do operador.
 
-ESTRUTURA DA RESPOSTA (Markdown):
+ESTRUTURA DA RESPOSTA (Markdown, obrigatoriamente em 5 blocos):
 
-🌌 I. O Alinhamento dos Mundos (Auspiciosidade Geral)
-Análise do "Céu Universal". Como as emanações estão fluindo no momento independente do operador?
+### 1. Veredito Técnico
+Explique o grau de auspiciosidade geral e, se houver mapa natal, mostre o cruzamento com Almuten, Hyleg e estado operacional natal. Use apenas o que estiver explicitamente fornecido.
 
-👤 II. A Assinatura da Alma (Conexão com o Natal Tradicional)
-Aqui reside o coração da análise. Como os astros do momento "tocam" a estrutura técnica do seu nascimento? Use os dados de Almuten, Hyleg e Estado Operacional Natal para personalizar o conselho. O planeta da eleição respeita a hierarquia do seu mapa?
+### 2. Preparação
+Liste materiais, cores, metais e remédios simbólicos quando disponíveis. Se houver correspondências rituais, use-as como fonte canônica e não amplie além do contexto.
 
-🏗️ III. A Fortaleza do Operador (Casas e Ângulos)
-Em qual casa do seu mapa natal a operação está ocorrendo? (Ex: "A Lua da eleição transita sua Casa XI natal, mobilizando seus aliados e redes").
+### 3. Invocação
+Explique a assinatura celeste e o que está sendo acionado pela eleição. Traga anjos, espíritos, inteligência, hino órfico e anjo da hora somente se estiverem presentes no contexto.
 
-🕯️ IV. A Liturgia Sob Medida (Cores, Metais e Incensos)
-Instruções ritualísticas baseadas na mistura das energias. Se a eleição é de Sol, mas seu Sol natal precisa de força, sugira o uso de pedras ou metais que façam essa ponte.
+### 4. Ação Mágica
+Descreva o passo a passo prático da operação. Se houver mapa natal, destaque as casas e ângulos ativados sem inferir posições que não foram fornecidas.
 
-⚖️ V. O Veredito do Mestre
-Conselho final: Prosseguir, Adaptar ou Abortar. Use um tom de autoridade técnica e espiritual.
+### 5. Finalização
+Conclua com o veredito do mestre, a licença para partir e a caridade planetária. Se remédios aparecerem, mantenha o aviso simbólico obrigatório.
 
-🧾 VI. Correspondências Ritualísticas Fornecidas
-Use esta seção como fonte canônica para cores, metais, incensos, caridade e intenções quando os dados estiverem disponíveis.
+REGRAS ADICIONAIS:
+- Use somente os dados explicitamente fornecidos no contexto JSON.
+- Não invente correspondências, nomes rituais, anjos, espíritos, remédios ou materiais que não estejam presentes.
+- Se um dado não estiver fornecido, escreva "Dado não fornecido" em vez de supor.
+- Quando o score normalizado for inferior a 70, destaque o caráter simbólico dos remédios e mantenha o aviso de que eles não substituem cuidado profissional.
+- Preserve o foco teúrgico e tradicional.
 
 REGRAS DE OURO:
 

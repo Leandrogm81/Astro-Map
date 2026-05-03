@@ -216,6 +216,31 @@ describe('/api/report elective magic', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('propagates the selected elective house system to the generated prompt', async () => {
+    const fetchMock = installOpenRouterMock();
+    installSupabaseMock();
+
+    const response = (await POST(makeRequest({
+      reportMode: 'elective_magic',
+      electiveMode: 'sky_only',
+      contextChart: baseChart,
+      houseSystem: 'equal_house',
+      veredict: electiveVeredict,
+      apiKey: 'test-key',
+    }))) as Response;
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain('Relatório eletivo pronto');
+
+    const [, options] = fetchMock.mock.calls[0] as [string | URL | Request, RequestInit | undefined];
+    const payload = JSON.parse(options?.body as string) as {
+      messages: Array<{ role: string; content: string }>;
+    };
+
+    expect(payload.messages[1].content).toContain('ESTADO DAS CASAS (SISTEMA CASAS IGUAIS)');
+    expect(payload.messages[1].content).toContain('Vênus: Gêmeos em 3a Casa');
+  });
+
   it('rejects sky_plus_natal without natalChart.birthData', async () => {
     const fetchMock = installOpenRouterMock();
     installSupabaseMock();

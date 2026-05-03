@@ -25,6 +25,10 @@ function isElectiveMode(value: unknown): value is ElectiveMode {
   return value === 'sky_only' || value === 'sky_plus_natal';
 }
 
+function isElectiveHouseSystem(value: unknown): value is 'whole_sign' | 'equal_house' {
+  return value === 'whole_sign' || value === 'equal_house';
+}
+
 async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isDemo: boolean = false) {
   const reportMode = body.reportMode as string | undefined;
   const solarChart = body.solarChart as NatalChart | undefined;
@@ -33,6 +37,7 @@ async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isD
   const electiveMode = body.electiveMode as 'sky_only' | 'sky_plus_natal' | undefined;
   const veredict = body.veredict as ElectiveVeredict | undefined;
   const contextChart = body.contextChart as NatalChart | undefined;
+  const houseSystem = isElectiveHouseSystem(body.houseSystem) ? body.houseSystem : 'whole_sign';
 
   const result = reportMode === 'solar' && solarChart
     ? {
@@ -49,7 +54,7 @@ async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isD
         systemPrompt: electiveMode === 'sky_plus_natal'
           ? ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM
           : ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM,
-        userMessage: formatElectiveForAI(veredict, (contextChart || chart)!, electiveMode, natalChart),
+        userMessage: formatElectiveForAI(veredict, (contextChart || chart)!, electiveMode, natalChart, houseSystem),
       }
     : {
         systemPrompt: NATAL_PROMPT_SYSTEM,

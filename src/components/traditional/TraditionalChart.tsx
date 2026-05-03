@@ -34,13 +34,17 @@ interface TraditionalChartProps {
   showAllLots?: boolean;
   selectedPlanetId?: string | null;
   onPlanetClick?: (id: string | null, position?: { x: number, y: number }) => void;
+  houseSystem?: 'whole_sign' | 'equal_house';
+  onHouseSystemChange?: (houseSystem: 'whole_sign' | 'equal_house') => void;
 }
 
 export default function TraditionalChart({ 
   chart, 
   showAllLots: externalShowAllLots = false,
   selectedPlanetId: externalSelectedPlanetId = null,
-  onPlanetClick 
+  onPlanetClick,
+  houseSystem = 'whole_sign',
+  onHouseSystemChange
 }: TraditionalChartProps) {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -55,7 +59,6 @@ export default function TraditionalChart({
   }, []);
 
   // Estados internos para configurações (podem ser movidos para props no futuro se necessário)
-  const [houseSystem, setHouseSystem] = useState<'whole_sign' | 'equal_house'>('whole_sign');
   const [showAspects, setShowAspects] = useState(true);
   const [showAllLots, setShowAllLots] = useState(externalShowAllLots);
 
@@ -143,7 +146,7 @@ export default function TraditionalChart({
         />
       );
     });
-  }, [asc]);
+  }, [asc, longitudeToAngle]);
 
   // 3. Casas Tradicionais
   const houseElements = useMemo(() => {
@@ -183,7 +186,7 @@ export default function TraditionalChart({
         );
     }
     return houses;
-  }, [asc, houseSystem]);
+  }, [asc, houseSystem, longitudeToAngle]);
 
   // 2.5 Aneis de Dignidades (Termos e Decanos)
   const dignityRings = useMemo(() => {
@@ -253,7 +256,7 @@ export default function TraditionalChart({
         <g id="decans-ring">{decans}</g>
       </g>
     );
-  }, [asc]);
+  }, [asc, getArcPath, longitudeToAngle]);
 
   // 4. Planetas Classic (7)
   const classicIds = ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'];
@@ -262,7 +265,7 @@ export default function TraditionalChart({
         const pId = p.id?.toLowerCase();
         return classicIds.includes(pId);
     });
-  }, [chart.planets]);
+  }, [chart.planets, classicIds]);
 
   const planetNodes = classicPlanets.map(p => {
     const angle = longitudeToAngle(p.longitude);
@@ -631,8 +634,8 @@ export default function TraditionalChart({
               <div className="pt-2 border-t border-slate-800">
                 <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Sistema de Casas</span>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setHouseSystem('whole_sign')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Signos Inteiros</button>
-                  <button onClick={() => setHouseSystem('equal_house')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${houseSystem === 'equal_house' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Casas Iguais</button>
+                  <button onClick={() => onHouseSystemChange?.('whole_sign')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${houseSystem === 'whole_sign' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Signos Inteiros</button>
+                  <button onClick={() => onHouseSystemChange?.('equal_house')} className={`px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all border ${houseSystem === 'equal_house' ? 'bg-gold-500/20 border-gold-500 text-gold-400' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-500'}`}>Casas Iguais</button>
                 </div>
               </div>
             </div>

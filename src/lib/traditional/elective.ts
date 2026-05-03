@@ -1,9 +1,9 @@
-import { MagicPurpose, PlanetHour, LunarMansion, ElectiveVeredict, ElectiveScore } from './types';
-import { ZodiacSign } from '@/types';
+import { MagicPurpose, PlanetHour, LunarMansion, ElectiveVeredict, ElectiveScore, ElectiveRitualContext, ElectiveRemedyRecommendations } from './types';
+import { ZodiacSign, HouseCusp } from '@/types';
 import { calculateTraditionalAssessment } from './scoring';
 import { PlanetPosition } from '@/types';
 import { calculateTraditionalAspects, calculateMoonVoidOfCourse, getPlanetNamePT } from './aspects';
-import { PLANETARY_CORRESPONDENCES, PlanetKey } from './magic-correspondences';
+import { PLANETARY_CORRESPONDENCES, PlanetKey, PlanetaryCorrespondence } from './magic-correspondences';
 
 /**
  * Ordem Caldeia de Regência (descendente de velocidade/distância)
@@ -37,6 +37,69 @@ const PLANET_ID_TO_KEY: Partial<Record<string, PlanetKey>> = {
   jupiter: 'Jupiter',
   saturn: 'Saturn',
 };
+
+const REMEDY_THRESHOLD = 70;
+const REMEDY_DISCLAIMER = 'Estas recomendações são de caráter simbólico e tradicional. Não substituem aconselhamento médico ou terapêutico profissional.';
+
+function normalizeTraditionalScore(rawScore: number): number {
+  const normalized = 50 + (rawScore * 5);
+  return Math.max(0, Math.min(100, Math.round(normalized)));
+}
+
+function getPlanetKey(planetId: string): PlanetKey | undefined {
+  return PLANET_ID_TO_KEY[planetId.toLowerCase()];
+}
+
+function buildRitualContext(
+  purpose: MagicPurpose,
+  planetHour: PlanetHour,
+  correspondences: PlanetaryCorrespondence,
+): ElectiveRitualContext {
+  const planetKey = getPlanetKey(planetHour.planetId);
+  const hourCorrespondence = planetKey ? PLANETARY_CORRESPONDENCES[planetKey] : undefined;
+
+  return {
+    purpose,
+    planetId: planetHour.planetId,
+    planetKey,
+    sephirah: correspondences.sephirah,
+    angel: correspondences.angel,
+    hourAngel: hourCorrespondence?.angel,
+    olympicSpirit: correspondences.olympicSpirit,
+    intelligence: correspondences.intelligence,
+    spirit: correspondences.spirit,
+    orphicHymn: correspondences.orphicHymn,
+    materials: {
+      colors: correspondences.colors,
+      metals: correspondences.metals,
+      incenses: correspondences.incense,
+    },
+    remedies: {
+      stones: correspondences.remedies.stones,
+      plants: correspondences.remedies.plants,
+      baths: correspondences.remedies.baths,
+      disclaimer: REMEDY_DISCLAIMER,
+    },
+    charity: correspondences.charity,
+    intentions: correspondences.intentions,
+  };
+}
+
+function buildRemedyRecommendations(
+  normalizedScore: number,
+  correspondences: PlanetaryCorrespondence,
+): ElectiveRemedyRecommendations | undefined {
+  if (normalizedScore >= REMEDY_THRESHOLD) {
+    return undefined;
+  }
+
+  return {
+    stones: correspondences.remedies.stones,
+    plants: correspondences.remedies.plants,
+    baths: correspondences.remedies.baths,
+    disclaimer: REMEDY_DISCLAIMER,
+  };
+}
 
 /**
  * Mansões Lunares (Sistema de 28 divisões iguais de 12°51'26")
@@ -184,7 +247,8 @@ export function getElectiveVeredict(
   targetPlanets: PlanetPosition[],
   isDayChart: boolean,
   planetHour: PlanetHour,
-  moonMansion: LunarMansion
+  moonMansion: LunarMansion,
+  houses?: HouseCusp[]
 ): ElectiveVeredict {
   const rulerId = PURPOSE_RULER[purpose];
   const ruler = targetPlanets.find(p => p.id?.toLowerCase() === rulerId.toLowerCase());
@@ -196,34 +260,42 @@ export function getElectiveVeredict(
   if (!ruler) throw new Error(`Regente ${rulerId} não encontrado.`);
   if (!sun) throw new Error(`Sol não encontrado.`);
 
-  const assessment = calculateTraditionalAssessment(ruler, targetPlanets, isDayChart);
-  const moonAssessment = calculateTraditionalAssessment(moon, targetPlanets, isDayChart);
+  const assessment = calculateTraditionalAssessment(ruler, targetPlanets, isDayChart, houses);
+  const moonAssessment = calculateTraditionalAssessment(moon, targetPlanets, isDayChart, houses);
   const voc = calculateMoonVoidOfCourse(moon, targetPlanets);
   const aspects = calculateTraditionalAspects(targetPlanets);
 
-  let points = 0;
+  let rawScore = 0;
 
   // 1. Hora Planetária (Crucial)
-  if (planetHour.planetId === rulerId) points += 5;
-  else if (['jupiter', 'venus'].includes(planetHour.planetId)) points += 2; // Benéficos ajudam
-  else if (['mars', 'saturn'].includes(planetHour.planetId)) points -= 3; // Maléficos atrapalham
+  if (planetHour.planetId === rulerId) rawScore += 5;
+  else if (['jupiter', 'venus'].includes(planetHour.planetId)) rawScore += 2; // Benéficos ajudam
+  else if (['mars', 'saturn'].includes(planetHour.planetId)) rawScore -= 3; // Maléficos atrapalham
 
   // 2. Condição do Regente
-  points += Math.floor(assessment.score.total / 2);
+  rawScore += Math.floor(assessment.score.total / 2);
 
   // 3. Condição da Lua (A Lua transmite a influência)
-  points += Math.floor(moonAssessment.score.total / 3);
-  if (moonAssessment.condition.isCombust) points -= 10;
+  rawScore += Math.floor(moonAssessment.score.total / 3);
+  if (moonAssessment.condition.isCombust) rawScore -= 10;
   
   // Mansão Lunar (Simplificado: algumas mansões são "más" para tudo)
-  if ([9, 12, 21, 23].includes(moonMansion.number)) points -= 5;
+  if ([9, 12, 21, 23].includes(moonMansion.number)) rawScore -= 5;
 
   let score: ElectiveScore = 'neutral';
-  if (points >= 7) score = 'propitious';
-  else if (points < 0) score = 'challenging';
+  if (rawScore >= 7) score = 'propitious';
+  else if (rawScore < 0) score = 'challenging';
+
+  const normalizedScore = normalizeTraditionalScore(rawScore);
+  const ritualContext = correspondences ? buildRitualContext(purpose, planetHour, correspondences) : undefined;
+  const remedyRecommendations = correspondences
+    ? buildRemedyRecommendations(normalizedScore, correspondences)
+    : undefined;
 
   return {
     score,
+    rawScore,
+    normalizedScore,
     purpose,
     planetHour,
     lunarMansion: moonMansion,
@@ -248,7 +320,7 @@ export function getElectiveVeredict(
     planetConditions: ['sun', 'moon', 'mercury', 'venus', 'mars', 'jupiter', 'saturn'].reduce((acc, id) => {
       const p = targetPlanets.find(pl => pl.id?.toLowerCase() === id.toLowerCase());
       if (p) {
-        const ass = calculateTraditionalAssessment(p, targetPlanets, isDayChart);
+        const ass = calculateTraditionalAssessment(p, targetPlanets, isDayChart, houses);
         acc[id] = {
           planetId: id,
           totalScore: ass.score.total,
@@ -267,6 +339,7 @@ export function getElectiveVeredict(
       degree: number;
       house: number;
     }>),
+    ritualContext,
     ritualCorrespondences: correspondences
       ? {
           colors: correspondences.colors,
@@ -276,6 +349,7 @@ export function getElectiveVeredict(
           intentions: correspondences.intentions,
         }
       : undefined,
+    remedyRecommendations,
   };
 }
 

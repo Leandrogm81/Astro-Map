@@ -1,5 +1,5 @@
 import React from 'react';
-import { NatalChart, ZodiacSign } from '@/types';
+import { NatalChart } from '@/types';
 import { Compass, Trophy, Star, Moon } from 'lucide-react';
 import { getZodiacSign, getSignDegree } from '@/lib/astrology';
 

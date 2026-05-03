@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
 import { NatalChart, BirthData, GeocodingResult } from '@/types';
 import { ElectiveMode, MagicPurpose } from '@/lib/traditional/types';
@@ -57,6 +58,19 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import styles from './TraditionalElectivePanel.module.css';
 
+const ElectiveGrimoirePDF = dynamic(() => import('@/components/traditional/ElectiveGrimoirePDF'), {
+  ssr: false,
+  loading: () => (
+    <button
+      type="button"
+      disabled
+      className="px-3 py-2 rounded-lg text-[10px] uppercase tracking-widest bg-slate-800 text-slate-500 cursor-wait"
+    >
+      Preparando PDF...
+    </button>
+  ),
+});
+
 interface TraditionalElectivePanelProps {
   chart: NatalChart;
 }
@@ -89,6 +103,14 @@ function getCurrentTimeInputs(): { dateStr: string; timeStr: string } {
   return formatDateTimeInput(new Date());
 }
 
+function formatOptionalList(values?: string[]): string {
+  if (!values || values.length === 0) {
+    return 'Dado não fornecido';
+  }
+
+  return values.join(', ');
+}
+
 export default function TraditionalElectivePanel({ chart }: TraditionalElectivePanelProps) {
   const [intentionId, setIntentionId] = useState<string>(RITUAL_INTENTIONS[0].id);
   const [electiveMode, setElectiveMode] = useState<ElectiveMode>('sky_only');
@@ -99,6 +121,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   const [magicInsight, setMagicInsight] = useState<string | null>(null);
   const [skyChart, setSkyChart] = useState<NatalChart | null>(null);
   const [skyTimestamp, setSkyTimestamp] = useState<Date | null>(null);
+  const [checkedMaterials, setCheckedMaterials] = useState<Record<string, boolean>>({});
 
   // Frente 3: AI Report UI states
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -139,6 +162,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
   const [targetLat, setTargetLat] = useState<number>(chart.birthData.latitude);
   const [targetLon, setTargetLon] = useState<number>(chart.birthData.longitude);
   const [targetTimezone, setTargetTimezone] = useState<string>(chart.birthData.timezone);
+  const [electiveHouseSystem, setElectiveHouseSystem] = useState<'whole_sign' | 'equal_house'>('whole_sign');
 
   const {
     searchQuery,
@@ -318,9 +342,33 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
       skyChart.planets,
       skyChart.isDayChart ?? true,
       planetHour,
-      mansion
+      mansion,
+      skyChart.housesWhole
     );
   }, [electiveDateTime, purpose, skyChart, targetLat, targetLon]);
+
+  const ritualContext = veredict?.ritualContext;
+  const ritualMaterials = ritualContext?.materials ?? {
+    colors: correspondences.colors,
+    metals: correspondences.metals,
+    incenses: correspondences.incense,
+  };
+  const remedyRecommendations = veredict?.remedyRecommendations;
+  const checklistItems = useMemo(() => {
+    const colors = ritualMaterials.colors ?? [];
+    const metals = ritualMaterials.metals ?? [];
+    const incenses = ritualMaterials.incenses ?? [];
+
+    return [
+      ...colors.map((item) => ({ key: `color:${item}`, group: 'Cor', label: item })),
+      ...metals.map((item) => ({ key: `metal:${item}`, group: 'Metal', label: item })),
+      ...incenses.map((item) => ({ key: `incense:${item}`, group: 'Incenso', label: item })),
+    ];
+  }, [ritualMaterials.colors, ritualMaterials.metals, ritualMaterials.incenses]);
+
+  useEffect(() => {
+    setCheckedMaterials({});
+  }, [intentionId, electiveMode, veredict?.normalizedScore]);
 
   const planetaryDay = useMemo(() => {
     const { sunrise } = calculateRiseSet(electiveDateTime, targetLat, targetLon);
@@ -368,6 +416,7 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
           natalChart: enrichedNatalChart,
           reportMode: 'elective_magic',
           electiveMode,
+          houseSystem: electiveHouseSystem,
           veredict,
           targetDate: skyChart.birthData.date,
           targetTime: skyChart.birthData.time,
@@ -792,37 +841,189 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
 
           {/* CÓDICE DE CORRESPONDÊNCIAS */}
           <div className="bg-slate-900/50 backdrop-blur-sm rounded-3xl border border-white/10 p-6 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Flame className="w-5 h-5 text-orange-400" />
-                Códice Hermético
-              </h3>
+            <div className="flex items-center justify-between mb-4 gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Flame className="w-5 h-5 text-orange-400" />
+                  Códice Hermético
+                </h3>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500 mt-1">
+                  Regente: {translatePlanetKeyPt(selectedIntention.ruler)}
+                </p>
+              </div>
               <span className="text-[10px] bg-white/10 text-slate-300 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                Regente: {translatePlanetKeyPt(selectedIntention.ruler)}
+                {veredict?.normalizedScore !== undefined ? `${veredict.normalizedScore}/100` : 'Sem score'}
               </span>
             </div>
-            
+
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="bg-black/30 rounded-xl p-3 border border-white/5">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Velas / Cores</div>
-                  <div className="text-sm text-slate-200">{correspondences.colors.join(', ')}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Sephirah</div>
+                  <div className="text-sm text-slate-200">{ritualContext?.sephirah ?? correspondences.sephirah}</div>
                 </div>
                 <div className="bg-black/30 rounded-xl p-3 border border-white/5">
-                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Metal</div>
-                  <div className="text-sm text-slate-200">{correspondences.metals.join(', ')}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Anjo Planetário</div>
+                  <div className="text-sm text-slate-200">{ritualContext?.angel ?? correspondences.angel}</div>
+                </div>
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Anjo da Hora</div>
+                  <div className="text-sm text-slate-200">{ritualContext?.hourAngel ?? 'Dado não fornecido'}</div>
+                </div>
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Hino Órfico</div>
+                  <div className="text-sm text-slate-200">
+                    {ritualContext?.orphicHymn ? ritualContext.orphicHymn.title : correspondences.orphicHymn.title}
+                  </div>
                 </div>
               </div>
-              <div className="bg-black/30 rounded-xl p-3 border border-white/5">
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Incensos</div>
-                <div className="text-sm text-slate-200">{correspondences.incense.join(', ')}</div>
-              </div>
-              <div className="bg-black/30 rounded-xl p-3 border border-white/5">
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Caridade Planetária</div>
-                <div className="text-sm text-slate-300 leading-relaxed italic border-l-2 border-gold-500/30 pl-3 py-1">
-                  &quot;{correspondences.charity}&quot;
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5 md:col-span-2">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Espírito Olímpico</div>
+                  <div className="text-sm text-slate-200">
+                    {ritualContext?.olympicSpirit?.name ?? correspondences.olympicSpirit.name}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    {ritualContext?.olympicSpirit?.description ?? correspondences.olympicSpirit.description}
+                  </p>
+                </div>
+                <div className={`rounded-xl p-3 border transition-all ${
+                  veredict && veredict.normalizedScore !== undefined && veredict.normalizedScore < 70
+                    ? 'bg-amber-500/10 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
+                    : 'bg-black/30 border-white/5 opacity-60'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Inteligência</div>
+                    {veredict && veredict.normalizedScore !== undefined && veredict.normalizedScore < 70 && (
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded-full font-bold">Recomendado: Cura</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-slate-200">
+                    {ritualContext?.intelligence?.name ?? correspondences.intelligence.name}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    {ritualContext?.intelligence?.description ?? correspondences.intelligence.description}
+                  </p>
+                </div>
+                <div className={`rounded-xl p-3 border transition-all ${
+                  veredict && veredict.normalizedScore !== undefined && veredict.normalizedScore >= 70
+                    ? 'bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                    : 'bg-black/30 border-white/5 opacity-60'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Espírito</div>
+                    {veredict && veredict.normalizedScore !== undefined && veredict.normalizedScore >= 70 && (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded-full font-bold">Recomendado: Manifestação</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-slate-200">
+                    {ritualContext?.spirit?.name ?? correspondences.spirit.name}
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    {ritualContext?.spirit?.description ?? correspondences.spirit.description}
+                  </p>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-white/5 bg-black/25 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">Checklist Local</h4>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500 mt-1">Sem persistência, apenas para a sessão atual</p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                    {checklistItems.length} itens
+                  </span>
+                </div>
+                {checklistItems.length === 0 ? (
+                  <p className="text-sm text-slate-400">Dado não fornecido.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {checklistItems.map((item) => (
+                      <label
+                        key={item.key}
+                        className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-200"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checkedMaterials[item.key] ?? false}
+                          onChange={() => setCheckedMaterials((current) => ({
+                            ...current,
+                            [item.key]: !current[item.key],
+                          }))}
+                          className="h-4 w-4 rounded border-white/20 bg-black/40 text-indigo-500 focus:ring-indigo-500"
+                        />
+                        <span className="flex flex-col">
+                          <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{item.group}</span>
+                          <span>{item.label}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Cores</div>
+                  <div className="text-sm text-slate-200">
+                    {formatOptionalList(ritualMaterials.colors)}
+                  </div>
+                </div>
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Metais</div>
+                  <div className="text-sm text-slate-200">
+                    {formatOptionalList(ritualMaterials.metals)}
+                  </div>
+                </div>
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5 md:col-span-2">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Incensos</div>
+                  <div className="text-sm text-slate-200">
+                    {formatOptionalList(ritualMaterials.incenses)}
+                  </div>
+                </div>
+                <div className="bg-black/30 rounded-xl p-3 border border-white/5 md:col-span-2">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Caridade Planetária</div>
+                  <div className="text-sm text-slate-300 leading-relaxed italic border-l-2 border-gold-500/30 pl-3 py-1">
+                    &quot;{ritualContext?.charity ?? correspondences.charity}&quot;
+                  </div>
+                </div>
+              </div>
+
+              {remedyRecommendations && (
+                <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h4 className="text-sm font-semibold text-amber-100">Remédios Simbólicos</h4>
+                    <span className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80">Score normalizado abaixo de 70</span>
+                  </div>
+                  <div className="space-y-3 text-sm text-amber-50">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80 mb-1">Pedras</div>
+                      <div>{formatOptionalList(remedyRecommendations.stones)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80 mb-1">Plantas</div>
+                      <div>{formatOptionalList(remedyRecommendations.plants)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-amber-200/80 mb-1">Banhos</div>
+                      <div>{formatOptionalList(remedyRecommendations.baths)}</div>
+                    </div>
+                    <p className="text-[11px] text-amber-100/90 leading-relaxed border-t border-amber-400/20 pt-3">
+                      {remedyRecommendations.disclaimer}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!remedyRecommendations && veredict && veredict.normalizedScore !== undefined && veredict.normalizedScore >= 70 && (
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4">
+                  <p className="text-sm text-emerald-50">
+                    O score normalizado está acima do limiar ritualístico. O card de remédios permanece oculto.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -852,7 +1053,11 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
               </div>
 
               <div className="relative z-10">
-                <TraditionalChart chart={skyChart} />
+                <TraditionalChart
+                  chart={skyChart}
+                  houseSystem={electiveHouseSystem}
+                  onHouseSystemChange={setElectiveHouseSystem}
+                />
                 {isCalculatingSky && (
                   <div
                     className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-[1.75rem] md:rounded-[2rem] bg-slate-950/60 backdrop-blur-sm"
@@ -914,6 +1119,9 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                   {veredict?.rulerCondition.totalScore ?? '--'} pontos
                 </div>
                 <div className="text-[10px] text-slate-400 mt-1 uppercase">{translatePlanetKeyPt(selectedIntention.ruler)} em {veredict?.rulerCondition.dignity ?? '--'}</div>
+                <div className="text-[10px] text-slate-500 mt-1 uppercase">
+                  Score normalizado: {veredict?.normalizedScore ?? '--'}/100
+                </div>
               </div>
             </div>
 
@@ -930,6 +1138,9 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                   : resolvedScore === 'neutral'
                     ? 'O céu não favorece nem impede. A força do magista ditará o resultado.'
                     : 'As estrelas resistem a esta obra. Cautela ou adiamento são recomendados.'}
+              </p>
+              <p className="mt-2 text-[10px] uppercase tracking-[0.18em] opacity-70">
+                Score normalizado: {veredict?.normalizedScore ?? '--'}/100
               </p>
             </div>
             
@@ -982,6 +1193,17 @@ export default function TraditionalElectivePanel({ chart }: TraditionalElectiveP
                   <option value="sky_only">Apenas o Céu Eletivo</option>
                   <option value="sky_plus_natal">Céu Eletivo + Mapa Natal</option>
                 </select>
+
+                <ElectiveGrimoirePDF
+                  chart={chart}
+                  skyChart={skyChart}
+                  veredict={veredict}
+                  protocolText={magicInsight}
+                  intentionLabel={selectedIntention.label}
+                  purposeLabel={translatePlanetKeyPt(selectedIntention.ruler)}
+                  generatedAt={skyTimestamp?.toISOString()}
+                  disabled={!veredict || !skyChart || !magicInsight || isGenerating || isCalculatingSky}
+                />
 
                 {reportLimitReached ? (
                   <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-200 text-[10px] font-bold">
