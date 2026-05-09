@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { BirthData, NatalChart, AIReport as AIReportType, SavedChart } from '@/types';
@@ -59,7 +59,8 @@ import {
   ChevronUp,
   Save,
   Loader2,
-  Hexagon
+  Hexagon,
+  BookOpen
 } from 'lucide-react';
 import { hydrateNatalChart } from '@/lib/chartHydration';
 
@@ -349,6 +350,21 @@ export default function Home() {
         </div>
       )}
 
+      <Link 
+        href="/salmos" 
+        className="w-full mb-6 p-4 flex items-center justify-between bg-gradient-to-br from-purple-900/40 to-slate-900/80 border border-purple-500/30 rounded-xl hover:bg-purple-900/60 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-purple-500/20 rounded-lg group-hover:scale-110 transition-transform">
+            <BookOpen className="w-5 h-5 text-purple-400" />
+          </div>
+          <div className="text-left">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Salmos Cabalísticos</h2>
+            <p className="text-xs text-purple-300">Conexões astrológicas e propósitos</p>
+          </div>
+        </div>
+      </Link>
+
       <div className="bg-slate-900/50 border border-purple-500/20 rounded-xl overflow-hidden">
         <button
           onClick={() => toggleSection('form')}
@@ -447,6 +463,14 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
+              <Link 
+                href="/salmos" 
+                className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 text-purple-400 text-[10px] font-bold uppercase tracking-widest rounded-full border border-purple-500/30 hover:bg-purple-500/20 transition-colors"
+                title="Explorar Salmos Cabalísticos"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Salmos Cabalísticos</span>
+              </Link>
               {hasValidChart && !sidebarVisible && (
                 <button
                   onClick={handleNewChart}

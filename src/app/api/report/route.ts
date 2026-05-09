@@ -29,7 +29,7 @@ function isElectiveHouseSystem(value: unknown): value is 'whole_sign' | 'equal_h
   return value === 'whole_sign' || value === 'equal_house';
 }
 
-async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isDemo: boolean = false) {
+async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isDemo = false) {
   const reportMode = body.reportMode as string | undefined;
   const solarChart = body.solarChart as NatalChart | undefined;
   const natalChart = body.natalChart as NatalChart | undefined;
@@ -39,33 +39,57 @@ async function buildPrompt(body: Record<string, unknown>, chart: NatalChart, isD
   const contextChart = body.contextChart as NatalChart | undefined;
   const houseSystem = isElectiveHouseSystem(body.houseSystem) ? body.houseSystem : 'whole_sign';
 
-  const result = reportMode === 'solar' && solarChart
-    ? {
-        systemPrompt: SOLAR_RETURN_PROMPT_SYSTEM,
-        userMessage: `Analise minha Revolução Solar para o ano ${solarYear || new Date().getFullYear()} comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSIÇÃO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(chart, solarChart, solarYear || new Date().getFullYear())}`,
-      }
-    : reportMode === 'traditional'
-    ? {
-        systemPrompt: TRADITIONAL_PROMPT_SYSTEM,
-        userMessage: formatTraditionalChartForAI(chart, (body.assessments as []) || []),
-      }
-    : reportMode === 'elective_magic' && veredict && (contextChart || chart) && electiveMode
-    ? {
-        systemPrompt: electiveMode === 'sky_plus_natal'
-          ? ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM
-          : ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM,
-        userMessage: formatElectiveForAI(veredict, (contextChart || chart)!, electiveMode, natalChart, houseSystem),
-      }
-    : {
-        systemPrompt: NATAL_PROMPT_SYSTEM,
-        userMessage: formatChartForAI(chart),
-      };
+  const result =
+    reportMode === 'solar' && solarChart
+      ? {
+          systemPrompt: SOLAR_RETURN_PROMPT_SYSTEM,
+          userMessage: `Analise minha Revolucao Solar para o ano ${
+            solarYear || new Date().getFullYear()
+          } comparando com meu Mapa Natal. Use especialmente os ASPECTOS CRUZADOS e a INTERPOSICAO DE CASAS fornecidos nos dados abaixo.\n\n${formatSolarComparisonForAI(
+            chart,
+            solarChart,
+            solarYear || new Date().getFullYear()
+          )}`,
+        }
+      : reportMode === 'traditional'
+        ? {
+            systemPrompt: TRADITIONAL_PROMPT_SYSTEM,
+            userMessage: formatTraditionalChartForAI(chart, (body.assessments as []) || []),
+          }
+        : reportMode === 'elective_magic' && veredict && (contextChart || chart) && electiveMode
+          ? {
+              systemPrompt:
+                electiveMode === 'sky_plus_natal'
+                  ? ELECTIVE_MAGIC_SKY_PLUS_NATAL_PROMPT_SYSTEM
+                  : ELECTIVE_MAGIC_SKY_ONLY_PROMPT_SYSTEM,
+              userMessage: formatElectiveForAI(veredict, (contextChart || chart)!, electiveMode, natalChart, houseSystem),
+            }
+          : {
+              systemPrompt: NATAL_PROMPT_SYSTEM,
+              userMessage: formatChartForAI(chart),
+            };
 
   if (isDemo && !('error' in result)) {
-    result.systemPrompt += '\n\nIMPORTANTE: Você está em MODO DEMONSTRAÇÃO. Seja extremamente conciso, direto ao ponto e forneça apenas uma visão geral resumida.';
+    result.systemPrompt +=
+      '\n\nIMPORTANTE: Voce esta em MODO DEMONSTRACAO. Seja extremamente conciso, direto ao ponto e forneca apenas uma visao geral resumida.';
   }
 
   return result;
+}
+
+function sanitizeProviderError(errorText: string, status: number): string {
+  try {
+    const parsed = JSON.parse(errorText) as { error?: { message?: string } };
+    const providerMessage = parsed.error?.message?.trim();
+
+    if (status === 401 || status === 403) {
+      return providerMessage || 'Falha de autenticacao com o provedor de IA.';
+    }
+
+    return providerMessage || `Erro na OpenRouter: ${status}`;
+  } catch {
+    return errorText || `Erro na OpenRouter: ${status}`;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -75,19 +99,17 @@ export async function POST(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
-    // Buscar perfil para verificar limites e modo demo
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, email, role, tier, is_suspended, is_demo, ai_reports_limit, ai_reports_used, created_at, updated_at')
-      .eq('id', user.id)
-      .single<UserProfile>();
+    const profileResult = user
+      ? await supabase
+          .from('profiles')
+          .select('id, email, role, tier, is_suspended, is_demo, ai_reports_limit, ai_reports_used, created_at, updated_at')
+          .eq('id', user.id)
+          .maybeSingle<UserProfile>()
+      : { data: null, error: null };
+    const profile = profileResult.data ?? null;
 
     if (profile?.is_suspended) {
-      return NextResponse.json({ error: 'Sua conta está suspensa.' }, { status: 403 });
+      return NextResponse.json({ error: 'Sua conta esta suspensa.' }, { status: 403 });
     }
 
     const tierLimits = getTierLimits(profile?.tier);
@@ -95,7 +117,7 @@ export async function POST(request: NextRequest) {
     const used = profile?.ai_reports_used ?? 0;
 
     if (profile && used >= limit && profile.tier !== 'admin') {
-      return NextResponse.json({ error: 'Limite de relatórios de IA atingido para seu plano.' }, { status: 403 });
+      return NextResponse.json({ error: 'Limite de relatorios de IA atingido para seu plano.' }, { status: 403 });
     }
 
     let body: Record<string, unknown>;
@@ -103,7 +125,7 @@ export async function POST(request: NextRequest) {
       body = await request.json();
     } catch {
       return NextResponse.json(
-        { error: 'Corpo da requisição inválido. Certifique-se de enviar um JSON válido.' },
+        { error: 'Corpo da requisicao invalido. Certifique-se de enviar um JSON valido.' },
         { status: 400 }
       );
     }
@@ -119,25 +141,25 @@ export async function POST(request: NextRequest) {
     if (reportMode === 'elective_magic') {
       if (!veredict || !isElectiveMode(electiveModeValue) || !skyChart?.birthData) {
         return NextResponse.json(
-          { error: 'Dados da eletiva são obrigatórios: veredito, modo de leitura e céu do momento.' },
+          { error: 'Dados da eletiva sao obrigatorios: veredito, modo de leitura e ceu do momento.' },
           { status: 400 }
         );
       }
 
       if (electiveModeValue === 'sky_plus_natal' && !natalChart?.birthData) {
         return NextResponse.json(
-          { error: 'Mapa natal obrigatório para o modo céu do momento + mapa natal.' },
+          { error: 'Mapa natal obrigatorio para o modo ceu do momento + mapa natal.' },
           { status: 400 }
         );
       }
     } else if (!chart?.birthData) {
-      return NextResponse.json({ error: 'Dados do mapa natal são obrigatórios.' }, { status: 400 });
+      return NextResponse.json({ error: 'Dados do mapa natal sao obrigatorios.' }, { status: 400 });
     }
 
     const apiKey = (body.apiKey as string | undefined) || process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Chave API não configurada. Por favor, insira uma chave válida.' },
+        { error: 'Chave API nao configurada. Por favor, insira uma chave valida.' },
         { status: 401 }
       );
     }
@@ -147,7 +169,9 @@ export async function POST(request: NextRequest) {
     const promptChart = reportMode === 'elective_magic' ? skyChart! : chart!;
     const prompt = await buildPrompt(body, promptChart, profile?.is_demo ?? false);
 
-    if ('error' in prompt) return prompt.error;
+    if ('error' in prompt) {
+      return prompt.error;
+    }
 
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
@@ -160,11 +184,12 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         model,
         messages: [
-          { 
-            role: 'system', 
-            content: profile?.is_demo 
-              ? `${prompt.systemPrompt}\n\nIMPORTANTE: Este é um relatório de demonstração. Seja extremamente breve e direto, limitando-se a no máximo 3 parágrafos curtos.` 
-              : prompt.systemPrompt 
+          {
+            role: 'system',
+            content:
+              profile?.is_demo
+                ? `${prompt.systemPrompt}\n\nIMPORTANTE: Este e um relatorio de demonstracao. Seja extremamente breve e direto, limitando-se a no maximo 3 paragrafos curtos.`
+                : prompt.systemPrompt,
           },
           { role: 'user', content: prompt.userMessage },
         ],
@@ -184,16 +209,9 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      let errorData: { error?: { message?: string } };
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error: { message: errorText } };
-      }
-
       return NextResponse.json(
         {
-          error: errorData.error?.message || `Erro na OpenRouter: ${response.status}`,
+          error: sanitizeProviderError(errorText, response.status),
           status: response.status,
         },
         { status: response.status }
@@ -212,7 +230,6 @@ export async function POST(request: NextRequest) {
       async start(controller) {
         let buffer = '';
         try {
-          // Incrementar uso de IA no banco de dados se for um usuário autenticado
           if (user && profile) {
             await supabase
               .from('profiles')

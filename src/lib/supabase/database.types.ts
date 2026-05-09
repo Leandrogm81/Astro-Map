@@ -182,6 +182,164 @@ export type Database = {
           created_at?: string | null;
         };
       };
+      salmos: {
+        Row: {
+          id: string;
+          number: number;
+          nome_divino: string | null;
+          page_start: string | null;
+          page_end: string | null;
+        };
+        Insert: {
+          id?: string;
+          number: number;
+          nome_divino?: string | null;
+          page_start?: string | null;
+          page_end?: string | null;
+        };
+        Update: {
+          id?: string;
+          number?: number;
+          nome_divino?: string | null;
+          page_start?: string | null;
+          page_end?: string | null;
+        };
+      };
+      salmos_propositos: {
+        Row: {
+          id: string;
+          salmo_id: string;
+          nome: string;
+          evidencia: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          salmo_id: string;
+          nome: string;
+          evidencia?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          salmo_id?: string;
+          nome?: string;
+          evidencia?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
+      salmos_elementos: {
+        Row: {
+          id: string;
+          salmo_id: string;
+          nome: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          salmo_id: string;
+          nome: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          salmo_id?: string;
+          nome?: string;
+          created_at?: string | null;
+        };
+      };
+      salmos_fontes: {
+        Row: {
+          id: string;
+          salmo_id: string;
+          nome_fonte: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          salmo_id: string;
+          nome_fonte: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          salmo_id?: string;
+          nome_fonte?: string;
+          created_at?: string | null;
+        };
+      };
+      salmos_condicoes_astro: {
+        Row: {
+          id: string;
+          salmo_id: string;
+          descricao: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          salmo_id: string;
+          descricao: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          salmo_id?: string;
+          descricao?: string;
+          created_at?: string | null;
+        };
+      };
+      user_salmos_favoritos: {
+        Row: {
+          id: string;
+          user_id: string;
+          salmo_id: string;
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          salmo_id: string;
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          salmo_id?: string;
+          created_at?: string | null;
+        };
+      };
+      salmos_diario: {
+        Row: {
+          id: string;
+          user_id: string;
+          salmo_id: string;
+          anotacao: string;
+          data_pratica: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          salmo_id: string;
+          anotacao: string;
+          data_pratica?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          salmo_id?: string;
+          anotacao?: string;
+          data_pratica?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
